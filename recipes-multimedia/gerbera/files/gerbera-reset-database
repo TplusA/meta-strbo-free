@@ -1,0 +1,28 @@
+#!/bin/bash -e
+
+trap 'echo Error on line $LINENO' ERR
+
+declare CONFIG_FILE
+declare GERBERA_HOME
+
+CONFIG_FILE=$(readlink /etc/gerbera/config.xml)
+GERBERA_HOME=$(xml sel -N mt=http://mediatomb.cc/config/2 -t -v /mt:config/mt:server/mt:home $CONFIG_FILE)
+
+declare GERBERA_STOP_START=
+if systemctl is-active --quiet gerbera; then
+    GERBERA_STOP_START=1
+fi
+
+if [ -n "$GERBERA_STOP_START" ]; then
+    echo "Stopping service gerbera..."
+    systemctl stop gerbera
+fi
+
+declare GERBERA_DB="${GERBERA_HOME:?}/gerbera.db"
+echo "Deleting database $GERBERA_DB..."
+rm -f "$GERBERA_DB"
+
+if [ -n "$GERBERA_STOP_START" ]; then
+    echo "Starting service gerbera..."
+    systemctl start gerbera
+fi

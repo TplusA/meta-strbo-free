@@ -1,0 +1,10 @@
+[Unit]
+Description=StrBo session D-Bus
+After=tmp.mount
+Requires=tmp.mount
+
+[Service]
+ExecStart=/usr/bin/dbus-daemon --session --address=unix:path=/tmp/strbo_bus_socket --nofork --nopidfile
+ExecReload=/usr/bin/dbus-send --print-reply --session --type=method_call --dest=org.freedesktop.DBus / org.freedesktop.DBus.ReloadConfig
+User=strbo
+Group=strbo

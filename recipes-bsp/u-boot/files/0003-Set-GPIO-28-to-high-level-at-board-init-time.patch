@@ -1,0 +1,37 @@
+From 0a9273f3733d32d2d014d4271036215c105ae55c Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Wed, 26 Oct 2016 12:02:01 +0200
+Subject: [PATCH] Set GPIO 28 to high level at board init time.
+
+External hardware can tell now when the system is powered on and about
+to boot the system. The pin is never set back to low level by
+software, so it only ever gets back to low level when going through a
+reset or power cycle.
+
+If GPIO 28 remains low after powering the Streaming Board, then the
+board is bricked and requires service.
+
+Change-Id: I3e3106ced256b252e3a849c426e5b42094c4f098
+---
+ board/raspberrypi/rpi/rpi.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/board/raspberrypi/rpi/rpi.c b/board/raspberrypi/rpi/rpi.c
+index f00153b6aa..c321729992 100644
+--- a/board/raspberrypi/rpi/rpi.c
++++ b/board/raspberrypi/rpi/rpi.c
+@@ -473,6 +473,11 @@ int arch_early_init_r(void)
+ 	if (gpio_request(47, "boot select") == 0)
+ 		gpio_direction_input(47);
+ 
++	if (gpio_request(28, "board active") == 0) {
++		gpio_direction_output(28, 1);
++		gpio_set_value(28, 1);
++	}
++
+ 	return 0;
+ }
+ 
+-- 
+2.26.2
+

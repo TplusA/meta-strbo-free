@@ -1,0 +1,147 @@
+From 2b696c6f191f78ebdbb72d043e3b924104f2bb0f Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Fri, 14 Aug 2020 12:44:57 +0200
+Subject: [PATCH] Alternative way to trigger system recovery (#472).
+
+Change-Id: I0d6bbe0927d4ee8b28b2f17ce0f1a9657c0b32bf
+---
+ Kconfig                     |  8 ++++
+ board/raspberrypi/rpi/rpi.c | 77 +++++++++++++++++++++++++++++++++----
+ 2 files changed, 78 insertions(+), 7 deletions(-)
+
+diff --git a/Kconfig b/Kconfig
+index 92fc4fc135..d17c38d938 100644
+--- a/Kconfig
++++ b/Kconfig
+@@ -296,6 +296,14 @@ config ERR_PTR_OFFSET
+ 	  pointer values - up to 'MAX_ERRNO' bytes below this value must be
+ 	  unused/invalid addresses.
+ 
++config STRBO_RECOVERY_BOOTLOADER
++	bool "Build StrBo recovery boot loader"
++	default n
++	help
++	  Build a special version for the recovery system. That version does
++	  not check the boot select pins and always runs the boot script
++	  independently of these pins.
++
+ endmenu		# General setup
+ 
+ menu "Boot images"
+diff --git a/board/raspberrypi/rpi/rpi.c b/board/raspberrypi/rpi/rpi.c
+index 10cfd6c103..7243252b1b 100644
+--- a/board/raspberrypi/rpi/rpi.c
++++ b/board/raspberrypi/rpi/rpi.c
+@@ -251,6 +251,7 @@ static uint32_t revision;
+ static uint32_t rev_scheme;
+ static uint32_t rev_type;
+ static const struct rpi_model *model;
++static unsigned char recovery_requested;
+ 
+ int dram_init(void)
+ {
+@@ -389,6 +390,14 @@ static void set_serial_number(void)
+ 	env_set("serial#", serial_string);
+ }
+ 
++#ifndef CONFIG_STRBO_RECOVERY_BOOTLOADER
++static void set_recovery_request(void)
++{
++	printf("Boot:  %s System\n", recovery_requested ? "Recovery" : "Main");
++	env_set("recovery_requested", recovery_requested ? "1" : "0");
++}
++#endif /* !CONFIG_STRBO_RECOVERY_BOOTLOADER */
++
+ int misc_init_r(void)
+ {
+ 	set_fdt_addr();
+@@ -398,6 +407,9 @@ int misc_init_r(void)
+ 	set_board_info();
+ #endif
+ 	set_serial_number();
++#ifndef CONFIG_STRBO_RECOVERY_BOOTLOADER
++	set_recovery_request();
++#endif
+ 
+ 	return 0;
+ }
+@@ -468,18 +480,69 @@ int board_init(void)
+ 	return bcm2835_power_on_module(BCM2835_MBOX_POWER_DEVID_USB_HCD);
+ }
+ 
++static int get_debounced_value(unsigned int pin, unsigned long t_stable_ms,
++                               unsigned long t_poll_ms)
++{
++	unsigned long t = 0;
++	int value = gpio_get_value(pin);
++
++	while (t < t_stable_ms) {
++		int temp;
++
++		mdelay(t_poll_ms);
++		temp = gpio_get_value(pin);
++
++		if (temp == value)
++			t += t_poll_ms;
++		else {
++			value = temp;
++			t = 0;
++		}
++	}
++
++	return value;
++}
++
++static void handle_recovery_request(void)
++{
++#ifndef CONFIG_STRBO_RECOVERY_BOOTLOADER
++	int act_state;
++	int sel_state;
++#endif /* !CONFIG_STRBO_RECOVERY_BOOTLOADER */
++
++	if (gpio_request(28, "board active") != 0)
++		return;
++
++#ifndef CONFIG_STRBO_RECOVERY_BOOTLOADER
++	if (gpio_request(47, "boot select") != 0)
++		return;
++
++	gpio_direction_input(28);
++	gpio_direction_input(47);
++	act_state = get_debounced_value(28, 50, 5);
++	sel_state = gpio_get_value(47);
++
++	recovery_requested = act_state || !sel_state;
++#endif /* !CONFIG_STRBO_RECOVERY_BOOTLOADER */
++
++	gpio_direction_output(28, 1);
++	gpio_set_value(28, 1);
++}
++
+ int arch_early_init_r(void)
+ {
++	printf("Boot loader for "
++#ifdef CONFIG_STRBO_RECOVERY_BOOTLOADER
++	       "recovery"
++#else /* !CONFIG_STRBO_RECOVERY_BOOTLOADER */
++	       "main"
++#endif /* CONFIG_STRBO_RECOVERY_BOOTLOADER */
++	       " system\n");
++
+ 	if (gpio_request(42, "power available") == 0)
+ 		gpio_direction_input(42);
+ 
+-	if (gpio_request(47, "boot select") == 0)
+-		gpio_direction_input(47);
+-
+-	if (gpio_request(28, "board active") == 0) {
+-		gpio_direction_output(28, 1);
+-		gpio_set_value(28, 1);
+-	}
++	handle_recovery_request();
+ 
+ 	unsigned int counter = 0;
+ 
+-- 
+2.17.1
+

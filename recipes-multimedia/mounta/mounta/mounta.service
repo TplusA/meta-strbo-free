@@ -1,0 +1,15 @@
+[Unit]
+Description=T+A mount daemon
+After=strbo-dbus.service
+BindsTo=strbo-dbus.service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/mounta
+KillMode=process
+UMask=0007
+User=strbo
+Group=strbo
+
+[Install]
+WantedBy=strbo.target

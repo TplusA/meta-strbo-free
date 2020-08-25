@@ -1,0 +1,16 @@
+[Unit]
+Description=Bridge for exchanging DCP traffic over TCP/IP
+Requires=tmp.mount
+After=tmp.mount syslog.target rescue.service rescue.target dcpspi.service connman.service
+BindsTo=dcpspi.service connman.service
+Conflicts=strbo-dbus.service
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -c 'exec nc -l -p 7000 </tmp/spi_to_dcp >/tmp/dcp_to_spi'
+KillMode=process
+UMask=0007
+User=strbo
+Group=strbo
+Restart=always
+RestartSec=2

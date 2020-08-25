@@ -1,0 +1,95 @@
+From 4de52f35e3041b1b7e50d21fe15d2b913c84c920 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alp=20=C3=96zmert?= <info@ib-oezmert.de>
+Date: Fri, 5 Oct 2018 11:59:03 +0300
+Subject: [PATCH] Add log messages to Gerbera for file addition/removal
+
+---
+ src/content_manager.cc | 22 +++++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/src/content_manager.cc b/src/content_manager.cc
+index 82202f3..d480e4e 100644
+--- a/src/content_manager.cc
++++ b/src/content_manager.cc
+@@ -35,6 +35,7 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <unistd.h>
++#include <chrono>
+ 
+ #include "config_manager.h"
+ #include "content_manager.h"
+@@ -760,6 +761,7 @@ void ContentManager::_rescanDirectory(int containerID, int scanID, ScanMode scan
+ /* scans the given directory and adds everything recursively */
+ void ContentManager::addRecursive(String path, bool hidden, Ref<GenericTask> task)
+ {
++
+     if (hidden == false) {
+         log_debug("Checking path %s\n", path.c_str());
+         if (path.charAt(0) == '.')
+@@ -815,6 +817,7 @@ void ContentManager::addRecursive(String path, bool hidden, Ref<GenericTask> tas
+                 } else {
+                     //obj->setParentID(parentID);
+                     if (IS_CDS_ITEM(obj->getObjectType())) {
++                        log_info("Adding file: %s\n", newPath.c_str());
+                         addObject(obj);
+                         parentID = obj->getParentID();
+                     }
+@@ -1245,13 +1248,16 @@ void ContentManager::threadProc()
+     Ref<GenericTask> task;
+     std::unique_lock<mutex_type> lock(mutex);
+     working = true;
++    log_info("Content-manager-status: Busy\n");
+     while (!shutdownFlag) {
+         currentTask = nullptr;
+         if (((task = taskQueue1->dequeue()) == nullptr) && ((task = taskQueue2->dequeue()) == nullptr)) {
+             working = false;
++            log_info("Content-manager-status: Idle\n");
+             /* if nothing to do, sleep until awakened */
+             cond.wait(lock);
+             working = true;
++            log_info("Content-manager-status: Busy\n");
+             continue;
+         } else {
+             currentTask = task;
+@@ -1260,8 +1266,18 @@ void ContentManager::threadProc()
+ 
+         // log_debug("content manager Async START %s\n", task->getDescription().c_str());
+         try {
+-            if (task->isValid())
++            if (task->isValid()) {
++                auto description = task->getDescription();
++                if (description.length()>0) {
++                  char* first_letter = description.charPtrAt(0);
++                  *first_letter = tolower(*first_letter);
++                }
++                log_info("Starting %s \n", description.c_str());
++                const auto  task_begin = std::chrono::system_clock::now();
+                 task->run();
++                const std::chrono::duration<double> duration = std::chrono::system_clock::now()-task_begin;
++                log_info("Finished %s in %.1lfs \n", description.c_str(), duration.count());
++          }
+         } catch (const ServerShutdownException& se) {
+             shutdownFlag = true;
+         } catch (const Exception& e) {
+@@ -1842,6 +1858,7 @@ String CMAddFileTask::getRootPath()
+ void CMAddFileTask::run()
+ {
+     log_debug("running add file task with path %s recursive: %d\n", path.c_str(), recursive);
++
+     Ref<ContentManager> cm = ContentManager::getInstance();
+     cm->_addFile(path, rootpath, recursive, hidden, Ref<GenericTask>(this));
+ }
+@@ -1857,6 +1874,9 @@ CMRemoveObjectTask::CMRemoveObjectTask(int objectID, bool all)
+ 
+ void CMRemoveObjectTask::run()
+ {
++  Ref<Storage> storage = Storage::getInstance();
++
++
+     Ref<ContentManager> cm = ContentManager::getInstance();
+     cm->_removeObject(objectID, all);
+ }
+-- 
+2.7.4
+

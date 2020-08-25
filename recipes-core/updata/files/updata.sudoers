@@ -1,0 +1,4 @@
+updata ALL = (root) NOPASSWD: /usr/bin/dnf install --assumeyes *
+updata ALL = (root) NOPASSWD: /usr/bin/dnf distro-sync --assumeyes
+updata ALL = (root) NOPASSWD: /bin/systemctl isolate reboot.target
+updata ALL = (root) NOPASSWD: /bin/mount, /bin/umount

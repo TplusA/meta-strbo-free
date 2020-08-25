@@ -1,0 +1,162 @@
+#!/usr/bin/python3 -u
+# -*- coding: utf-8 -*-
+
+"""Streaming board media server system test executable for UPNP discovery
+
+The executable tests a strbo system on the same network that can be accessed by SSH.
+
+For details, see methods starting with "test_" in classes derived from "unittest.TestCase".
+"""
+
+# Outlook:
+#
+# - Consider implementing a handshake instead of waiting for an arbitrary time interval
+#   for Dleyna & upnpgate to restart
+
+# pylint: disable=missing-docstring
+# pylint: disable=invalid-name
+
+import argparse
+import importlib.machinery
+import os
+import socket
+import subprocess
+import sys
+import time
+import unittest
+import dbus
+
+this_directory = os.path.dirname(os.path.realpath(__file__))
+strbo_ssdp_path = '{}/../../flagpole/files/strbo_ssdp'.format(this_directory)
+strbo_ssdp = importlib.machinery.SourceFileLoader("strbo_ssdp", strbo_ssdp_path).load_module()
+
+class DleynaFactory:
+    """Type to ease construction of Dleyna's DBUS interfaces"""
+
+    def __init__(self):
+        self.bus = dbus.SessionBus()
+
+    def manager(self):
+        return dbus.Interface(
+            self.bus.get_object('com.intel.dleyna-server', '/com/intel/dLeynaServer'),
+            'com.intel.dLeynaServer.Manager')
+
+    def container(self, path):
+        return dbus.Interface(self.bus.get_object('com.intel.dleyna-server', path),
+                              'org.gnome.UPnP.MediaContainer2')
+
+    def props(self, path):
+        return dbus.Interface(
+            self.bus.get_object('com.intel.dleyna-server', path),
+            'org.freedesktop.DBus.Properties')
+
+class TestMediaServerDiscovery(unittest.TestCase):
+
+    SYSTEM_UNDER_TEST = None
+    VERY_VERBOSE = False
+    WAIT_DLEYNA_RESCAN = 5
+    WAIT_UPNPGATE_RESTART = 30
+    WAIT_AFTER_MSEARCH = 5
+
+    def setUp(self):
+        self.dleyna = DleynaFactory()
+
+        if self.VERY_VERBOSE:
+            print('')
+
+        self.assertTrue(self.SYSTEM_UNDER_TEST,
+                        'System under test is not set')
+
+        self.assertShell('ping -c 3 -w 10 {}'.format(self.SYSTEM_UNDER_TEST),
+                         'System under test is not reachable')
+
+        self.assertShell('ssh {} true'.format(self.SYSTEM_UNDER_TEST),
+                         'System under test is not accessible via SSH')
+
+    def verbose(self, msg):
+        if self.VERY_VERBOSE:
+            print(msg)
+
+    def assertShell(self, cmd, msg=""):
+        try:
+            self.verbose('Executing \'{}\'...'.format(cmd))
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+        except subprocess.CalledProcessError as error:
+            if msg:
+                print(msg)
+            print(cmd)
+            print(error.output.decode('utf-8'))
+            self.fail('Command returned {}'.format(error.returncode))
+
+    def test_discoverable_with_user_agent_by_dleyna(self):
+        """ UPNP media server is not discoverable unless it receives an MSEARCH packet with
+        a specific User-Agent like TaMusicNavigator.
+
+        After receiving such a packet, it should  be discoverable by dleyna.
+        """
+        IP = socket.gethostbyname(self.SYSTEM_UNDER_TEST)
+
+        self.verbose('Restarting UPNPGATE and waiting {}s...'.format(self.WAIT_UPNPGATE_RESTART))
+        self.assertShell('ssh {} /bin/systemctl restart upnpgate'.format(self.SYSTEM_UNDER_TEST))
+        time.sleep(self.WAIT_UPNPGATE_RESTART)
+
+        self.verbose('Searching via MSEARCH User-Agent=TaMusicNavigator...')
+        servers = strbo_ssdp.SsdpTestClient().discover(user_agent='TaMusicNavigator')
+        self.verbose('Let Dleyna rescan and wait {}s...'.format(self.WAIT_DLEYNA_RESCAN))
+        dleyna_manager = self.dleyna.manager()
+        dleyna_manager.Rescan()
+        time.sleep(self.WAIT_DLEYNA_RESCAN)
+
+        self.verbose('Checking that media server is visible to DLEYNA ...')
+        servers = dleyna_manager.GetServers()
+        self.assertTrue(any(IP in str(self.dleyna.props(p).Get('', 'Location')) for p in servers))
+
+    def test_discoverable_with_user_agent_by_ssdp(self):
+        """ UPNP media server is not discoverable unless it receives an MSEARCH packet with
+        a specific User-Agent like TaMusicNavigator.
+
+        After receiving such a packet, it should  be discoverable by the SsdpTestClient.
+        """
+        IP = socket.gethostbyname(self.SYSTEM_UNDER_TEST)
+
+        self.verbose('Restarting UPNPGATE and waiting {}s...'.format(self.WAIT_UPNPGATE_RESTART))
+        self.assertShell('ssh {} /bin/systemctl restart upnpgate'.format(self.SYSTEM_UNDER_TEST))
+        time.sleep(self.WAIT_UPNPGATE_RESTART)
+
+        self.verbose('Searching via MSEARCH User-Agent=GenericControlPoint...')
+        servers = strbo_ssdp.SsdpTestClient().discover(user_agent='GenericControlPoint')
+        self.verbose('Checking that media server is NOT visible...')
+        self.assertTrue(not any(IP in srv.location for srv in servers))
+
+        time.sleep(self.WAIT_AFTER_MSEARCH)
+
+        self.verbose('Searching via MSEARCH User-Agent=TaMusicNavigator...')
+        servers = strbo_ssdp.SsdpTestClient().discover(user_agent='TaMusicNavigator')
+        self.verbose('Checking that media server IS visible...')
+        self.assertTrue(any(IP in srv.location for srv in servers))
+ 
+
+if __name__ == '__main__':
+    docstring = __doc__.splitlines();
+    parser = argparse.ArgumentParser(description=docstring[0],
+                                     epilog='\n'.join(docstring[2:]),
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("system_under_test",
+                        help='IP address of the system under test',
+                        metavar="SYSTEMUNDERTEST")
+    parser.add_argument('-v', '--verbosity',
+                        help='Integer starting with 0. If >=1 print test names. If >=2 also print commands.',
+                        default=2,
+                        dest='verbose')
+
+    arguments, remaining = parser.parse_known_args()
+    sys.argv[1:] = remaining
+
+    TestMediaServerDiscovery.SYSTEM_UNDER_TEST = arguments.system_under_test
+
+    if arguments.verbose >= 1:
+        sys.argv.append('-v')
+    if arguments.verbose >= 2:
+        TestMediaServerDiscovery.VERY_VERBOSE = True
+
+    unittest.main()

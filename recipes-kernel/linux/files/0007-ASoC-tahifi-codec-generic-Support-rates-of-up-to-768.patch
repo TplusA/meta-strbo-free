@@ -1,0 +1,63 @@
+From a0c432e83c0b599fa453978ef255e7ce466198ae Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Sat, 18 Apr 2020 11:59:30 +0200
+Subject: [PATCH] ASoC: tahifi-codec-generic: Support rates of up to 768000.
+
+---
+ sound/soc/codecs/tahifi-codec-generic.c | 25 +++++++++++++++++++++++--
+ 1 file changed, 23 insertions(+), 2 deletions(-)
+
+diff --git a/sound/soc/codecs/tahifi-codec-generic.c b/sound/soc/codecs/tahifi-codec-generic.c
+index 03c906948267..7af03b28cc98 100644
+--- a/sound/soc/codecs/tahifi-codec-generic.c
++++ b/sound/soc/codecs/tahifi-codec-generic.c
+@@ -1,7 +1,7 @@
+ /*
+  * ALSA SoC codec driver for T+A high-end audio platforms
+  *
+- * Copyright (C) 2015, 2019 T+A elektroakustik GmbH & Co. KG
++ * Copyright (C) 2015, 2019, 2020 T+A elektroakustik GmbH & Co. KG
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+@@ -60,7 +60,26 @@ static int tahifi_codec_generic_mute_stream(struct snd_soc_dai *dai,
+ 	return 0;
+ }
+ 
++static const u32 tahifi_dai_rates[] = {
++	8000, 11025, 16000, 22050, 32000, 44100, 48000, 64000, 88200, 96000,
++	176400, 192000, 352800, 384000, 705600, 768000
++};
++
++static const struct snd_pcm_hw_constraint_list constraints = {
++	.count = ARRAY_SIZE(tahifi_dai_rates),
++	.list  = tahifi_dai_rates,
++};
++
++static int tahifi_codec_generic_dai_startup(struct snd_pcm_substream *substream,
++					    struct snd_soc_dai *dai)
++{
++	return snd_pcm_hw_constraint_list(substream->runtime, 0,
++					  SNDRV_PCM_HW_PARAM_RATE,
++					  &constraints);
++}
++
+ static const struct snd_soc_dai_ops tahifi_codec_generic_dai_ops = {
++	.startup = tahifi_codec_generic_dai_startup,
+ 	.mute_stream = tahifi_codec_generic_mute_stream,
+ };
+ 
+@@ -111,7 +130,9 @@ static struct snd_soc_dai_driver tahifi_codec_generic_dai_driver[] = {
+ 		.playback = {
+ 			.channels_min = 2,
+ 			.channels_max = 2,
+-			.rates        = SNDRV_PCM_RATE_8000_192000,
++			.rates        = SNDRV_PCM_RATE_CONTINUOUS,
++			.rate_min     = 8000,
++			.rate_max     = 768000,
+ 			.formats      = SNDRV_PCM_FMTBIT_S32_LE,
+ 		},
+ 		.ops = &tahifi_codec_generic_dai_ops,
+-- 
+2.26.1
+

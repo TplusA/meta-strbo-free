@@ -1,0 +1,42 @@
+From 4e209d71b5df8ba6d01d2ed5973c3b867577ac88 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Fri, 25 Nov 2016 12:04:08 +0100
+Subject: [PATCH] Wait for mains power before booting (#481).
+
+Change-Id: Ib0b489b15a1d1784ed525a6916bbe06ad2dd21bd
+---
+ board/raspberrypi/rpi/rpi.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/board/raspberrypi/rpi/rpi.c b/board/raspberrypi/rpi/rpi.c
+index c321729992..4ae637cd40 100644
+--- a/board/raspberrypi/rpi/rpi.c
++++ b/board/raspberrypi/rpi/rpi.c
+@@ -470,6 +470,9 @@ int board_init(void)
+ 
+ int arch_early_init_r(void)
+ {
++	if (gpio_request(42, "power available") == 0)
++		gpio_direction_input(42);
++
+ 	if (gpio_request(47, "boot select") == 0)
+ 		gpio_direction_input(47);
+ 
+@@ -478,6 +481,14 @@ int arch_early_init_r(void)
+ 		gpio_set_value(28, 1);
+ 	}
+ 
++	unsigned int counter = 0;
++
++	while (!gpio_get_value(42)) {
++		printf("No power [%u ms]\n", counter);
++		counter += 100;
++		mdelay(100);
++	}
++
+ 	return 0;
+ }
+ 
+-- 
+2.26.2
+

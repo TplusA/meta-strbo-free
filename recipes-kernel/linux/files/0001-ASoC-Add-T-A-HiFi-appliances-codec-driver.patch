@@ -1,0 +1,212 @@
+From fb9b0af98af33abe55f2623f4aa7b1f129e9df65 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Wed, 8 Jul 2015 11:29:21 +0200
+Subject: [PATCH] ASoC: Add T+A HiFi appliances codec driver.
+
+---
+ sound/soc/codecs/Kconfig                |   3 +
+ sound/soc/codecs/Makefile               |   2 +
+ sound/soc/codecs/tahifi-codec-generic.c | 157 ++++++++++++++++++++++++
+ 3 files changed, 162 insertions(+)
+ create mode 100644 sound/soc/codecs/tahifi-codec-generic.c
+
+diff --git a/sound/soc/codecs/Kconfig b/sound/soc/codecs/Kconfig
+index 41d9413b02b8..86842f895ed3 100644
+--- a/sound/soc/codecs/Kconfig
++++ b/sound/soc/codecs/Kconfig
+@@ -1206,6 +1206,9 @@ config SND_SOC_STAC9766
+ config SND_SOC_STI_SAS
+ 	tristate "codec Audio support for STI SAS codec"
+ 
++config SND_SOC_TAHIFI_CODEC_GENERIC
++	tristate "T+A high-end audio platforms codec"
++
+ config SND_SOC_TAS2552
+ 	tristate "Texas Instruments TAS2552 Mono Audio amplifier"
+ 	depends on I2C
+diff --git a/sound/soc/codecs/Makefile b/sound/soc/codecs/Makefile
+index b2cd5679e9df..d5b957ba9f39 100644
+--- a/sound/soc/codecs/Makefile
++++ b/sound/soc/codecs/Makefile
+@@ -204,6 +204,7 @@ snd-soc-sta350-objs := sta350.o
+ snd-soc-sta529-objs := sta529.o
+ snd-soc-stac9766-objs := stac9766.o
+ snd-soc-sti-sas-objs := sti-sas.o
++snd-soc-tahifi-codec-generic-objs := tahifi-codec-generic.o
+ snd-soc-tas5086-objs := tas5086.o
+ snd-soc-tas571x-objs := tas571x.o
+ snd-soc-tas5720-objs := tas5720.o
+@@ -502,6 +503,7 @@ obj-$(CONFIG_SND_SOC_SSM4567)	+= snd-soc-ssm4567.o
+ obj-$(CONFIG_SND_SOC_STA32X)   += snd-soc-sta32x.o
+ obj-$(CONFIG_SND_SOC_STA350)   += snd-soc-sta350.o
+ obj-$(CONFIG_SND_SOC_STA529)   += snd-soc-sta529.o
++obj-$(CONFIG_SND_SOC_TAHIFI_CODEC_GENERIC) += snd-soc-tahifi-codec-generic.o
+ obj-$(CONFIG_SND_SOC_STAC9766)	+= snd-soc-stac9766.o
+ obj-$(CONFIG_SND_SOC_STI_SAS)	+= snd-soc-sti-sas.o
+ obj-$(CONFIG_SND_SOC_TAS2552)	+= snd-soc-tas2552.o
+diff --git a/sound/soc/codecs/tahifi-codec-generic.c b/sound/soc/codecs/tahifi-codec-generic.c
+new file mode 100644
+index 000000000000..03c906948267
+--- /dev/null
++++ b/sound/soc/codecs/tahifi-codec-generic.c
+@@ -0,0 +1,157 @@
++/*
++ * ALSA SoC codec driver for T+A high-end audio platforms
++ *
++ * Copyright (C) 2015, 2019 T+A elektroakustik GmbH & Co. KG
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ */
++
++#include <linux/module.h>
++#include <linux/gpio.h>
++#include <linux/of_gpio.h>
++#include <sound/soc.h>
++
++struct tahifi_codec_priv
++{
++	unsigned int mute_gpio;
++	bool mute_active_low;
++};
++
++static inline void set_mute_pin(struct snd_soc_component *component, int mute)
++{
++	struct tahifi_codec_priv *priv = snd_soc_component_get_drvdata(component);
++
++	gpio_set_value(priv->mute_gpio, priv->mute_active_low ? !mute : mute);
++}
++
++static int tahifi_codec_generic_get_mute_state(struct snd_kcontrol *kcontrol,
++					       struct snd_ctl_elem_value *ucontrol)
++{
++	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
++	struct tahifi_codec_priv *priv = snd_soc_component_get_drvdata(component);
++
++	int value = gpio_get_value(priv->mute_gpio);
++
++	if(priv->mute_active_low)
++		value = !value;
++
++	ucontrol->value.integer.value[0] = (long)value;
++
++	return 0;
++}
++
++static int tahifi_codec_generic_put_mute_state(struct snd_kcontrol *kcontrol,
++					       struct snd_ctl_elem_value *ucontrol)
++{
++	set_mute_pin(snd_soc_kcontrol_component(kcontrol),
++		     (int)ucontrol->value.integer.value[0]);
++	return 0;
++}
++
++static int tahifi_codec_generic_mute_stream(struct snd_soc_dai *dai,
++					    int mute, int stream)
++{
++	if(stream == SNDRV_PCM_STREAM_PLAYBACK)
++		set_mute_pin(dai->component, mute);
++
++	return 0;
++}
++
++static const struct snd_soc_dai_ops tahifi_codec_generic_dai_ops = {
++	.mute_stream = tahifi_codec_generic_mute_stream,
++};
++
++static int snd_tahifi_codec_generic_probe(struct snd_soc_component *component)
++{
++	struct tahifi_codec_priv *priv;
++	enum of_gpio_flags flags;
++	int ret;
++
++	priv = devm_kzalloc(component->dev, sizeof(*priv), GFP_KERNEL);
++	if (IS_ERR(priv))
++		return PTR_ERR(priv);
++
++	ret = of_get_named_gpio_flags(component->dev->of_node,
++						  "mute-gpio", 0, &flags);
++	if (ret < 0) {
++		dev_err(component->dev, "Mute GPIO not defined in DT: %d\n", ret);
++		return ret;
++	}
++
++	priv->mute_gpio = ret;
++	priv->mute_active_low = (flags & OF_GPIO_ACTIVE_LOW);
++
++	ret = devm_gpio_request_one(component->dev,
++		priv->mute_gpio,
++		priv->mute_active_low ? GPIOF_OUT_INIT_HIGH : GPIOF_OUT_INIT_LOW,
++		"Mute Pin");
++	if (ret < 0) {
++		dev_err(component->dev, "Failed requesting mute GPIO %u: %d\n",
++			priv->mute_gpio, ret);
++		return ret;
++	}
++
++	snd_soc_component_set_drvdata(component, priv);
++
++	return 0;
++}
++
++static const struct snd_kcontrol_new elements[] = {
++	SOC_SINGLE_BOOL_EXT("Mute Switch", 0,
++			    tahifi_codec_generic_get_mute_state,
++			    tahifi_codec_generic_put_mute_state),
++};
++
++static struct snd_soc_dai_driver tahifi_codec_generic_dai_driver[] = {
++	{
++		.name = "tahifi-i2s",
++		.playback = {
++			.channels_min = 2,
++			.channels_max = 2,
++			.rates        = SNDRV_PCM_RATE_8000_192000,
++			.formats      = SNDRV_PCM_FMTBIT_S32_LE,
++		},
++		.ops = &tahifi_codec_generic_dai_ops,
++	}
++};
++
++static struct snd_soc_component_driver tahifi_codec_generic_driver = {
++	.probe = snd_tahifi_codec_generic_probe,
++	.controls = elements,
++	.num_controls = ARRAY_SIZE(elements),
++};
++
++static int snd_tahifi_codec_generic_platform_probe(struct platform_device *pdev)
++{
++	return devm_snd_soc_register_component(&pdev->dev,
++				      &tahifi_codec_generic_driver,
++				      tahifi_codec_generic_dai_driver,
++				      ARRAY_SIZE(tahifi_codec_generic_dai_driver));
++}
++
++static const struct of_device_id snd_tahifi_codec_generic_of_match[] = {
++	{
++		.compatible = "tahifi,tahifi-codec-generic",
++		.data = &tahifi_codec_generic_dai_driver,
++	},
++	{},
++};
++MODULE_DEVICE_TABLE(of, snd_tahifi_codec_generic_of_match);
++
++static struct platform_driver snd_tahifi_codec_generic_driver = {
++	.driver = {
++		.name = "tahifi-codec",
++		.owner = THIS_MODULE,
++		.of_match_table = snd_tahifi_codec_generic_of_match,
++	},
++	.probe  = snd_tahifi_codec_generic_platform_probe,
++};
++
++module_platform_driver(snd_tahifi_codec_generic_driver);
++
++MODULE_AUTHOR("Robert Tiemann <r.tiemann@ta-hifi.de>");
++MODULE_DESCRIPTION("ALSA SoC codec driver for T+A high-end audio platforms");
++MODULE_LICENSE("GPL");
+-- 
+2.26.1
+

@@ -1,0 +1,27 @@
+From 7f0416f0f90d2459c514ac911efb93c75096d3d3 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Mon, 17 Aug 2020 11:12:22 +0200
+Subject: [PATCH] WIP
+
+Change-Id: I34b8da440e62e2689f16ba63b617020ca161e628
+---
+ board/raspberrypi/rpi/rpi.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/board/raspberrypi/rpi/rpi.c b/board/raspberrypi/rpi/rpi.c
+index 7243252b1b..b7d72ea799 100644
+--- a/board/raspberrypi/rpi/rpi.c
++++ b/board/raspberrypi/rpi/rpi.c
+@@ -522,6 +522,9 @@ static void handle_recovery_request(void)
+ 	act_state = get_debounced_value(28, 50, 5);
+ 	sel_state = gpio_get_value(47);
+ 
++	printf("active (GPIO 28) %d, boot select (GPIO 47) %d\n",
++	       act_state, sel_state);
++
+ 	recovery_requested = act_state || !sel_state;
+ #endif /* !CONFIG_STRBO_RECOVERY_BOOTLOADER */
+ 
+-- 
+2.17.1
+

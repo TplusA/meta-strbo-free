@@ -1,0 +1,22 @@
+From 16907b2beaf7e3a99b9a329f96a9ce5a31cd99ed Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Tue, 5 May 2020 22:23:52 +0200
+Subject: [PATCH] extract_documentation: Use Python 3 shebang.
+
+---
+ dbus_interfaces/extract_documentation.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dbus_interfaces/extract_documentation.py b/dbus_interfaces/extract_documentation.py
+index 164454c..7fffcba 100755
+--- a/dbus_interfaces/extract_documentation.py
++++ b/dbus_interfaces/extract_documentation.py
+@@ -1,4 +1,4 @@
+-#! /usr/bin/env python
++#! /usr/bin/env python3
+ 
+ #
+ # Copyright (C) 2015, 2019  T+A elektroakustik GmbH & Co. KG
+-- 
+2.25.1
+

@@ -1,0 +1,382 @@
+From 7632fc90cb093ad65803e27718a452317f389c82 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alp=20=C3=96zmert?= <info@ib-oezmert.de>
+Date: Fri, 30 Nov 2018 18:08:20 +0100
+Subject: [PATCH] Add DBUS interface using systemd/sd-bus library
+
+The interface currently contains:
+
+- Property Busy
+- Signal BusyChangedTo (Might be deprecated)
+---
+ CMakeLists.txt              |  10 ++++
+ src/content_manager.cc      | 134 ++++++++++++++++++++++++++++++++++++++++++--
+ src/content_manager.h       |  16 ++++++
+ src/sd-bus-vtable-for-cxx.c |  53 ++++++++++++++++++
+ src/sd-bus-vtable-for-cxx.h |  36 ++++++++++++
+ 5 files changed, 243 insertions(+), 6 deletions(-)
+ create mode 100644 src/sd-bus-vtable-for-cxx.c
+ create mode 100644 src/sd-bus-vtable-for-cxx.h
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 44f8b77..fe74cda 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -165,6 +165,8 @@ set(libgerberaFILES
+         src/scripting/runtime.h
+         src/scripting/script.cc
+         src/scripting/script.h
++        src/sd-bus-vtable-for-cxx.c
++        src/sd-bus-vtable-for-cxx.h
+         src/search_handler.cc
+         src/search_handler.h
+         src/server.cc
+@@ -548,11 +550,19 @@ if(WITH_SYSTEMD)
+         configure_file(${CMAKE_SOURCE_DIR}/scripts/systemd/gerbera.service.cmake gerbera.service)
+         message(STATUS "Configuring systemd unit file: gerbera.service" )
+         INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/gerbera.service DESTINATION ${SYSTEMD_UNIT_DIR} COMPONENT init)
++
+     else()
+         message(FATAL_ERROR "Systemd not found")
+     endif()
+ endif()
+ 
++# Libraries for systemd/sd-bus
++find_package(PkgConfig REQUIRED)
++pkg_check_modules(LIBSYSTEMD REQUIRED libsystemd)
++target_link_libraries(gerbera ${LIBSYSTEMD_LIBRARIES})
++target_include_directories(gerbera PUBLIC ${LIBSYSTEMD_INCLUDE_DIRS})
++target_compile_options(gerbera PUBLIC ${LIBSYSTEMD_CFLAGS_OTHER})
++
+ # Needs to be towards the end (after CURL, TagLib, etc...)
+ find_package (ZLIB REQUIRED)
+ include_directories(${ZLIB_INCLUDE_DIRS})
+diff --git a/src/content_manager.cc b/src/content_manager.cc
+index 1515c1f..6d83082 100644
+--- a/src/content_manager.cc
++++ b/src/content_manager.cc
+@@ -79,6 +79,9 @@ extern "C" {
+ struct magic_set* ms = nullptr;
+ #endif
+ 
++#include "sd-bus-vtable-for-cxx.h"
++#include <system_error>
++
+ using namespace zmm;
+ using namespace mxml;
+ using namespace std;
+@@ -96,7 +99,36 @@ static String get_filename(String path)
+         return path.substring(pos + 1);
+ }
+ 
++extern "C" int dbusGetProperty(sd_bus *bus, const char *path, const char *interface, const char *property,
++                               sd_bus_message *reply, void *userdata, sd_bus_error *error)
++{
++    ContentManager* cm = static_cast<ContentManager*>(userdata);
++
++    if(std::string("Busy") == property) {
++        int r = sd_bus_message_append(reply, "b", cm->isBusy());
++        return (r==0) ? 1 : 0;
++    }
++    else {
++        return 0;
++    }
++}
++
++const char* const ContentManager::DBUS_SERVICE = "io.gerbera.ContentManager";
++const char* const ContentManager::DBUS_OBJECT = "/io/gerbera/ContentManager";
++const char* const ContentManager::DBUS_INTERFACE = "io.gerbera.ContentManager";
++
++const sd_bus_vtable ContentManager::DBUS_VTABLE[] = {
++  SD_BUS_CXX_VTABLE_START(0),
++  SD_BUS_CXX_SIGNAL("BusyChangedTo", "b", 0),
++  SD_BUS_CXX_PROPERTY("Busy", "b", &dbusGetProperty, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE),
++  SD_BUS_CXX_VTABLE_END()
++};
++
++
+ ContentManager::ContentManager()
++  : dbus_(nullptr)
++  , dbus_slot_(nullptr)
++  , dbusThread_()
+ {
+     int i;
+     ignore_unknown_extensions = false;
+@@ -255,6 +287,12 @@ ContentManager::ContentManager()
+ 
+ ContentManager::~ContentManager()
+ {
++    if (dbus_slot_) {
++        sd_bus_slot_unref(dbus_slot_);
++    }
++    if (dbus_) {
++        sd_bus_unref(dbus_);
++    }
+     log_debug("ContentManager destroyed\n");
+ }
+ 
+@@ -263,6 +301,45 @@ void ContentManager::init()
+     reMimetype = Ref<RExp>(new RExp());
+     reMimetype->compile(_(MIMETYPE_REGEXP));
+ 
++    log_info("DBUS: Registering on session bus: Service '%s' Object '%s' Interface '%s'...\n",
++             DBUS_SERVICE,
++             DBUS_OBJECT,
++             DBUS_INTERFACE);
++
++    int r = sd_bus_open_user(&dbus_);
++    if(r<0) {
++        throw std::system_error(-r, std::generic_category(), "Failed to connect to the  bus");
++    }
++
++    r = sd_bus_add_object_vtable(dbus_,
++                                 &dbus_slot_,
++                                 DBUS_OBJECT,
++                                 DBUS_INTERFACE,
++                                 DBUS_VTABLE,
++                                 this);
++    if(r<0) {
++        throw std::system_error(-r, std::generic_category(), "Failed to add object vtable");
++    }
++
++    r = sd_bus_request_name(dbus_, DBUS_SERVICE, 0);
++    if(r<0) {
++        throw std::system_error(-r, std::generic_category(), "Failed to acquire service name");
++    }
++
++    log_info("DBUS: Starting message processing thread...\n");
++
++    if( pthread_create( &dbusThread_,
++                        nullptr,
++                        [](void* v) -> void* { static_cast<ContentManager*>(v)->dbusThreadProc(); return nullptr; },
++                        this)<0 ) {
++        throw _Exception(_("DBUS: Could not startthread"));
++    }
++
++    r = pthread_setname_np(dbusThread_, "ContentManager::dbusThreadProc");
++    if(r<0) {
++        throw std::system_error(-r, std::generic_category(), "Failed to set thread name");
++    }
++
+     int ret = pthread_create(
+         &taskThread,
+         nullptr, //&attr, // attr
+@@ -272,6 +349,11 @@ void ContentManager::init()
+         throw _Exception(_("Could not start task thread"));
+     }
+ 
++    r = pthread_setname_np(taskThread, "ContentManager::staticThreadProc");
++    if(r<0) {
++        throw std::system_error(-r, std::generic_category(), "Failed to set thread name");
++    }
++
+     autoscan_timed->notifyAll(this);
+ 
+ #ifdef HAVE_INOTIFY
+@@ -1244,23 +1326,63 @@ void ContentManager::reloadLayout()
+     initLayout();
+ }
+ 
++void ContentManager::dbusThreadProc()
++{
++    for (;;) {
++        std::unique_lock<mutex_type> lock(mutex);
++
++        int r = 0;
++        do { r = sd_bus_process(dbus_, NULL); }  while (r>0);
++        if(r<0) {
++            throw std::system_error(-r, std::generic_category(), "Failed to process dbus");
++        }
++
++        lock.unlock();
++        r = sd_bus_wait(dbus_, (uint64_t) -1);
++        if(r<0) {
++            throw std::system_error(-r, std::generic_category(), "Failed to wait on dbus");
++        }
++    }
++}
++
+ void ContentManager::threadProc()
+ {
++    auto set_working = [=](std::unique_lock<mutex_type>& lock, bool value) {
++
++      assert(lock.owns_lock());
++
++      working = value;
++
++      int r = sd_bus_emit_signal(dbus_, DBUS_OBJECT, DBUS_INTERFACE, "BusyChangedTo", "b", value);
++      if (r <0) {
++          throw std::system_error(-r, std::generic_category(), "Failed to emit signal");
++      }
++
++      r = sd_bus_emit_properties_changed(dbus_, DBUS_OBJECT, DBUS_INTERFACE, "Busy", NULL);
++      if (r <0) {
++          throw std::system_error(-r, std::generic_category(), "Failed to emit properties changed signal");
++      }
++
++      do { r = sd_bus_process(dbus_, NULL); } while(r>0);
++      if(r<0) {
++          throw std::system_error(-r, std::generic_category(), "Failed to process dbus");
++      }
++
++      log_info(value ? "Content-manager-status: Busy\n" : "Content-manager-status: Idle\n");
++    };
++
+     Ref<GenericTask> task;
+     std::unique_lock<mutex_type> lock(mutex);
+-    working = true;
+-    log_info("Content-manager-status: Busy\n");
++    set_working(lock, true);
+     while (!shutdownFlag) {
+         currentTask = nullptr;
+         if (((task = taskQueue1->dequeue()) == nullptr) && ((task = taskQueue2->dequeue()) == nullptr)) {
+             _loadAccounting();
+             log_info("File-count: %d\n", getAccounting()->totalFiles);
+-            working = false;
+-            log_info("Content-manager-status: Idle\n");
++            set_working(lock, false);
+             /* if nothing to do, sleep until awakened */
+             cond.wait(lock);
+-            working = true;
+-            log_info("Content-manager-status: Busy\n");
++            set_working(lock, true);
+             continue;
+         } else {
+             currentTask = task;
+diff --git a/src/content_manager.h b/src/content_manager.h
+index f4eadd7..f27ef1c 100644
+--- a/src/content_manager.h
++++ b/src/content_manager.h
+@@ -64,6 +64,10 @@
+ 
+     #include "executor.h"
+ 
++extern "C" {
++#include <systemd/sd-bus.h>
++}
++
+ class CMAddFileTask : public GenericTask
+ {
+ protected:
+@@ -436,6 +440,18 @@ protected:
+     friend void CMFetchOnlineContentTask::run();
+ #endif
+     friend void CMLoadAccountingTask::run();
++
++    // DBUS interface
++
++    static const char* const DBUS_SERVICE;
++    static const char* const DBUS_OBJECT;
++    static const char* const DBUS_INTERFACE;
++    static const sd_bus_vtable DBUS_VTABLE[];
++    void dbusThreadProc();
++    sd_bus* dbus_;
++    sd_bus_slot* dbus_slot_;
++    pthread_t dbusThread_;
++
+ };
+ 
+ #endif // __CONTENT_MANAGER_H__
+diff --git a/src/sd-bus-vtable-for-cxx.c b/src/sd-bus-vtable-for-cxx.c
+new file mode 100644
+index 0000000..c39e56f
+--- /dev/null
++++ b/src/sd-bus-vtable-for-cxx.c
+@@ -0,0 +1,53 @@
++#include "sd-bus-vtable-for-cxx.h"
++
++sd_bus_vtable SD_BUS_CXX_VTABLE_START(uint64_t flags)
++{
++  const sd_bus_vtable v = SD_BUS_VTABLE_START(flags);
++  return v;
++}
++
++sd_bus_vtable SD_BUS_CXX_METHOD(const char *member
++                               , const char *signature
++                               , const char *result
++                               , sd_bus_message_handler_t handler
++                               , uint64_t flags)
++{
++  const sd_bus_vtable v = SD_BUS_METHOD(member, signature, result, handler, flags);
++  return v;
++}
++
++sd_bus_vtable SD_BUS_CXX_SIGNAL(const char *member
++                                , const char *signature
++                                , uint64_t flags)
++{
++  const sd_bus_vtable v = SD_BUS_SIGNAL(member, signature, flags);
++  return v;
++}
++
++sd_bus_vtable SD_BUS_CXX_PROPERTY(const char *member
++                                  , const char *signature
++                                  , sd_bus_property_get_t getter
++                                  , size_t offset
++                                  , uint64_t flags)
++{
++  const sd_bus_vtable v = SD_BUS_PROPERTY(member, signature, getter, offset, flags);
++  return v;
++}
++
++sd_bus_vtable SD_BUS_CXX_WRITABLE_PROPERTY( const char *member
++                                            , const char *signature
++                                            , sd_bus_property_get_t getter
++                                            , sd_bus_property_set_t setter
++                                            , size_t offset
++                                            , uint64_t flags)
++
++{
++  const sd_bus_vtable v = SD_BUS_WRITABLE_PROPERTY(member, signature, getter, setter, offset, flags);
++  return v;
++}
++
++sd_bus_vtable SD_BUS_CXX_VTABLE_END()
++{
++  const sd_bus_vtable v = SD_BUS_VTABLE_END;
++  return v;
++}
+diff --git a/src/sd-bus-vtable-for-cxx.h b/src/sd-bus-vtable-for-cxx.h
+new file mode 100644
+index 0000000..e2b3b5e
+--- /dev/null
++++ b/src/sd-bus-vtable-for-cxx.h
+@@ -0,0 +1,36 @@
++#ifndef SD_BUS_VTABLE_FOR_CXX_H
++#define SD_BUS_VTABLE_FOR_CXX_H
++
++#include <systemd/sd-bus.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++  sd_bus_vtable SD_BUS_CXX_VTABLE_START(uint64_t flags);
++  sd_bus_vtable SD_BUS_CXX_VTABLE_END();
++  sd_bus_vtable SD_BUS_CXX_METHOD(const char *member
++                                , const char *signature
++                                , const char *result
++                                , sd_bus_message_handler_t handler
++                                , uint64_t flags );
++  sd_bus_vtable SD_BUS_CXX_SIGNAL(const char *member
++                                , const char *signature
++                                , uint64_t flags);
++  sd_bus_vtable SD_BUS_CXX_PROPERTY(const char *member
++                                    , const char *signature
++                                    , sd_bus_property_get_t getter
++                                    , size_t offset
++                                    , uint64_t flags);
++  sd_bus_vtable SD_BUS_CXX_WRITABLE_PROPERTY(const char *member
++                                             , const char *signature
++                                             , sd_bus_property_get_t getter
++                                             , sd_bus_property_set_t setter
++                                             , size_t offset
++                                             , uint64_t flags);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+-- 
+2.7.4
+

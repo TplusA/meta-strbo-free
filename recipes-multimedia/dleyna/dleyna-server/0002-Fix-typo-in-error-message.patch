@@ -1,0 +1,25 @@
+From 7b4a2e02547e34c0c372704de7118c7035e6f546 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Thu, 16 May 2019 16:29:25 +0200
+Subject: [PATCH 2/3] Fix typo in error message.
+
+---
+ libdleyna/server/device.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libdleyna/server/device.c b/libdleyna/server/device.c
+index 97594b0..d77dfbc 100644
+--- a/libdleyna/server/device.c
++++ b/libdleyna/server/device.c
+@@ -2688,7 +2688,7 @@ static void prv_sleeping_for_prop_cb(GUPnPServiceProxy *proxy,
+ 
+ 		cb_data->error = g_error_new(DLEYNA_SERVER_ERROR,
+ 					     DLEYNA_ERROR_OPERATION_FAILED,
+-					     "GetNetworkInterfaceInfo failed: %s",
++					     "GetInterfaceInfo failed: %s",
+ 					     message);
+ 
+ 		goto on_complete;
+-- 
+2.17.1
+

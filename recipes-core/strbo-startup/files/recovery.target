@@ -1,0 +1,8 @@
+[Unit]
+Description=Reboot into StrBo recovery system
+DefaultDependencies=no
+Requires=systemd-reboot.service recovery-prepare.service
+After=systemd-reboot.service recovery-prepare.service
+AllowIsolate=yes
+JobTimeoutSec=5min
+JobTimeoutAction=reboot-force

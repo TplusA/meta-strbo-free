@@ -1,0 +1,2 @@
+strbo-rest ALL = (root) NOPASSWD: /www/strbo-rest/helpers/*.sh
+strbo-rest ALL = (root) NOPASSWD: /bin/kill

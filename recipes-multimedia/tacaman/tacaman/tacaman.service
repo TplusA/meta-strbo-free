@@ -1,0 +1,16 @@
+[Unit]
+Description=T+A Cover Art Manager
+After=syslog.target strbo-dbus.service dcpd.service
+BindsTo=strbo-dbus.service dcpd.service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/tacaman
+KillMode=process
+UMask=0002
+Nice=19
+User=strbo-tacaman
+Group=tacaman
+
+[Install]
+WantedBy=strbo.target

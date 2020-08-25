@@ -1,0 +1,266 @@
+From d7da0ccc7e1837b5f79c42170aab20f3b2c1f67d Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Wed, 8 Jul 2015 11:48:41 +0200
+Subject: [PATCH] ASoC: Add T+A HiFi appliances driver for RasPi.
+
+---
+ sound/soc/bcm/Kconfig          |   7 ++
+ sound/soc/bcm/Makefile         |   2 +
+ sound/soc/bcm/tahifi-generic.c | 207 +++++++++++++++++++++++++++++++++
+ 3 files changed, 216 insertions(+)
+ create mode 100644 sound/soc/bcm/tahifi-generic.c
+
+diff --git a/sound/soc/bcm/Kconfig b/sound/soc/bcm/Kconfig
+index fdaccbfd79ce..670e0c656fd2 100644
+--- a/sound/soc/bcm/Kconfig
++++ b/sound/soc/bcm/Kconfig
+@@ -26,6 +26,13 @@ config SND_BCM2708_SOC_GOOGLEVOICEHAT_SOUNDCARD
+ 	help
+           Say Y or M if you want to add support for voiceHAT soundcard.
+ 
++config SND_BCM2708_SOC_TAHIFI_GENERIC
++	tristate "Audio support for T+A HiFi appliances"
++	depends on SND_BCM2708_SOC_I2S || SND_BCM2835_SOC_I2S
++	select SND_SOC_TAHIFI_CODEC_GENERIC
++	help
++	 Say Y or M if you want to add support for T+A platforms.
++
+ config SND_BCM2708_SOC_HIFIBERRY_DAC
+         tristate "Support for HifiBerry DAC"
+         depends on SND_BCM2708_SOC_I2S || SND_BCM2835_SOC_I2S
+diff --git a/sound/soc/bcm/Makefile b/sound/soc/bcm/Makefile
+index cab392690974..773d80715c74 100644
+--- a/sound/soc/bcm/Makefile
++++ b/sound/soc/bcm/Makefile
+@@ -13,6 +13,7 @@ obj-$(CONFIG_SND_SOC_CYGNUS) += snd-soc-cygnus.o
+ snd-soc-googlevoicehat-codec-objs := googlevoicehat-codec.o
+ 
+ # BCM2708 Machine Support
++snd-soc-tahifi-generic-objs := tahifi-generic.o
+ snd-soc-hifiberry-dacplus-objs := hifiberry_dacplus.o
+ snd-soc-hifiberry-dacplushd-objs := hifiberry_dacplushd.o
+ snd-soc-hifiberry-dacplusadc-objs := hifiberry_dacplusadc.o
+@@ -41,6 +42,7 @@ snd-soc-fe-pi-audio-objs := fe-pi-audio.o
+ snd-soc-rpi-simple-soundcard-objs := rpi-simple-soundcard.o
+ snd-soc-rpi-wm8804-soundcard-objs := rpi-wm8804-soundcard.o
+ 
++obj-$(CONFIG_SND_BCM2708_SOC_TAHIFI_GENERIC) += snd-soc-tahifi-generic.o
+ obj-$(CONFIG_SND_BCM2708_SOC_GOOGLEVOICEHAT_SOUNDCARD)  += snd-soc-googlevoicehat-codec.o
+ obj-$(CONFIG_SND_BCM2708_SOC_HIFIBERRY_DACPLUS) += snd-soc-hifiberry-dacplus.o
+ obj-$(CONFIG_SND_BCM2708_SOC_HIFIBERRY_DACPLUSHD) += snd-soc-hifiberry-dacplushd.o
+diff --git a/sound/soc/bcm/tahifi-generic.c b/sound/soc/bcm/tahifi-generic.c
+new file mode 100644
+index 000000000000..04c0620c3f6d
+--- /dev/null
++++ b/sound/soc/bcm/tahifi-generic.c
+@@ -0,0 +1,207 @@
++/*
++ * ALSA SoC driver for T+A high-end audio platforms
++ *
++ * Copyright (C) 2015, 2019 T+A elektroakustik GmbH & Co. KG
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ */
++
++#include <linux/module.h>
++#include <linux/platform_device.h>
++#include <linux/of_platform.h>
++#include <sound/soc.h>
++#include <sound/pcm_params.h>
++
++#define TAHIFI_GENERIC_DAI_FMT_I2S \
++	(SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBS_CFS | \
++	 SND_SOC_DAIFMT_CONT)
++
++#define TAHIFI_GENERIC_DAI_FMT_LEFT_JUSTIFIED \
++	(SND_SOC_DAIFMT_LEFT_J | SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBS_CFS |\
++	 SND_SOC_DAIFMT_CONT)
++
++static int tahifi_generic_hw_params(struct snd_pcm_substream *substream,
++				    struct snd_pcm_hw_params *params)
++{
++	struct snd_soc_pcm_runtime *rtd = substream->private_data;
++	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
++
++	return snd_soc_dai_set_bclk_ratio(cpu_dai, 32 * 2);
++}
++
++static struct snd_soc_ops snd_tahifi_generic_ops = {
++	.hw_params = tahifi_generic_hw_params,
++};
++
++static int tahifi_generic_i2s_format_get(struct snd_kcontrol *kcontrol,
++					 struct snd_ctl_elem_value *ucontrol)
++{
++	struct snd_soc_card *card = snd_kcontrol_chip(kcontrol);
++	struct snd_soc_dai_link *dai_link = card->dai_link;
++
++	if(dai_link->dai_fmt == TAHIFI_GENERIC_DAI_FMT_I2S)
++		ucontrol->value.enumerated.item[0] = 0;
++	else if(dai_link->dai_fmt == TAHIFI_GENERIC_DAI_FMT_LEFT_JUSTIFIED)
++		ucontrol->value.enumerated.item[0] = 1;
++	else
++		return -EINVAL;
++
++	return 0;
++}
++
++static int tahifi_generic_i2s_format_put(struct snd_kcontrol *kcontrol,
++					 struct snd_ctl_elem_value *ucontrol)
++{
++	struct snd_soc_card *card = snd_kcontrol_chip(kcontrol);
++	struct snd_soc_pcm_runtime *rtd;
++	struct snd_soc_dai_link *dai_link;
++	struct snd_soc_dai *codec_dai;
++	unsigned int dai_fmt = 0;
++	int ret;
++
++	switch(ucontrol->value.enumerated.item[0])
++	{
++	case 0:
++		dai_fmt = TAHIFI_GENERIC_DAI_FMT_I2S;
++		break;
++
++	case 1:
++		dai_fmt = TAHIFI_GENERIC_DAI_FMT_LEFT_JUSTIFIED;
++		break;
++
++	default:
++		return -EINVAL;
++	}
++
++	/*
++	 * Two notes:
++	 * 1) This is a hack. We should use DPCM/DAPM for this.
++	 * 2) The procedure below was taken from snd_soc_instantiate_card() and
++	 *    heavily changed. There is a patch applied in Linux 3.19 (see
++	 *    commits ddaca25 and ce64c8b) that would make this job easier, but
++	 *    even then I would still consider the solution below a mere hack.
++	 */
++
++	if(card->num_links < 1)
++		return 0;
++
++	dai_link = &card->dai_link[0];
++
++	if(dai_fmt == dai_link->dai_fmt)
++		return 0;
++
++	rtd = snd_soc_get_pcm_runtime(card, dai_link->name);
++
++	if(rtd->num_codecs < 1)
++		return 0;
++
++	codec_dai = rtd->codec_dais[0];
++
++	ret = snd_soc_dai_set_fmt(codec_dai, dai_fmt);
++	if (ret != 0 && ret != -ENOTSUPP)
++		dev_warn(codec_dai->dev,
++			 "Failed to set codec DAI format: %d\n", ret);
++
++	ret = snd_soc_dai_set_fmt(rtd->cpu_dai, dai_fmt);
++	if (ret != 0 && ret != -ENOTSUPP)
++		dev_warn(rtd->cpu_dai->dev,
++			 "Failed to set CPU DAI format: %d\n", ret);
++
++	dai_link->dai_fmt = dai_fmt;
++
++	return 0;
++}
++
++static const char *tahifi_generic_i2s_format_text[] =
++{
++	"Standard I2S",
++	"Broken left-justified",
++};
++
++static SOC_ENUM_SINGLE_DECL(tahifi_generic_i2s_format_enum, SND_SOC_NOPM, 0,
++			    tahifi_generic_i2s_format_text);
++
++static const struct snd_kcontrol_new elements[] = {
++	SOC_ENUM_EXT("I2S Format", tahifi_generic_i2s_format_enum,
++		     tahifi_generic_i2s_format_get,
++		     tahifi_generic_i2s_format_put),
++};
++
++static struct snd_soc_dai_link snd_tahifi_generic_dai[] = {
++	{
++		.name           = "T+A generic HiFi appliance",
++		.stream_name    = "T+A HiFi",
++		.cpu_dai_name   = "bcm2708-i2s.0",
++		.codec_dai_name = "tahifi-i2s",
++		.platform_name  = "bcm2708-i2s.0",
++		.codec_name     = "tahifi-codec",
++		.dai_fmt        = TAHIFI_GENERIC_DAI_FMT_I2S,
++		.ops            = &snd_tahifi_generic_ops,
++	},
++};
++
++static struct snd_soc_card tahifi_generic_card = {
++	.name      = "snd_tahifi_generic",
++	.owner     = THIS_MODULE,
++	.controls = elements,
++	.num_controls = ARRAY_SIZE(elements),
++	.dai_link  = snd_tahifi_generic_dai,
++	.num_links = ARRAY_SIZE(snd_tahifi_generic_dai),
++};
++
++static const struct of_device_id snd_tahifi_generic_of_match[] = {
++	{
++		.compatible = "tahifi,tahifi-generic",
++		.data = &snd_tahifi_generic_dai[0],
++	},
++	{},
++};
++MODULE_DEVICE_TABLE(of, snd_tahifi_generic_of_match);
++
++static int snd_tahifi_generic_probe(struct platform_device *pdev)
++{
++	const struct of_device_id *match =
++		of_match_device(of_match_ptr(snd_tahifi_generic_of_match),
++				&pdev->dev);
++	struct snd_soc_dai_link *dai = (struct snd_soc_dai_link *) match->data;
++	struct device_node *i2s_node;
++	int ret;
++
++	tahifi_generic_card.dev = &pdev->dev;
++	tahifi_generic_card.dai_link = dai;
++
++	i2s_node = of_parse_phandle(pdev->dev.of_node, "i2s-controller", 0);
++
++	if (i2s_node) {
++		dai->cpu_dai_name = NULL;
++		dai->cpu_of_node = i2s_node;
++		dai->platform_name = NULL;
++		dai->platform_of_node = i2s_node;
++	}
++
++	ret = devm_snd_soc_register_card(&pdev->dev, &tahifi_generic_card);
++
++	if (ret)
++		dev_err(&pdev->dev,
++			"devm_snd_soc_register_card() failed (%d)\n", ret);
++
++	return ret;
++}
++
++static struct platform_driver snd_tahifi_generic_driver = {
++	.driver = {
++		.name = "snd-tahifi-generic",
++		.owner = THIS_MODULE,
++		.of_match_table = snd_tahifi_generic_of_match,
++	},
++	.probe = snd_tahifi_generic_probe,
++};
++
++module_platform_driver(snd_tahifi_generic_driver);
++
++MODULE_AUTHOR("Robert Tiemann <r.tiemann@ta-hifi.de>");
++MODULE_DESCRIPTION("ALSA SoC driver for T+A high-end audio platforms");
++MODULE_LICENSE("GPL");
+-- 
+2.26.1
+

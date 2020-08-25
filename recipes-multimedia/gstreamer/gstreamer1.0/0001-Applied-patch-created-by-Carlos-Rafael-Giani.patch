@@ -1,0 +1,226 @@
+From 3928f4305419e6163d34ba294d49c386cea93ba6 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Thu, 3 Sep 2015 08:03:35 +0200
+Subject: [PATCH] Applied patch created by Carlos Rafael Giani.
+
+See https://gitlab.freedesktop.org/gstreamer/gstreamer/issues/82
+Patch 300235
+---
+ libs/gst/base/gstbaseparse.c | 119 +++++++++++++++++++++++++++++++++--
+ libs/gst/base/gstbaseparse.h |   5 ++
+ 2 files changed, 118 insertions(+), 6 deletions(-)
+
+diff --git a/libs/gst/base/gstbaseparse.c b/libs/gst/base/gstbaseparse.c
+index ce6895650..8e8a98d84 100644
+--- a/libs/gst/base/gstbaseparse.c
++++ b/libs/gst/base/gstbaseparse.c
+@@ -231,6 +231,7 @@ struct _GstBaseParsePrivate
+   guint lead_in, lead_out;
+   GstClockTime lead_in_ts, lead_out_ts;
+   GstClockTime min_latency, max_latency;
++  gint64 start_padding, end_padding;
+ 
+   gboolean discont;
+   gboolean flushing;
+@@ -479,6 +480,9 @@ static gboolean gst_base_parse_is_seekable (GstBaseParse * parse);
+ 
+ static void gst_base_parse_push_pending_events (GstBaseParse * parse);
+ 
++static void gst_base_parse_adjust_segment_in_event (GstBaseParse * parse,
++    GstEvent ** event);
++
+ static void
+ gst_base_parse_clear_queues (GstBaseParse * parse)
+ {
+@@ -822,6 +826,7 @@ gst_base_parse_reset (GstBaseParse * parse)
+   parse->priv->frame_duration = GST_CLOCK_TIME_NONE;
+   parse->priv->lead_in = parse->priv->lead_out = 0;
+   parse->priv->lead_in_ts = parse->priv->lead_out_ts = 0;
++  parse->priv->start_padding = parse->priv->end_padding = 0;
+   parse->priv->bitrate = 0;
+   parse->priv->framecount = 0;
+   parse->priv->bytecount = 0;
+@@ -2284,7 +2289,9 @@ gst_base_parse_push_pending_events (GstBaseParse * parse)
+ 
+     parse->priv->pending_events = NULL;
+     for (l = r; l != NULL; l = l->next) {
+-      gst_pad_push_event (parse->srcpad, GST_EVENT_CAST (l->data));
++      GstEvent *event = GST_EVENT_CAST (l->data);
++      gst_base_parse_adjust_segment_in_event (parse, &event);
++      gst_pad_push_event (parse->srcpad, event);
+     }
+     g_list_free (r);
+   }
+@@ -2500,6 +2507,7 @@ gst_base_parse_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
+         topush = gst_event_new_segment (&parse->segment);
+         if (parse->priv->segment_seqnum != GST_SEQNUM_INVALID)
+           gst_event_set_seqnum (topush, parse->priv->segment_seqnum);
++        gst_base_parse_adjust_segment_in_event (parse, &topush);
+         gst_pad_push_event (parse->srcpad, topush);
+ 
+         parse->segment.position = last_start;
+@@ -3609,7 +3617,7 @@ pause:
+         gint64 stop;
+ 
+         if ((stop = parse->segment.stop) == -1)
+-          stop = parse->segment.duration;
++          stop = parse->segment.duration - parse->priv->end_padding;
+ 
+         GST_DEBUG_OBJECT (parse, "sending segment_done");
+ 
+@@ -4039,21 +4047,29 @@ gst_base_parse_get_duration (GstBaseParse * parse, GstFormat format,
+     GstClockTime * duration)
+ {
+   gboolean res = FALSE;
++  gint64 total_padding;
+ 
+   g_return_val_if_fail (duration != NULL, FALSE);
+ 
++  total_padding = parse->priv->start_padding + parse->priv->end_padding;
++  if (total_padding > 0) {
++    GST_LOG_OBJECT (parse, "subtracting start padding %" G_GINT64_FORMAT
++        " and end padding %" G_GINT64_FORMAT " from duration",
++        parse->priv->start_padding, parse->priv->end_padding);
++  }
++
+   *duration = GST_CLOCK_TIME_NONE;
+   if (parse->priv->duration != -1 && format == parse->priv->duration_fmt) {
+     GST_LOG_OBJECT (parse, "using provided duration");
+-    *duration = parse->priv->duration;
++    *duration = parse->priv->duration - total_padding;
+     res = TRUE;
+   } else if (parse->priv->duration != -1) {
+     GST_LOG_OBJECT (parse, "converting provided duration");
+     res = gst_base_parse_convert (parse, parse->priv->duration_fmt,
+-        parse->priv->duration, format, (gint64 *) duration);
++        parse->priv->duration - total_padding, format, (gint64 *) duration);
+   } else if (format == GST_FORMAT_TIME && parse->priv->estimated_duration != -1) {
+     GST_LOG_OBJECT (parse, "using estimated duration");
+-    *duration = parse->priv->estimated_duration;
++    *duration = parse->priv->estimated_duration - total_padding;
+     res = TRUE;
+   } else {
+     GST_LOG_OBJECT (parse, "cannot estimate duration");
+@@ -4159,7 +4175,9 @@ gst_base_parse_src_query_default (GstBaseParse * parse, GstQuery * query)
+             GST_LOG_OBJECT (parse, "already determine upstream seekabled: %d",
+                 seekable);
+           }
+-          gst_query_set_seeking (query, GST_FORMAT_TIME, seekable, 0, duration);
++          gst_query_set_seeking (query, GST_FORMAT_TIME, seekable,
++              parse->priv->start_padding,
++              duration + parse->priv->start_padding);
+           res = TRUE;
+         }
+       }
+@@ -4980,3 +4998,92 @@ gst_base_parse_merge_tags (GstBaseParse * parse, GstTagList * tags,
+ 
+   GST_OBJECT_UNLOCK (parse);
+ }
++
++/**
++ * gst_base_parse_set_padding_times:
++ * @parse: a #GstBaseParse
++ * @start_padding: Amount of padding at the start of the segment
++ * @end_padding: Amount of padding at the end of the segment
++ *
++ * This function sets start and stop padding values that adjust future
++ * outgoing segments. It is typically called in subclasses that parse
++ * padding information in headers. Padding areas are not considered
++ * content, and therefore need to be skipped. By shrinking segments,
++ * these areas are properly avoided. The stream time then excludes
++ * these padding areas.
++ *
++ * The function adds start_padding to the start field of outgoing
++ * segments, and subtracts end_padding from the stop field unless it
++ * it is set to -1. The segment's duration is also reduced, unless it
++ * is set to -1.
++ *
++ * Since: 1.6
++ */
++void
++gst_base_parse_set_padding (GstBaseParse * parse, gint64 start_padding,
++    gint64 end_padding)
++{
++  g_return_if_fail (GST_IS_BASE_PARSE (parse));
++
++  GST_DEBUG_OBJECT (parse,
++      "setting padding values: start %" G_GINT64_FORMAT " end %"
++      G_GINT64_FORMAT, start_padding, end_padding);
++
++  parse->priv->start_padding = (start_padding < 0) ? 0 : start_padding;
++  parse->priv->end_padding = (end_padding < 0) ? 0 : end_padding;
++}
++
++static void
++gst_base_parse_adjust_segment_in_event (GstBaseParse * parse, GstEvent ** event)
++{
++  /* parse->segment itself is never adjusted for start/end padding;
++   * these adjustments are performed on outgoing segment events by
++   * this function instead. In other words, segment events always
++   * initially contain an unadjusted segment, which is then adjusted
++   * here. This approach ensures the padding is not applied more
++   * than once. */
++
++  GstSegment segment;
++  GstEvent *new_event;
++
++  if (GST_EVENT_TYPE (*event) != GST_EVENT_SEGMENT)
++    return;
++
++  /* No padding means nothing needs to be done here */
++  if ((parse->priv->start_padding == 0) && (parse->priv->end_padding == 0))
++    return;
++
++  gst_event_copy_segment (*event, &segment);
++
++  segment.start += parse->priv->start_padding;
++  if (segment.stop == -1) {
++    if ((segment.stop == -1) && (parse->priv->end_padding != 0)
++        && (parse->priv->duration > 0)) {
++      segment.stop = parse->priv->duration - parse->priv->end_padding;
++    }
++  } else if (parse->priv->end_padding < segment.stop)
++    segment.stop = segment.stop - parse->priv->end_padding;
++
++  /* Padding shortens the duration, so reflect that in the duration field
++   * (if it is set) */
++  if (segment.duration != -1) {
++    guint64 total_padding =
++        parse->priv->start_padding + parse->priv->end_padding;
++    if (segment.duration < total_padding)
++      segment.duration = 0;
++    else
++      segment.duration = segment.duration - total_padding;
++  }
++
++  /* Not adding start_padding to segment.base, since this would cause a gap.
++   * The padding areas are not considered part of the actual baseparse output, and therefore
++   * are not counted as playback. This means that advancing segment.base by start_padding
++   * is the wrong thing to do, since it *would* effectively count start_padding as part of
++   * the output.
++   * Also not modifying segment.time, since the stream time stays the same.
++   */
++
++  new_event = gst_event_new_segment (&segment);
++  gst_event_set_seqnum (new_event, gst_event_get_seqnum (*event));
++  gst_event_replace (event, new_event);
++}
+diff --git a/libs/gst/base/gstbaseparse.h b/libs/gst/base/gstbaseparse.h
+index 21c2fd46b..a4407bfd0 100644
+--- a/libs/gst/base/gstbaseparse.h
++++ b/libs/gst/base/gstbaseparse.h
+@@ -361,6 +361,11 @@ void            gst_base_parse_merge_tags       (GstBaseParse  * parse,
+                                                  GstTagList    * tags,
+                                                  GstTagMergeMode mode);
+ 
++GST_BASE_API
++void            gst_base_parse_set_padding (GstBaseParse * parse,
++                                            gint64 start_padding,
++                                            gint64 end_padding);
++
+ #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
+ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GstBaseParseFrame, gst_base_parse_frame_free)
+ #endif
+-- 
+2.17.1
+

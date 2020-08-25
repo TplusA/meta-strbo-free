@@ -1,0 +1,16 @@
+[Unit]
+Description=StrBo Stream Player
+After=syslog.target strbo-dbus.service
+BindsTo=strbo-dbus.service
+
+[Service]
+Type=dbus
+BusName=de.tahifi.Streamplayer
+ExecStart=/usr/bin/streamplayer
+KillMode=process
+UMask=0007
+Nice=-20
+User=strbo-audio
+
+[Install]
+WantedBy=strbo.target

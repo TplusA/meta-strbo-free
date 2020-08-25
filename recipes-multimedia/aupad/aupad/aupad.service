@@ -1,0 +1,15 @@
+[Unit]
+Description=StrBo Audio Path Daemon
+After=syslog.target strbo-dbus.service dcpd.service
+BindsTo=strbo-dbus.service dcpd.service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/aupad --config /usr/share/aupad/models.json
+KillMode=process
+UMask=0007
+User=strbo
+Group=strbo
+
+[Install]
+WantedBy=strbo.target

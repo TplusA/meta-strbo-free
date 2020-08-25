@@ -1,0 +1,13 @@
+[Unit]
+Description=StrBo DCP-to-SPI brigde
+After=syslog.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/dcpspi --spiclk 400000
+KillMode=process
+UMask=0007
+User=strbo-spi
+ExecStartPre=/usr/libexec/dcpspi_gpio start
+ExecStopPost=/usr/libexec/dcpspi_gpio stop
+PermissionsStartOnly=true

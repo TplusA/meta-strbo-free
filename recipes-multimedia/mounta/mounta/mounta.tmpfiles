@@ -1,0 +1,2 @@
+d /run/MounTA 0755 strbo strbo -
+D /run/mount-by-label    0755  strbo    strbo -

@@ -1,0 +1,102 @@
+From cabebcb44038971d63c6fa81053d03e36333d7d3 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Tue, 14 May 2019 14:05:39 +0200
+Subject: [PATCH] Fix crash while cancelling all task queues.
+
+It is possible for a GUPnP service proxy action callback to run into a
+dangling pointer to an already freed task queue after a call of
+dleyna_task_processor_set_quitting(). The root cause is a bad use of
+g_hash_table_remove() inside a callback of
+g_hash_table_foreach_remove() while trying to cancel and remove all
+task queues from a task processor:
+
+    dleyna_task_processor_set_quitting()
+    prv_cancel_all_queues()
+    g_hash_table_foreach_remove()
+    prv_cancel_cb()
+    prv_cancel()
+    prv_cancel_only()
+    dleyna_service_task_cancel_cb()  [via task_queue->task_cancel_cb()]
+    dleyna_task_queue_task_completed()
+    g_hash_table_remove()            [DLEYNA_TASK_QUEUE_FLAG_AUTO_REMOVE]
+
+The bad g_hash_table_remove() call results in
+g_hash_table_foreach_remove() to return early, leaving some task
+queues uncancelled. The affected hash table is completely removed in
+dleyna_task_processor_set_quitting(), but there might still be some
+pending GUPnP actions around which have previously been started with
+gupnp_service_proxy_begin_action(). Since task queue cancellation was
+incomplete, these actions will not have been cancelled, and their
+associated callbacks are called on completion. Callback
+dleyna_service_task_begin_action_cb() dereferences its user_data
+pointer which points to a nonexistent task structure, leading to a
+crash.
+
+To reproduce, start dleyna-server-service and quickly call
+com.intel.dLeynaServer.Manager.GetServers() while
+dleyna-server-service is querying the UPnP servers on the network.
+
+$ G_SLICE=always-malloc G_DEBUG=gc-friendly valgrind \
+    Install/libexec/dleyna-server-service
+$ busctl --user call com.intel.dleyna-server /com/intel/dLeynaServer \
+    com.intel.dLeynaServer.Manager GetServers
+
+This commit avoids the call of g_hash_table_remove() and returns the
+appropriate return value to g_hash_table_foreach_remove() to have it
+remove the hash table entries for us.
+---
+ dleyna-core/libdleyna/core/task-processor.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/libdleyna/core/task-processor.c b/libdleyna/core/task-processor.c
+index 39529a3..df44aa6 100644
+--- a/libdleyna/core/task-processor.c
++++ b/libdleyna/core/task-processor.c
+@@ -202,9 +202,8 @@ static gboolean prv_cancel_only(const dleyna_task_queue_key_t *queue_id,
+ 	if (task_queue->current_task)
+ 		task_queue->task_cancel_cb(task_queue->current_task,
+ 					   task_queue->user_data);
+-	else
+-		remove_queue = task_queue->flags &
+-			DLEYNA_TASK_QUEUE_FLAG_AUTO_REMOVE;
++
++	remove_queue = task_queue->flags & DLEYNA_TASK_QUEUE_FLAG_AUTO_REMOVE;
+ 
+ out:
+ 
+@@ -446,6 +445,7 @@ void dleyna_task_queue_task_completed(const dleyna_task_queue_key_t *queue_id)
+ {
+ 	dleyna_task_queue_t *queue;
+ 	dleyna_task_processor_t *processor = queue_id->processor;
++	gboolean current_task_was_cancelled = FALSE;
+ 
+ 	DLEYNA_LOG_DEBUG("Enter - Task completed for queue <%s,%s>",
+ 			 queue_id->source, queue_id->sink);
+@@ -453,12 +453,16 @@ void dleyna_task_queue_task_completed(const dleyna_task_queue_key_t *queue_id)
+ 	queue = g_hash_table_lookup(processor->task_queues, queue_id);
+ 
+ 	if (queue->current_task) {
++		current_task_was_cancelled = queue->cancelled;
+ 		queue->task_delete_cb(queue->current_task, queue->user_data);
+ 		queue->current_task = NULL;
+ 	}
+ 
+ 	processor->running_tasks--;
+ 
++	if (current_task_was_cancelled)
++		goto out;
++
+ 	if (processor->quitting && !processor->running_tasks) {
+ 		g_idle_add(processor->on_quit_cb, NULL);
+ 		g_hash_table_remove_all(processor->task_queues);
+@@ -475,6 +479,7 @@ void dleyna_task_queue_task_completed(const dleyna_task_queue_key_t *queue_id)
+ 		g_hash_table_remove(processor->task_queues, queue_id);
+ 	}
+ 
++out:
+ 	DLEYNA_LOG_DEBUG("Exit");
+ }
+ 
+-- 
+2.17.1
+

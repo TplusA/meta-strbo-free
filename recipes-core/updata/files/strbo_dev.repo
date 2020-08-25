@@ -1,0 +1,7 @@
+[strbo_development]
+name=T+A internal developers' repo
+baseurl=$strbo_development_baseurl
+enabled=0
+cost=400
+metadata_expire=0
+gpgcheck=0

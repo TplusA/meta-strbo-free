@@ -1,0 +1,36 @@
+#! /bin/sh
+
+EVDEV_PATH='/dev/input/event0'
+LOG='systemd-cat'
+
+while true
+do
+    echo "Waiting for events on $EVDEV_PATH"
+    EVENT=$(offevent --evdev $EVDEV_PATH)
+    EXITCODE=$?
+
+    if test $EXITCODE -ne 0
+    then
+        echo "Failed, exit code ${EXITCODE}."
+        sleep 5
+        continue
+    fi
+
+    case $EVENT
+    in
+        power)
+            $LOG echo "Power down event"
+            $LOG dbus-send --system --print-reply --dest=org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager.PowerOff boolean:false
+            sleep 20
+            ;;
+        reboot)
+            $LOG echo "Reboot request"
+            $LOG dbus-send --system --print-reply --dest=org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager.Reboot boolean:false
+            sleep 20
+            ;;
+        *)
+            $LOG echo "Unknown event: $EVENT"
+            sleep 5
+            ;;
+    esac
+done

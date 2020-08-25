@@ -1,0 +1,1 @@
+strbo-dcpd ALL = (root) NOPASSWD: /usr/bin/gerbera-reset-database

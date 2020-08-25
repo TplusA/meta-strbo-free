@@ -1,0 +1,62 @@
+#! /bin/bash -e
+# Emacs: -*- mode: sh; indent-tabs-mode: t; compile-command: "shellcheck -f gcc system_test_quota"; -*-
+
+declare DESCRIPTION="Streaming board media server system test executable for disk quota
+
+The executable tests a strbo system on the same network that can be accessed by SSH.
+"
+
+declare TESTFILE=/var/local/data/testfile
+declare SPACELIMITKB=10000
+
+declare POSITIONAL=()
+while [ $# -gt 0 ]; do
+	case $1 in
+		-x)
+			set -x
+			shift
+			;;
+		-h|--help)
+			echo "${BASH_SOURCE##*/} [-x] [-h|--help] SYSTEMUNDERTEST"
+			echo "$DESCRIPTION"
+			exit
+			;;
+		*)
+			POSITIONAL+=("$1")
+			shift
+			;;
+	esac
+done
+set -- "${POSITIONAL[@]}"
+POSITIONAL=
+
+SYSTEMUNDERTEST=${1:?Error:Missing parameter SYSTEMUNDERTEST.}
+
+declare THISDIR="$(dirname $(readlink -f "$0"))"
+declare SSHIDFILE=$(readlink -f "$THISDIR/../../../../meta-strbo/recipes-core/tahifi-ssh-key/files/tahifi")
+STRBO_SSH_CONFIG="$(mktemp -t system-test-import-ssh-config-XXX)"
+! cat <<-EOF > "$STRBO_SSH_CONFIG"
+	IdentityFile $SSHIDFILE
+	User root
+	CheckHostIp no
+	StrictHostKeyChecking no
+	UserKnownHostsFile=/dev/null
+	LogLevel ERROR
+	EOF
+trap "rm $STRBO_SSH_CONFIG" EXIT
+
+remote() {	ssh -F "$STRBO_SSH_CONFIG" "root@$SYSTEMUNDERTEST" "$@"; }
+remote-scp() { scp -F "$STRBO_SSH_CONFIG" "$@"; }
+
+trap 'Error: On line $LINENO' ERR
+
+remote bash -evx <<EOF
+/usr/sbin/setquota -u strbo-mediaserver 0 $SPACELIMITKB 0 0 /var/local/data
+! sudo -u strbo-mediaserver dd if=/dev/urandom of=$TESTFILE bs=1K count=$((SPACELIMITKB*2)) status=progress
+TESTFILEBYTES=\$(stat --printf="%s" $TESTFILE)
+test \$TESTFILEBYTES -le $((SPACELIMITKB*1024))
+rm ${TESTFILE:?}
+exit $?
+EOF
+
+echo "Success."

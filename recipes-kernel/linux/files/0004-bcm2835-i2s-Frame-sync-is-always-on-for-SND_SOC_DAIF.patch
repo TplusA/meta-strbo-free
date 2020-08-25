@@ -1,0 +1,76 @@
+From 97c6d7c545490e6d85d265a7f7685a25cb6df82f Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Mon, 5 Aug 2019 16:59:03 +0200
+Subject: [PATCH] bcm2835-i2s: Frame sync is always on for SND_SOC_DAIFMT_CONT.
+
+---
+ sound/soc/bcm/bcm2835-i2s.c | 22 +++++++++++++++++-----
+ 1 file changed, 17 insertions(+), 5 deletions(-)
+
+diff --git a/sound/soc/bcm/bcm2835-i2s.c b/sound/soc/bcm/bcm2835-i2s.c
+index 49637b2f526d..05523a585d78 100644
+--- a/sound/soc/bcm/bcm2835-i2s.c
++++ b/sound/soc/bcm/bcm2835-i2s.c
+@@ -118,6 +118,7 @@ struct bcm2835_i2s_dev {
+ 	unsigned int				tx_mask;
+ 	unsigned int				slot_width;
+ 	unsigned int				frame_length;
++	bool					is_tx_idle_clock_active;
+ 
+ 	struct regmap				*i2s_regmap;
+ 	struct clk				*clk;
+@@ -349,7 +350,8 @@ static int bcm2835_i2s_hw_params(struct snd_pcm_substream *substream,
+ 	 */
+ 	regmap_read(dev->i2s_regmap, BCM2835_I2S_CS_A_REG, &csreg);
+ 
+-	if (csreg & (BCM2835_I2S_TXON | BCM2835_I2S_RXON))
++	if ((csreg & (BCM2835_I2S_TXON | BCM2835_I2S_RXON)) &&
++	    !dev->is_tx_idle_clock_active)
+ 		return 0;
+ 
+ 	data_length = params_width(params);
+@@ -646,11 +648,16 @@ static void bcm2835_i2s_stop(struct bcm2835_i2s_dev *dev,
+ 
+ 	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+ 		mask = BCM2835_I2S_RXON;
+-	else
++	else if(!dai->active && !(dev->fmt & SND_SOC_DAIFMT_CONT))
+ 		mask = BCM2835_I2S_TXON;
++	else {
++		mask = 0;
++		dev->is_tx_idle_clock_active = true;
++	}
+ 
+-	regmap_update_bits(dev->i2s_regmap,
+-			BCM2835_I2S_CS_A_REG, mask, 0);
++	if (mask)
++		regmap_update_bits(dev->i2s_regmap,
++				BCM2835_I2S_CS_A_REG, mask, 0);
+ 
+ 	/* Stop also the clock when not SND_SOC_DAIFMT_CONT */
+ 	if (!dai->active && !(dev->fmt & SND_SOC_DAIFMT_CONT))
+@@ -671,8 +678,10 @@ static int bcm2835_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
+ 
+ 		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+ 			mask = BCM2835_I2S_RXON;
+-		else
++		else {
+ 			mask = BCM2835_I2S_TXON;
++			dev->is_tx_idle_clock_active = false;
++		}
+ 
+ 		regmap_update_bits(dev->i2s_regmap,
+ 				BCM2835_I2S_CS_A_REG, mask, mask);
+@@ -887,6 +896,9 @@ static int bcm2835_i2s_probe(struct platform_device *pdev)
+ 	dev->dma_data[SNDRV_PCM_STREAM_CAPTURE].flags =
+ 		SND_DMAENGINE_PCM_DAI_FLAG_PACK;
+ 
++	/* TX frame sync may run even if idle (sending silence then) */
++	dev->is_tx_idle_clock_active = false;
++
+ 	/* Store the pdev */
+ 	dev->dev = &pdev->dev;
+ 	dev_set_drvdata(&pdev->dev, dev);
+-- 
+2.26.1
+

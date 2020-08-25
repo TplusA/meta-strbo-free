@@ -1,0 +1,6 @@
+[Unit]
+Description=Remotely executed StrBo software stack
+Requires=basic.target connman.service strbo-startup.service strbo-bridge.service
+After=basic.target rescue.service rescue.target connman.service strbo-bridge.service
+AllowIsolate=yes
+Conflicts=strbo.target

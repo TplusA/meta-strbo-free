@@ -1,0 +1,14 @@
+This recipe adds a developer account to the system.
+
+    User:     developer
+    Password: developer
+
+The user is added to the sudoers configuration so that user "developer" can
+access the system with root rights when needed.
+
+To make use of this recipe, an entry for user "developer" must be added to the
+passwd file used by the useradd package. This makes sure that the user is added
+when the developer-account package is installed.
+
+In case the user shall be allowed to log in remotely via ssh, make sure to
+configure the ssh daemon to accept password authentication.

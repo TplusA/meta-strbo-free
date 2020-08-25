@@ -1,0 +1,59 @@
+From 2b5635265e1a451e860baf7496b5110ced9e677a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alp=20=C3=96zmert?= <info@ib-oezmert.de>
+Date: Fri, 7 Dec 2018 16:06:31 +0100
+Subject: [PATCH] Add graceful exit on unhandled exception
+
+Replace standard implementation calling std::abort by
+an implementation logging an error message and exiting gracefully via
+std::exit.
+---
+ src/main.cc | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/src/main.cc b/src/main.cc
+index bb76126..8532ec3 100644
+--- a/src/main.cc
++++ b/src/main.cc
+@@ -81,6 +81,30 @@ void log_copyright()
+ 
+ void signal_handler(int signum);
+ 
++void cxx_terminate()
++{
++    std::exception_ptr p = std::current_exception();
++    if (p) {
++        try {
++            std::rethrow_exception(p);
++        }
++        catch(const std::exception& e) {
++            std::string msg = std::string(e.what()) + '\n';
++            log_error(msg.c_str());
++        }
++        catch (...) {
++            log_error("Unknown exception.\n");
++        }
++    }
++    else  {
++        log_error("Terminate was called.\n");
++    }
++
++    SingletonManager::getInstance()->shutdown(true);
++    log_info("Gerbera terminating. Please wait...\n");
++    std::exit(EXIT_FAILURE);
++}
++
+ int main(int argc, char** argv, char** envp)
+ {
+     char* err = nullptr;
+@@ -134,6 +158,8 @@ int main(int argc, char** argv, char** envp)
+     }
+ #endif
+ 
++    std::set_terminate(&cxx_terminate);
++
+     while (true) {
+         o = getopt_long(argc, argv, OPTSTR, long_options, &opt_index);
+         if (o == -1)
+-- 
+2.7.4
+

@@ -1,0 +1,60 @@
+From 3736e7d5d10d68ea7a046bc1cd29f8919074c72d Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Fri, 3 Apr 2020 14:56:37 +0200
+Subject: [PATCH] rpi: Remove bcm2835 video driver the hard way.
+
+There is are no configuration options for disabling the video drivers,
+at least none that would work. Here is the cure.
+---
+ board/raspberrypi/rpi/rpi.c | 7 -------
+ drivers/video/Makefile      | 1 -
+ include/configs/rpi.h       | 3 ---
+ 3 files changed, 11 deletions(-)
+
+diff --git a/board/raspberrypi/rpi/rpi.c b/board/raspberrypi/rpi/rpi.c
+index 4ae637cd40..10cfd6c103 100644
+--- a/board/raspberrypi/rpi/rpi.c
++++ b/board/raspberrypi/rpi/rpi.c
+@@ -504,13 +504,6 @@ void *board_fdt_blob_setup(void)
+ 
+ int ft_board_setup(void *blob, bd_t *bd)
+ {
+-	/*
+-	 * For now, we simply always add the simplefb DT node. Later, we
+-	 * should be more intelligent, and e.g. only do this if no enabled DT
+-	 * node exists for the "real" graphics driver.
+-	 */
+-	lcd_dt_simplefb_add_node(blob);
+-
+ #ifdef CONFIG_EFI_LOADER
+ 	/* Reserve the spin table */
+ 	efi_add_memory_map(0, 1, EFI_RESERVED_MEMORY_TYPE, 0);
+diff --git a/drivers/video/Makefile b/drivers/video/Makefile
+index df7119d62a..12ac80e8ca 100644
+--- a/drivers/video/Makefile
++++ b/drivers/video/Makefile
+@@ -40,7 +40,6 @@ obj-$(CONFIG_SANDBOX_OSD) += sandbox_osd.o
+ obj-$(CONFIG_S6E8AX0) += s6e8ax0.o
+ obj-$(CONFIG_SCF0403_LCD) += scf0403_lcd.o
+ obj-$(CONFIG_VIDEO_ARM_MALIDP) += mali_dp.o
+-obj-$(CONFIG_VIDEO_BCM2835) += bcm2835.o
+ obj-$(CONFIG_VIDEO_BROADWELL_IGD) += broadwell_igd.o
+ obj-$(CONFIG_VIDEO_COREBOOT) += coreboot.o
+ obj-$(CONFIG_VIDEO_DA8XX) += da8xx-fb.o videomodes.o
+diff --git a/include/configs/rpi.h b/include/configs/rpi.h
+index 83e258a6b9..43553e73d8 100644
+--- a/include/configs/rpi.h
++++ b/include/configs/rpi.h
+@@ -66,9 +66,6 @@
+ /* Devices */
+ /* GPIO */
+ #define CONFIG_BCM2835_GPIO
+-/* LCD */
+-#define CONFIG_LCD_DT_SIMPLEFB
+-#define CONFIG_VIDEO_BCM2835
+ 
+ #ifdef CONFIG_CMD_USB
+ #define CONFIG_TFTP_TSIZE
+-- 
+2.26.2
+

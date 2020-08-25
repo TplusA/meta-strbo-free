@@ -1,0 +1,42 @@
+From 2d7b4eda5f23218e9240eaa610fcbb26b806c9fd Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alp=20=C3=96zmert?= <info@ib-oezmert.de>
+Date: Wed, 24 Oct 2018 19:43:55 +0200
+Subject: [PATCH] Add build.sh script
+
+---
+ build-and-install.sh | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+ create mode 100755 build-and-install.sh
+
+diff --git a/build-and-install.sh b/build-and-install.sh
+new file mode 100755
+index 0000000..126c49c
+--- /dev/null
++++ b/build-and-install.sh
+@@ -0,0 +1,23 @@
++#! /bin/bash -e
++# Emacs: -*- mode: sh; indent-tabs-mode: t; compile-command: (format "shellcheck -f gcc %s" buffer-file-name); -*-
++
++sudo xargs apt install --yes <<PKG
++wget git autoconf automake libtool cmake gcc ffmpeg pkgconf
++default-libmysqlclient-dev uuid-dev libexpat1-dev libsqlite3-dev libmagic-dev libexif-dev
++libcurl4-openssl-dev libavutil-dev libavcodec-dev libavformat-dev libavdevice-dev libavfilter-dev
++libavresample-dev libswscale-dev libswresample-dev libpostproc-dev libav-tools
++PKG
++
++[ -e build ] || mkdir build
++cd build
++export MAKEFLAGS="-j $(nproc)"
++
++# One of the following scripts mistakingly thinks it's sh-compatible
++bash ../scripts/install-duktape.sh
++bash ../scripts/install-taglib111.sh
++export CFLAGS='-D_LARGE_FILE_SOURCE -D_FILE_OFFSET_BITS=64'
++bash ../scripts/install-pupnp18.sh
++
++cmake .. -DWITH_JS=1 -DWITH_AVCODEC=1
++make
++sudo make install
+-- 
+2.7.4
+

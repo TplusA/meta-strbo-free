@@ -1,0 +1,431 @@
+#! /usr/bin/python3 -u
+# -*- coding: utf-8 -*-
+
+"""StrBo SSDP python module and command line tool
+
+WARNING: Tested only for basic functionality with Intel UPNP tools, GUPNP CP, gssdp-discover.
+Probably not compliant with the UPNP standard.
+
+See flagpole recipe for python dependencies.
+
+Outlook:
+
+- In SsdpServerSocket, monitor ip address assignment to interfaces and try to join multicast
+  group again.
+- In SsdpTestBasicServer, bind to all network interfaces separately. Binding to 0.0.0.0:* is not
+  enough because we need to know the IP adresses for the reply. Alternatively, some magic with
+  IP_PKTINFO might be useful.
+- Consider using logging package.
+
+"""
+
+# pylint: disable=missing-docstring
+
+import pdb
+import socket
+import http.client
+import http.server
+import io
+import os
+import argparse
+import sys
+import threading
+import textwrap
+import subprocess
+import re
+import struct
+import gzip
+import pyroute2
+
+PROGRAM_VERSION = (0, 9, 2)
+
+
+class SsdpSearchResponse(object):
+    """ Represents the response to a M-SEARCH query. """
+
+    #pylint: disable=unused-argument,invalid-name,too-few-public-methods
+    class _FakeSocket(io.BytesIO):
+        def makefile(self, *args, **kw):
+            return self
+
+    def __init__(self, response):
+        r = http.client.HTTPResponse(self._FakeSocket(response))
+        r.begin()
+        self.location = r.getheader("location")
+        self.usn = r.getheader("usn")
+        self.st = r.getheader("st")
+        self.cache = r.getheader("cache-control").split("=")[1]
+
+    def __repr__(self):
+        return "<SsdpSearchResponse({location}, {st}, {usn})>".format(**self.__dict__)
+
+
+class SsdpTestClient:
+    """Test client for service discovery using SSDP."""
+
+    #pylint: disable=too-few-public-methods
+    SSDP_MCAST_GRP = '239.255.255.250'
+    SSDP_MCAST_PORT = 1900
+
+    def discover(self, service='urn:schemas-upnp-org:service:ContentDirectory',
+                 timeout=0.5, retries=10, mx=3, user_agent=None):
+        hdr = [
+            'M-SEARCH * HTTP/1.1',
+            'HOST: {0}:{1}',
+            'MAN: "ssdp:discover"',
+            'USER-AGENT: {ua}',
+            'ST: {st}',
+            'MX: {mx}'
+        ]
+        socket.setdefaulttimeout(timeout)
+        responses = {}
+        for _ in range(retries):
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+                message = '\r\n'.join(hdr).format(self.SSDP_MCAST_GRP, self.SSDP_MCAST_PORT,
+                                                  ua=user_agent,
+                                                  st=service, mx=mx)+'\r\n\r\n'
+                sock.sendto(message.encode('utf-8'), (self.SSDP_MCAST_GRP, self.SSDP_MCAST_PORT))
+                while True:
+                    try:
+                        response = SsdpSearchResponse(sock.recv(1024))
+                        responses[response.location] = response
+                    except socket.timeout:
+                        break
+        return list(responses.values())
+
+
+class SsdpServerSocket(socket.socket):
+    """SSDP multicast UDP socket with registration and deregistration."""
+
+    SSDP_MCAST_GRP = '239.255.255.250'
+    SSDP_MCAST_PORT = 1900
+
+    def __init__(self):
+        super(SsdpServerSocket, self).__init__(socket.AF_INET, socket.SOCK_DGRAM)
+        self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.bind(('', self.SSDP_MCAST_PORT))
+        try:
+            self.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
+                            struct.pack("4sl", socket.inet_aton(self.SSDP_MCAST_GRP),
+                                        socket.INADDR_ANY))
+        except OSError:
+            print('Warning: Failed to register for SSDP Multicast.')
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args1):
+        self.setsockopt(socket.IPPROTO_IP, socket.IP_DROP_MEMBERSHIP,
+                        struct.pack("4sl", socket.inet_aton(self.SSDP_MCAST_GRP),
+                                    socket.INADDR_ANY))
+
+
+class SsdpTestBasicDeviceServer:
+    """Test basic device for device announcements using SSDP."""
+
+    #pylint: disable=too-few-public-methods
+    DEVICE_XML_PATH = '/device.xml'
+    DEVICE_XML_CONTENT = """\
+         <?xml version="1.0" encoding="utf-8"?>
+         <root xmlns="urn:schemas-upnp-org:device-1-0">
+         <specVersion>
+         <major>1</major>
+         <minor>0</minor>
+         </specVersion>
+
+         <device>
+         <deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>
+         <friendlyName>T+A Strbo Testing Basic Device</friendlyName>
+         <manufacturer>T+A elektroakustik GmbH &amp; Co. KG</manufacturer>
+         <manufacturerURL>http://ta-hifi.de</manufacturerURL>
+         <modelDescription>Basic Device Server</modelDescription>
+         <modelName>SsdpTestBasicDeviceServer</modelName>
+         <UDN>uuid:0c2c87d2-a61e-11e8-98d0-529269fb1459</UDN>
+         </device>
+         </root>"""
+
+    HTTP_PATH_CONTENT_MAP = {
+        DEVICE_XML_PATH :  {
+            'Headers' : [('Content-Type', 'text/xml')],
+            'Content' : bytes(textwrap.dedent(DEVICE_XML_CONTENT), "utf8")
+        }
+    }
+
+    SSDP_MCAST_GRP = '239.255.255.250'
+    SSDP_MCAST_PORT = 1900
+    HTTP_PORT = 8081
+
+    class HTTPServerThread(threading.Thread):
+
+        def __init__(self, server_address, content):
+            class RequestHandler(http.server.BaseHTTPRequestHandler):
+
+                #pylint: disable=invalid-name
+                def do_GET(self):
+                    if self.path in content.keys():
+                        self.send_response(200)
+                        for h in content[self.path]['Headers']:
+                            self.send_header(*h)
+                        self.end_headers()
+                        self.wfile.write(content[self.path]['Content'])
+                    else:
+                        self.send_response(404)
+                        self.end_headers()
+
+            threading.Thread.__init__(self)
+            self.httpd = http.server.HTTPServer(server_address, RequestHandler)
+
+        def run(self):
+            self.httpd.serve_forever()
+
+    def __init__(self):
+        self.server_thread = None
+        #pylint: disable=no-member
+        self.ipdb = pyroute2.IPDB()
+
+    def run_forever(self, network_interface):
+        """Announce T+A Strbo Testing Basic Device via SSDP until interrupted."""
+
+        host_ip = self.ipdb.interfaces[network_interface].ipaddr.ipv4[0]['local']
+
+        server_address = (host_ip, self.HTTP_PORT)
+        self.server_thread = self.HTTPServerThread(server_address, self.HTTP_PATH_CONTENT_MAP)
+        self.server_thread.start()
+
+        print('Listening on *:{}...'.format(self.SSDP_MCAST_PORT))
+        with SsdpServerSocket() as sock:
+            try:
+                while True:
+                    data, sender_addr = sock.recvfrom(4096)
+                    datastr = data.decode('utf-8', 'ignore')
+                    print("-- Received via UDP from {}\n{}--".format(sender_addr, datastr))
+                    if datastr.startswith('M-SEARCH'):
+                        hdr = [
+                            'HTTP/1.1 200 OK',
+                            'CACHE-CONTROL: max-age=1800',
+                            'EXT:',
+                            'LOCATION: http://{ip}:{port}' + self.DEVICE_XML_PATH,
+                            'SERVER: Linux/0.0.0 UPnP/2.0 StrBo/0.0.0',
+                            'ST: upnp:rootdevice',
+                            'USN: uuid:0c2c87d2-a61e-11e8-98d0-529269fb1459'
+                        ]
+                        reply = '\r\n'.join(hdr).format(ip=host_ip, port=self.HTTP_PORT)+'\r\n\r\n'
+                        print("-- Replying via UDP to {}\n{}--".format(sender_addr, reply))
+                        sock.sendto(reply.encode('utf-8'), sender_addr)
+            except KeyboardInterrupt:
+                print("Interrupt received. Stopping...")
+
+        self.server_thread.httpd.shutdown()
+        self.server_thread.join()
+
+class TestStrboSsdp:
+
+    @staticmethod
+    def test_server():
+        SsdpTestBasicDeviceServer().run_forever(arguments.network_interface)
+
+    @staticmethod
+    def test_client():
+        SsdpTestClient().discover("ssdp:all")
+
+    def test_user_agent(self):
+        pass
+
+class UpnpGate:
+    """Manage netfilter/iptables rules for processes of ´UPNPGATEUSER´"""
+
+    UPNPGATEUSER = 'strbo-mediaserver'
+    SSDP_MCAST_GRP = '239.255.255.250'
+    SSDP_MCAST_PORT = 1900
+
+    def __init__(self):
+        #pylint: disable=no-member
+        self.ipdb = pyroute2.IPDB()
+        self.whitelisted_ips = list()
+        self.verbose = os.environ.get('STRBO_SSDP_VERBOSE', False)
+        try:
+            kernel_config = gzip.open('/proc/config.gz', 'rt').read()
+            if 'CONFIG_NETFILTER_XT_MATCH_OWNER=y' not in kernel_config:
+                print('Warning: \'CONFIG_NETFILTER_XT_MATCH_OWNER=y\' missing in /proc/config.gz.')
+        except:
+            print('Can\'t check /proc/config.gz for CONFIG_NETFILTER_XT_MATCH_OWNER.')
+
+    def add_default_drop_rule(self):
+        cmd = '/usr/sbin/iptables -A OUTPUT -m owner --uid-owner {} -j DROP'.format(
+            self.UPNPGATEUSER)
+        print("Executing '{}'".format(cmd))
+        subprocess.check_call(cmd, shell=True)
+
+    def rm_default_drop_rule(self):
+        cmd = '/usr/sbin/iptables -D OUTPUT -m owner --uid-owner {} -j DROP'.format(
+            self.UPNPGATEUSER)
+        print("Executing '{}'".format(cmd))
+        subprocess.check_call(cmd, shell=True)
+
+    def add_whitelist_rule(self, ipaddr):
+        cmd = '/usr/sbin/iptables -I OUTPUT -d {} -j ACCEPT'.format(ipaddr)
+        print("Executing '{}'".format(cmd))
+        subprocess.check_call(cmd, shell=True)
+        self.whitelisted_ips.append(ipaddr)
+
+    def is_whitelisted(self, ipaddr):
+        return ipaddr in self.whitelisted_ips
+
+    def rm_whitelist_rule(self, ipaddr):
+        cmd = '/usr/sbin/iptables -D OUTPUT -d {} -j ACCEPT'.format(ipaddr)
+        print("Executing '{}'".format(cmd))
+        subprocess.check_call(cmd, shell=True)
+        self.whitelisted_ips.remove(ipaddr)
+
+    def rm_all_whitelist_rules(self):
+        for ipaddr in list(self.whitelisted_ips):
+            self.rm_whitelist_rule(ipaddr)
+
+    def on_netlink_event(self, ipdb, msg, action):
+        del ipdb
+        if action == 'RTM_NEWADDR':
+            attrs = dict(msg['attrs'])
+            print('Received IP assignment notification via Netlink for {}.'.format(
+                attrs['IFA_LOCAL']))
+            self.add_whitelist_rule(attrs['IFA_LOCAL'])
+        elif action == 'RTM_DELADDR':
+            attrs = dict(msg['attrs'])
+            print('Received IP removal notification via Netlink for {}.'.format(
+                attrs['IFA_LOCAL']))
+            self.rm_whitelist_rule(attrs['IFA_LOCAL'])
+
+    def run_forever(self, user_agent_regex):
+        """Block outgoing traffic for processes of ´UPNPGATEGUSER´ by default and enable only for clients
+        sending SSDP MSEARCH packets with matching User-Agent field.
+        """
+
+        print('Setting up netfilter rules...')
+
+        self.add_default_drop_rule()
+        network_interfaces = set([nif.ifname for nif in self.ipdb.interfaces.values()])
+        for ifname in network_interfaces:
+            for ipaddr_and_network_bits in  self.ipdb.interfaces[ifname].ipaddr.ipv4:
+                self.add_whitelist_rule(ipaddr_and_network_bits[0])
+
+        print('Registering callback to monitor IP change of interfaces...')
+
+        self.ipdb.register_callback(self.on_netlink_event)
+
+        print('Listening on *:{}...'.format(self.SSDP_MCAST_PORT))
+        with SsdpServerSocket() as sock:
+            while True:
+                try:
+                    data, sender_addr = sock.recvfrom(4096)
+                    datastr = data.decode('utf-8', 'ignore')
+                    if datastr.startswith('M-SEARCH'):
+                        match = re.search('^USER-AGENT:(.*)$', datastr, re.I | re.M)
+                        user_agent = match.group(1).strip() if match else ''
+                        if self.verbose:
+                            print('Received M-SEARCH Sender: {} User-Agent: {}.'.format(
+                                sender_addr[0], user_agent))
+                        if not user_agent_regex or re.search(user_agent_regex, user_agent, re.I):
+                            if self.is_whitelisted(sender_addr[0]):
+                                if self.verbose:
+                                    print('IP {} already whitelisted.'.format(sender_addr[0]))
+                            else:
+                                print('Whitelisting {}...'.format(sender_addr[0]))
+                                self.add_whitelist_rule(sender_addr[0])
+                except subprocess.CalledProcessError:
+                    continue
+                except KeyboardInterrupt:
+                    print("Interrupt received. Stopping...")
+                    break
+
+        print('Reverting netfilter rules...')
+
+        self.rm_all_whitelist_rules()
+        self.rm_default_drop_rule()
+
+
+def commandline():
+    """ Handles command line invocation including help and argument parsing. """
+
+    subcommands = dict(
+        test_discover=dict(
+            help='Discover via SSDP: Send M-SEARCH and print each reply on a line.',
+            arguments=['search_target', 'user_agent']),
+        test_basicdevice=dict(
+            help='Serve a basic device on the network.',
+            arguments=['network_interface']),
+        upnpgate=dict(
+            help=('Block outgoing traffic for processes of ´UPNPGATEGUSER´ by default and enable only for clients'
+                  'sending SSDP MSEARCH packets with matching User-Agent field.'),
+            arguments=['user_agent']),
+    )
+
+    argument_descriptions = dict(
+        network_interface=dict(
+            flags=('-i',),
+            help='network interface',
+            metavar='INTERFACE',
+            default='eth0'),
+        search_target=dict(
+            flags=('-st',),
+            help='Search target',
+            metavar='SEARCHTARGET',
+            default='ssdp:all'),
+        user_agent=dict(
+            flags=('-ua',),
+            help='User agent string regular expression (Empty matches all MSEARCH requests)',
+            metavar='USERAGENT',
+            default=''),
+    )
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d",
+                        help='break debugger on exception',
+                        action='store_true',
+                        dest='debug')
+    version_str = '.'.join([str(n) for n in PROGRAM_VERSION])
+    parser.add_argument('-v', action='version', version='%(prog)sock ' + version_str)
+    parser.set_defaults(subcommand='')
+
+    subparsers = parser.add_subparsers()
+    for subcommand_dest, subcommand in subcommands.items():
+        subcommand_name = subcommand.get('name', None) or subcommand_dest
+        subparser = subparsers.add_parser(subcommand_name,
+                                          help=subcommand['help'],
+                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        for argument_name in subcommand['arguments']:
+            argument_description = argument_descriptions[argument_name]
+            if 'flags' in argument_description:
+                args = argument_description['flags']
+                kwargs = {k:v for k, v in argument_description.items() if k != 'flags'}
+                kwargs['dest'] = argument_name
+            else:
+                args = (argument_name,)
+                kwargs = argument_description
+            subparser.add_argument(*args, **kwargs)
+        subparser.set_defaults(subcommand=subcommand_dest)
+
+    global arguments
+    arguments = parser.parse_args()
+
+    if arguments.subcommand == 'test_discover':
+        for response in SsdpTestClient().discover(arguments.search_target,
+                                                  user_agent=arguments.user_agent):
+            print(response)
+    elif arguments.subcommand == 'test_basicdevice':
+        SsdpTestBasicDeviceServer().run_forever(arguments.network_interface)
+    elif arguments.subcommand == 'upnpgate':
+        UpnpGate().run_forever(arguments.user_agent)
+    else:
+        print(parser.format_usage())
+
+
+arguments = None
+if __name__ == "__main__":
+    try:
+        commandline()
+    except Exception as ex:
+        if (getattr(arguments, 'debug', False)
+                or os.environ.get('STRBO_SSDP_DEBUG_ON_EXCEPTION', False)):
+            pdb.post_mortem()
+        sys.exit('{}: {}'.format(type(ex).__name__, ex))
+    except:
+        sys.exit('Terminated.')

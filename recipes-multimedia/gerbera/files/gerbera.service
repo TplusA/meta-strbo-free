@@ -1,0 +1,19 @@
+[Unit]
+Description=Gerbera UPnP media server
+BindsTo=upnpgate.service
+After=upnpgate.service
+Conflicts=umount.target
+
+[Service]
+ExecStartPre=/usr/bin/gerbera-update-config-from-strbo
+ExecStart=/usr/bin/gerberad
+Type=simple
+Environment=PYTHONUNBUFFERED=True
+StandardOutput=journal
+StandardError=journal
+User=strbo-mediaserver
+Group=strbo
+Nice=10
+
+[Install]
+WantedBy=strbo.target

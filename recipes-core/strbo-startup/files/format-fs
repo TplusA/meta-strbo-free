@@ -1,0 +1,112 @@
+#! /bin/sh
+
+VERFILES='/etc/os-release /etc/strbo-release'
+VERFILES_FOUND=0
+for F in ${VERFILES}
+do
+    if test -f ${F}
+    then
+        VERFILES_FOUND=1
+        while read LINE
+        do
+            /usr/bin/logger --tag 'Version info' $LINE
+        done <${F}
+    fi
+done
+
+if test ${VERFILES_FOUND} -eq 0
+then
+    /usr/bin/logger '*** NO VERSION INFORMATION AVAILABLE ***'
+fi
+
+. /etc/systeminfo.rc
+
+set -u
+
+set_permissions()
+{
+    for i in $(/usr/bin/seq 10)
+    do
+        if grep -q "$4" /proc/mounts
+        then
+            /bin/chown "$2" "$1"
+            /bin/chmod "$3" "$1"
+            break
+        fi
+
+        test -d "$1/."
+        /bin/sleep 0.5
+    done
+}
+
+/usr/sbin/iw reg reload
+
+PATTERN="$(echo $PARTITION_CONFIGFS_DEVICE | sed 's,/,\\/,g')"
+MOUNTPOINT="$(awk '/^'$PATTERN'/ { print $2 }' /etc/fstab)"
+if test ! -d "${MOUNTPOINT}/."
+then
+    /sbin/mkfs.${PARTITION_CONFIGFS_TYPE} ${PARTITION_CONFIGFS_MKFS_OPTIONS} ${PARTITION_CONFIGFS_DEVICE}
+    test -d "${MOUNTPOINT}/."
+fi
+
+set_permissions "$MOUNTPOINT" 'root:strbo' '02775' "$PATTERN"
+
+CONFIG_DIR="${MOUNTPOINT}"
+
+PATTERN="$(echo $PARTITION_SPAREFS_DEVICE | sed 's,/,\\/,g')"
+MOUNTPOINT="$(awk '/^'$PATTERN'/ { print $2 }' /etc/fstab)"
+if test ! -d "${MOUNTPOINT}/."
+then
+    /sbin/mkfs.${PARTITION_SPAREFS_TYPE}  ${PARTITION_SPAREFS_MKFS_OPTIONS}  ${PARTITION_SPAREFS_DEVICE}
+    test -d "${MOUNTPOINT}/."
+fi
+
+set_permissions "$MOUNTPOINT" 'root:strbo' '02775' "$PATTERN"
+
+for d in connman connman-vpn
+do
+    d="${CONFIG_DIR}/${d}"
+
+    if test -d "$d"
+    then
+        PERM="$(/bin/stat -c '%a %U %G' "$d")"
+        if test "x${PERM}" != 'x2775 root netcfg'
+        then
+            /bin/chown root:netcfg "$d"
+            /bin/chmod 02775 "$d"
+        fi
+    else
+        /bin/mkdir -m 02775 "$d"
+        /bin/chown root:netcfg "$d"
+    fi
+done
+
+d='/var/local/data/tacaman'
+if test -d "$d"
+then
+    PERM="$(/bin/stat -c '%a %U %G' "$d")"
+    if test "x${PERM}" != 'x2775 strbo-tacaman tacaman'
+    then
+        /bin/chown strbo-tacaman:tacaman "$d"
+        /bin/chmod 02775 "$d"
+    fi
+else
+    /bin/mkdir -m 02775 "$d"
+    /bin/chown strbo-tacaman:tacaman "$d"
+fi
+
+d='/var/local/data/gerbera'
+if test -d "$d"
+then
+    PERM="$(/bin/stat -c '%a %U %G' "$d")"
+    if test "x${PERM}" != 'x2755 strbo-mediaserver strbo'
+    then
+        /bin/chown strbo-mediaserver:strbo "$d"
+        /bin/chmod 02755 "$d"
+    fi
+else
+    /bin/mkdir -m 02755 "$d"
+    /bin/chown strbo-mediaserver:strbo "$d"
+fi
+
+/usr/sbin/setquota -u strbo-mediaserver 0 1G 0 0 /var/local/data

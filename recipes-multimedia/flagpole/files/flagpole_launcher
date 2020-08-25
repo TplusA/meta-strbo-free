@@ -1,0 +1,29 @@
+#! /bin/sh
+
+test -f /var/local/etc/upnp_settings.rc && . /var/local/etc/upnp_settings.rc
+
+VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | cut -f 2 -d '=')
+VERSION_SHA1=$(grep '^BUILD_GIT_COMMIT=' /etc/os-release | cut -f 2 -d '=')
+MODEL_DESCRIPTION=$(grep '^PRETTY_NAME=' /etc/os-release | cut -f 2 -d '=')
+
+if test "x$UUID" = x
+then
+    UUID='INVALID'
+fi
+
+if test "x$FRIENDLY_NAME_OVERRIDE" != x
+then
+    # Screw you, XML!
+    FRIENDLY_NAME="$(echo "${FRIENDLY_NAME_OVERRIDE}" | sed 's/&/\&amp;/g;s/</\&lt;/g;s/>/\&gt;/g;s/'\''/\&apos;/g;s/"/\&quot;/g;s,\([/&\\]\),\\\1,g')"
+fi
+
+if test "x$APPLIANCE_ID" = x
+then
+    APPLIANCE_ID='generic'
+fi
+
+test "x$FRIENDLY_NAME" = x && FRIENDLY_NAME='T+A Streaming Board'
+
+sed 's/@UUID@/'"${UUID}"'/g;s/@SERIAL_NUMBER@/'"${UUID}"'/g;s/@VERSION_NUMBER@/'"${VERSION_ID}-${VERSION_SHA1}"'/g;s/@MODEL_DESCRIPTION@/'"${MODEL_DESCRIPTION}"'/g;s/@FRIENDLY_NAME@/'"${FRIENDLY_NAME}"'/g;s/@APPLIANCE_ID@/'"${APPLIANCE_ID}"'/g' </usr/share/flagpole/flagpole.xml.in >/tmp/flagpole.xml
+
+exec /usr/bin/flagpole /tmp

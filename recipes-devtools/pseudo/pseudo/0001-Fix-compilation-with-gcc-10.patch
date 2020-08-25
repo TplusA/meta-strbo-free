@@ -1,0 +1,25 @@
+From 8d2034b25d20cf3518997cadd7275bc32c635950 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Tue, 14 Jul 2020 15:30:44 +0200
+Subject: [PATCH] Fix compilation with gcc 10.
+
+---
+ pseudo_ipc.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pseudo_ipc.h b/pseudo_ipc.h
+index 46277bc..c932695 100644
+--- a/pseudo_ipc.h
++++ b/pseudo_ipc.h
+@@ -45,7 +45,7 @@ enum {
+ 	PSA_WRITE = (PSA_EXEC << 1),
+ 	PSA_READ = (PSA_WRITE << 1),
+ 	PSA_APPEND = (PSA_READ << 1),
+-} pseudo_access_t;
++};
+ 
+ #define PSEUDO_ACCESS_MAP(mode, fcntl_access, pseudo_access) ((((mode) & O_ACCMODE) == (fcntl_access)) ? (pseudo_access) : (0))
+ #define PSEUDO_ACCESS_FLAG(mode, fcntl_access, pseudo_access) (((mode) & (fcntl_access)) ? (pseudo_access) : (0))
+-- 
+2.27.0
+

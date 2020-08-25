@@ -1,0 +1,256 @@
+#! /bin/bash -e
+# Emacs: -*- mode: sh; indent-tabs-mode: t; compile-command: "shellcheck -f gcc system_test_import"; -*-
+
+declare DESCRIPTION="Streamin board media server system test executable for import performance
+
+The executable tests a strbo system on the same network that can be accessed by SSH.
+
+Tests assume a T+A R 1000 E appliance (e.g. for usb port numbers).
+
+Tests require modification on the strbo system:
+   - usb-storage-manual: Enumerate usb storage devices as block devices only after manual command.
+   - sysstat: needed for iostat.
+"
+
+declare USB_DEVICES="front rear"
+# shellcheck disable=SC2016
+declare DIRECTORY_EXPR='$(date +%y%m%d-%H%M)-strbo-$REMOTE_BUILD_GIT_COMMIT_SHORT-$SYSTEMUNDERTEST'
+declare DIRECTORY=
+
+declare POLL_MAX=30
+declare POLL_AGAIN_SECONDS=10
+declare BEGIN_AFTER_SECONDS=5
+declare FINISH_AFTER_SECONDS=5
+declare REPETITION_MAX=10
+declare GERBERA_HOME=/var/local/data/gerbera
+
+declare -A USB_DEVICE_MAX_TIME=([front]=42 [rear]=4200)
+declare ERROR_COUNT=0
+error() { let ERROR_COUNT=$ERROR_COUNT+1; echo "Error: $*" > /dev/stderr; }
+
+declare POSITIONAL=()
+while [ $# -gt 0 ]; do
+	case $1 in
+		-x)
+			set -x
+			shift
+			;;
+		-u|--usb-devices)
+			USB_DEVICES=${2:?Error:Missing parameter to $1.}
+			shift 2
+			;;
+		-d|--directory)
+			DIRECTORY=${2:?Error:Missing parameter to $1.}
+			shift 2
+			;;
+		-c|--count)
+			REPETITION_MAX=${2:?Error:Missing parameter to $1.}
+			shift 2
+			;;
+		-h|--help)
+			echo "${BASH_SOURCE##*/} [-x] [-h|--help] [-u|--usb-devices USB_DEVICES] [-d|--directory DIRECTORY] [-c REPETITION] SYSTEMUNDERTEST"
+			echo "$DESCRIPTION"
+			echo "Default values:"
+			echo "  USB_DEVICES='$USB_DEVICES'"
+			echo "  DIRECTORY='$DIRECTORY_EXPR"
+			echo "  REPETITION='$REPETITION_MAX'"
+			exit
+			;;
+		*)
+			POSITIONAL+=("$1")
+			shift
+			;;
+	esac
+done
+set -- "${POSITIONAL[@]}"
+POSITIONAL=
+
+SYSTEMUNDERTEST=${1:?Error:Missing parameter SYSTEMUNDERTEST.}
+
+
+remote() {
+	# shellcheck disable=SC2029
+	ssh "root@$SYSTEMUNDERTEST" "$@";
+}
+
+checkpoint()  {  { echo -e "\n---$1---\n"; remote "/usr/bin/iostat -t"; } >> "$directory/iostat.txt"; }
+
+remote_reboot_and_wait_for_connection() {
+	remote bash -c "/sbin/reboot &"
+	sleep 3
+	declare started=$SECONDS
+	declare n=$POLL_MAX
+	while ! remote -o ServerAliveInterval=1 true 2>/dev/null;  do
+		if [ $n -gt 0 ]; then
+			let n=$n-1
+			echo -en "\rWaited for $((SECONDS-started)) seconds. (Polling interval is $POLL_AGAIN_SECONDS seconds.)"
+			sleep $POLL_AGAIN_SECONDS
+		else
+			echo -e "\rFailed to connect."
+			exit 1
+		fi
+	done
+	echo
+}
+
+echo "Checking usb-storage (usb-storage-manual)..."
+remote which usb-storage
+
+echo "Checking iostat (sysstat)..."
+remote which iostat
+
+echo "Getting REMOTE_BUILD_GIT_COMMIT_SHORT..."
+REMOTE_BUILD_GIT_COMMIT=$(ssh "$SYSTEMUNDERTEST" 'cat /etc/os-release' | grep BUILD_GIT_COMMIT | cut -d '=' -f2)
+REMOTE_BUILD_GIT_COMMIT_SHORT=${REMOTE_BUILD_GIT_COMMIT:0:7}
+echo "Got REMOTE_BUILD_GIT_COMMIT_SHORT=$REMOTE_BUILD_GIT_COMMIT_SHORT"
+
+declare base_directory=${DIRECTORY:-$(eval "echo $DIRECTORY_EXPR")}
+
+for usb_device in $USB_DEVICES; do
+	for repetition in $(seq 1 "$REPETITION_MAX"); do
+
+		directory=$(printf '%s/%s/import-%02d' "$base_directory" "$usb_device" "$repetition")
+
+		echo "Importing $repetition/$REPETITION_MAX while saving output to $directory..."
+
+		mkdir -p "$directory"
+
+		echo "Stopping Gerbera and deleting database..."
+
+		remote systemctl stop gerbera
+		remote gerbera-reset-database
+
+		echo "Rebooting remote and waiting for connection..."
+
+		remote_reboot_and_wait_for_connection
+
+		echo "Executing test..."
+
+		coproc REMOTE_JOURNAL { remote journalctl -f; }
+		# bash issues false warning while launching the second coproc
+		# https://lists.gnu.org/archive/html/bug-bash/2011-04/msg00023.html
+		coproc REMOTE_STAT { remote "vmstat -w -t 1 > /tmp/stat.txt"; }
+
+		checkpoint "Ready"
+
+		echo "Waiting BEGIN_AFTER_SECONDS=${BEGIN_AFTER_SECONDS}s..."
+		sleep $BEGIN_AFTER_SECONDS
+
+		checkpoint "About to start"
+
+		remote usb-storage bind "$usb_device"
+
+		LINE_REGEX='Finished importing: /Storage/T.-MS-T.-I. in (.*)s'
+		while read line <&"${REMOTE_JOURNAL[0]}"; do
+			echo "$line"
+			if [[ "$line" =~ $LINE_REGEX ]]; then
+				if (( $(bc -l <<< "${BASH_REMATCH[1]}>${USB_DEVICE_MAX_TIME[$usb_device]}") )); then
+					error "Import time ${BASH_REMATCH[1]}s exceeds ${USB_DEVICE_MAX_TIME[$usb_device]}s."
+				else
+					echo "Success: Import time ${BASH_REMATCH[1]}s is less than ${USB_DEVICE_MAX_TIME[$usb_device]}s."
+				fi
+				break
+			fi
+		done
+
+		checkpoint "Import finished"
+
+		echo "Waiting FINISH_AFTER_SECONDS=${FINISH_AFTER_SECONDS}s..."
+		sleep $FINISH_AFTER_SECONDS
+
+		checkpoint "Stopping"
+
+		kill "$REMOTE_JOURNAL_PID" && ! wait "$_"
+		kill "$REMOTE_STAT_PID"&& ! wait "$_"
+
+		echo "Saving journal..."
+
+		remote journalctl -u gerbera >> "$directory/journal.txt"
+		scp "$SYSTEMUNDERTEST:$GERBERA_HOME/gerbera.db" "$directory"
+		scp "$SYSTEMUNDERTEST:/tmp/stat.txt" "$directory"
+
+	done
+
+	echo "Removing $usb_device from /etc/usb-storage-manual..."
+	remote cp /etc/usb-storage-manual /etc/usb-storage-manual-default
+	remote sed -i "/$usb_device/d" /etc/usb-storage-manual
+
+	for repetition in $(seq 1 "$REPETITION_MAX"); do
+
+		directory=$(printf '%s/%s/rescan-%02d' "$base_directory" "$usb_device" "$repetition")
+
+		echo "Recanning $repetition/$REPETITION_MAX while saving output to $directory..."
+
+		mkdir -p "$directory"
+
+		echo "Rebooting remote and waiting for connection..."
+
+		remote_reboot_and_wait_for_connection
+
+		echo "Executing test..."
+
+		coproc REMOTE_JOURNAL { remote journalctl -f; }
+		# bash issues false warning while launching the second coproc
+		# https://lists.gnu.org/archive/html/bug-bash/2011-04/msg00023.html
+		# shellcheck disable=2034
+		coproc REMOTE_STAT { remote "vmstat -w -t 1 > /tmp/stat.txt"; }
+
+		checkpoint "Ready"
+
+		echo "Waiting BEGIN_AFTER_SECONDS=${BEGIN_AFTER_SECONDS}s..."
+		sleep $BEGIN_AFTER_SECONDS
+
+		checkpoint "About to start"
+
+		echo "Waiting for start and then idle..."
+
+		while read line <&"${REMOTE_JOURNAL[0]}"; do
+			echo "$line"
+			if grep -e "Starting performing full scan: /Storage" <<<"$line" >/dev/null; then
+				break
+			fi
+		done
+		while read line <&"${REMOTE_JOURNAL[0]}"; do
+			echo "$line"
+			if grep -e "Content-manager-status: Idle" <<<"$line" >/dev/null; then
+				break
+			fi
+		done
+
+		checkpoint "Rescan finished"
+
+		echo "Waiting FINISH_AFTER_SECONDS=${FINISH_AFTER_SECONDS}s..."
+		sleep $FINISH_AFTER_SECONDS
+
+		checkpoint "Stopping"
+
+		kill "$REMOTE_JOURNAL_PID" && ! wait "$_"
+		kill "$REMOTE_STAT_PID" && ! wait "$_"
+
+		echo "Saving journal..."
+
+		remote journalctl -u gerbera >> "$directory/journal.txt"
+		scp "$SYSTEMUNDERTEST:$GERBERA_HOME/gerbera.db" "$directory"
+		scp "$SYSTEMUNDERTEST:/tmp/stat.txt" "$directory"
+
+		echo "Checking that all the 'File-count: ...' lines are the same..."
+		# shellcheck disable=SC2016
+		if [ "$(grep -o -e "File-count: .*" "$directory/journal.txt" | uniq | wc -l)" == "1" ]; then
+			echo "Success: All 'File-count: ...' lines are the same"
+		else
+		   error "Checking that all the  'File-count: ...' lines are the same... failed."
+		fi
+	done
+
+	echo "Restoring /etc/usb-storage-manual..."
+	remote mv -f /etc/usb-storage-manual-default /etc/usb-storage-manual
+
+done
+
+if [ $ERROR_COUNT -gt 0 ]; then
+	echo "Summary: $ERROR_COUNT errors."
+else
+	echo "Success."
+fi
+
+exit $ERROR_COUNT

@@ -1,0 +1,45 @@
+From 7d0ee69b7556fdce881bafe7da38ddc9c9d4aeea Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alp=20=C3=96zmert?= <info@ib-oezmert.de>
+Date: Tue, 27 Nov 2018 16:42:00 +0100
+Subject: [PATCH] Remove "All audio" & "All - full name".
+
+---
+ scripts/js/import.js | 19 -------------------
+ 1 file changed, 19 deletions(-)
+
+diff --git a/scripts/js/import.js b/scripts/js/import.js
+index 456f360..71671f3 100644
+--- a/scripts/js/import.js
++++ b/scripts/js/import.js
+@@ -91,28 +91,9 @@ function addAudio(obj) {
+     // comment the following line out if you uncomment the stuff above  :)
+     var track = '';
+ 
+-    var chain = ['Audio', 'All Audio'];
+-    obj.title = title;
+-    addCdsObject(obj, createContainerChain(chain));
+-    
+     chain = ['Audio', 'Artists', artist, 'All Songs'];
+     addCdsObject(obj, createContainerChain(chain));
+     
+-    chain = ['Audio', 'All - full name'];
+-    var temp = '';
+-    if (artist_full) {
+-        temp = artist_full;
+-    }
+-    
+-    if (album_full) {
+-        temp = temp + ' - ' + album_full + ' - ';
+-    } else {
+-        temp = temp + ' - ';
+-    }
+-   
+-    obj.title = temp + title;
+-    addCdsObject(obj, createContainerChain(chain));
+-    
+     chain = ['Audio', 'Artists', artist, 'All - full name'];
+     addCdsObject(obj, createContainerChain(chain));
+     
+-- 
+2.7.4
+

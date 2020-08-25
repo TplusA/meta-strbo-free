@@ -1,0 +1,55 @@
+From ea130ff295fe6660fe273df10b817d8ae3e96418 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Mon, 5 Aug 2019 14:47:26 +0200
+Subject: [PATCH] bcm2835-i2s: Bit clock is always on for SND_SOC_DAIFMT_CONT
+
+---
+ sound/soc/bcm/bcm2835-i2s.c | 18 ++++++++----------
+ 1 file changed, 8 insertions(+), 10 deletions(-)
+
+diff --git a/sound/soc/bcm/bcm2835-i2s.c b/sound/soc/bcm/bcm2835-i2s.c
+index e6a12e271b07..49637b2f526d 100644
+--- a/sound/soc/bcm/bcm2835-i2s.c
++++ b/sound/soc/bcm/bcm2835-i2s.c
+@@ -208,7 +208,7 @@ static void bcm2835_i2s_clear_fifos(struct bcm2835_i2s_dev *dev,
+ 		dev_err(dev->dev, "I2S SYNC error!\n");
+ 
+ 	/* Stop clock if it was not running before */
+-	if (!clk_was_prepared)
++	if (!clk_was_prepared && !(dev->fmt & SND_SOC_DAIFMT_CONT))
+ 		bcm2835_i2s_stop_clock(dev);
+ 
+ 	/* Restore I2S state */
+@@ -699,7 +699,8 @@ static int bcm2835_i2s_startup(struct snd_pcm_substream *substream,
+ 		return 0;
+ 
+ 	/* Should this still be running stop it */
+-	bcm2835_i2s_stop_clock(dev);
++	if (!(dev->fmt & SND_SOC_DAIFMT_CONT))
++		bcm2835_i2s_stop_clock(dev);
+ 
+ 	/* Enable PCM block */
+ 	regmap_update_bits(dev->i2s_regmap, BCM2835_I2S_CS_A_REG,
+@@ -727,14 +728,11 @@ static void bcm2835_i2s_shutdown(struct snd_pcm_substream *substream,
+ 		return;
+ 
+ 	/* Disable the module */
+-	regmap_update_bits(dev->i2s_regmap, BCM2835_I2S_CS_A_REG,
+-			BCM2835_I2S_EN, 0);
+-
+-	/*
+-	 * Stopping clock is necessary, because stop does
+-	 * not stop the clock when SND_SOC_DAIFMT_CONT
+-	 */
+-	bcm2835_i2s_stop_clock(dev);
++	if (!(dev->fmt & SND_SOC_DAIFMT_CONT)) {
++		regmap_update_bits(dev->i2s_regmap, BCM2835_I2S_CS_A_REG,
++				BCM2835_I2S_EN, 0);
++		bcm2835_i2s_stop_clock(dev);
++	}
+ }
+ 
+ static const struct snd_soc_dai_ops bcm2835_i2s_dai_ops = {
+-- 
+2.26.1
+
