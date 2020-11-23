@@ -4,7 +4,7 @@ LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "a2e8167feae5144dacfe45defa454b39346a38d9"
+SRCREV = "f7d33bf9843910386a9d1e2c77402fc0936aa84f"
 PR = "r0"
 
 SRC_URI = " \
