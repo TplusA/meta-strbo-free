@@ -6,7 +6,7 @@ SUMMARY = "Packages used on the T+A Streaming Board recovery system"
 LICENSE = "MIT"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-PR = "r7"
+PR = "r8"
 
 inherit packagegroup
 
@@ -25,6 +25,7 @@ RDEPENDS_${PN} = " \
     util-linux-mount \
     util-linux-mkfs \
     systemd \
+    systemd-journal-gatewayd \
     udev \
     bash \
     procps \
