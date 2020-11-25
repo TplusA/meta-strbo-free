@@ -6,7 +6,7 @@ SUMMARY = "Packages used on the T+A Streaming Board recovery system"
 LICENSE = "MIT"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-PR = "r8"
+PR = "r0"
 
 inherit packagegroup
 

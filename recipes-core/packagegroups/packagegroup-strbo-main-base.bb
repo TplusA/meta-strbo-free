@@ -2,11 +2,11 @@
 # Copyright (C) 2015, 2018, 2020 T+A elektroakustik GmbH & Co. KG
 #
 
-SUMMARY = "Packages used on the T+A Streaming Board"
+SUMMARY = "Basic packages used on the T+A Streaming Board"
 LICENSE = "MIT"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-PR = "r14"
+PR = "r0"
 
 inherit packagegroup
 
@@ -64,8 +64,6 @@ RDEPENDS_${PN} = " \
     strbo-startup \
     strbo-licenses \
     strbo-power \
-    strbo-appliance-icons \
-    strbo-appliance-icons-lighttpd \
     strbo-rest-lighttpd \
     updata \
     drcpd \
