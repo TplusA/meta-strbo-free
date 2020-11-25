@@ -7,7 +7,7 @@ IMAGE_ROOTFS_EXTRA_SPACE_append = "${@bb.utils.contains("PACKAGE_INSTALL", "dnf"
 IMAGE_FSTYPES += "${MAINROOTFS_TYPE}"
 EXTRA_IMAGECMD_${MAINROOTFS_TYPE} ?= "${MAINROOTFS_MKFS_EXTRA}"
 
-IMAGE_INSTALL = "packagegroup-strbo-main"
+IMAGE_INSTALL = "packagegroup-strbo-main packagegroup-strbo-main-extra"
 IMAGE_INSTALL += "u-boot-rpi-main u-boot-rpi3-main"
 IMAGE_FEATURES += "package-management"
 IMAGE_LINGUAS = "en-us"
