@@ -11,6 +11,6 @@ PR = "r0"
 inherit packagegroup
 
 RDEPENDS_${PN} = " \
-    strbo-appliance-icons \
-    strbo-appliance-icons-lighttpd \
+    strbo-appliance-icons-free \
+    strbo-appliance-icons-free-lighttpd \
 "
