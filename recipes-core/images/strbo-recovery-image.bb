@@ -7,7 +7,7 @@ IMAGE_ROOTFS_EXTRA_SPACE_append = "${@bb.utils.contains("PACKAGE_INSTALL", "dnf"
 IMAGE_FSTYPES += "${RECOVERYROOTFS_TYPE}"
 EXTRA_IMAGECMD_${RECOVERYROOTFS_TYPE} ?= "${RECOVERYROOTFS_MKFS_EXTRA}"
 
-IMAGE_INSTALL = "packagegroup-strbo-recovery-base"
+IMAGE_INSTALL = "packagegroup-strbo-recovery-base packagegroup-strbo-recovery-extra"
 IMAGE_FEATURES += "read-only-rootfs"
 IMAGE_LINGUAS = "en-us"
 GLIBC_GENERATE_LOCALES = "en_US.UTF-8"
