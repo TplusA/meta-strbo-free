@@ -87,10 +87,6 @@ RECOVERYDATAFS_MOUNTPOINT          ?= "/src"
 # Shared partitions
 #
 
-# Device ID partition
-DEVICE_ID_PARTITION_NUMBER         ?= "4"
-DEVICE_ID_PARTITION_SIZE           ?= "4096"
-
 # Spare partition
 SPAREFS_PARTITION_NUMBER           ?= "8"
 SPAREFS_TYPE                       ?= "ext4"

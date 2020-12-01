@@ -23,7 +23,7 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 ###
 EMMC_IMAGE_FILENAME = "${IMAGE_NAME}.emmc.image"
 EMMC_IMAGE = "${DEPLOY_DIR_IMAGE}/${EMMC_IMAGE_FILENAME}"
-EMMC_TOTAL_SPACE ?= "3817472"
+EMMC_TOTAL_SPACE ?= "3813376"
 
 PART_BOOT_MAIN_NAME             = "${DEPLOY_DIR_IMAGE}/strbo-main-boot-image-${MACHINE}.${MAINBOOT_TYPE}"
 PART_BOOT_MAIN_SPACE            = "${MAINBOOT_PARTITION_SIZE}"
@@ -46,9 +46,6 @@ PART_ROOTFS_MAIN_TYPE           = "${MAINROOTFS_TYPE}"
 
 PART_DATA_MAIN_TYPE             = "${SPAREFS_TYPE}"
 
-PART_DATA_JUNK_NAME             = "${DEPLOY_DIR_IMAGE}/strbo-junk-image.bin"
-PART_DATA_JUNK_SPACE            = "${DEVICE_ID_PARTITION_SIZE}"
-
 # Partitions should be aligned to erase block size for good write performance,
 # which means 512 kiB on Samsungs's eMMC as used on the Raspberry Compute
 # Module.
@@ -63,6 +60,8 @@ PART_DATA_JUNK_SPACE            = "${DEVICE_ID_PARTITION_SIZE}"
 # This value is specified in sectors (512 bytes).
 PARTITION_ALIGNMENT ?= "1024"
 
+REDUCE_EMMC_SPACE ?= "0"
+
 ###
 ### How to build the full image
 ###
@@ -73,7 +72,7 @@ do_emmc_image() {
     dd if=/dev/zero of=${EMMC_IMAGE} bs=1024 count=0 seek=${EMMC_TOTAL_SPACE} status=none
 
     # Space used for regular partitions
-    REDUCED_EMMC_TOTAL_SPACE=$(expr ${EMMC_TOTAL_SPACE} - ${PART_DATA_JUNK_SPACE})
+    REDUCED_EMMC_TOTAL_SPACE=$(expr ${EMMC_TOTAL_SPACE} - ${REDUCE_EMMC_SPACE})
 
     # Partition table
     parted -s ${EMMC_IMAGE} mklabel msdos
@@ -100,10 +99,6 @@ do_emmc_image() {
     parted -s ${EMMC_IMAGE} unit s mkpart extended ${PART_OFFSET} ${PART_END}
     EXTENDED_PARTITION_OFFSET=${PART_OFFSET}
     EXTENDED_PARTITION_END=${PART_END}
-
-    # Junk data partition
-    PART_OFFSET=$(expr ${PART_END} + 1)
-    parted -s ${EMMC_IMAGE} -- unit s mkpart primary ${PART_OFFSET} -1s
 
     # User settings (logical), left empty and formatted at runtime
     PART_SIZE=$(expr ${PART_USER_SETTINGS_SPACE} \* 2)
