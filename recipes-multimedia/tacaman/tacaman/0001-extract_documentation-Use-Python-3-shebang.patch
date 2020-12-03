@@ -11,12 +11,11 @@ diff --git a/dbus_interfaces/extract_documentation.py b/dbus_interfaces/extract_
 index 164454c..7fffcba 100755
 --- a/dbus_interfaces/extract_documentation.py
 +++ b/dbus_interfaces/extract_documentation.py
-@@ -1,4 +1,4 @@
+@@ -1,3 +1,3 @@
 -#! /usr/bin/env python
 +#! /usr/bin/env python3
  
  #
- # Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
 -- 
 2.25.1
 
