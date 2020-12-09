@@ -75,19 +75,3 @@ dtoverlay=strbo-bcm2835-gpio
 dtoverlay=strbo-tahifi-i2s
 EOF
 }
-
-pkg_preinst_${PN} () {
-if [ x"$D" = x ]; then mount -o remount,rw ${BOOT_PARTITION_MOUNTPOINT}; fi
-}
-
-pkg_postinst_${PN} () {
-if [ x"$D" = x ]; then mount -o remount,ro ${BOOT_PARTITION_MOUNTPOINT}; fi
-}
-
-pkg_prerm_${PN} () {
-if [ x"$D" = x ]; then mount -o remount,rw ${BOOT_PARTITION_MOUNTPOINT}; fi
-}
-
-pkg_postrm_${PN} () {
-if [ x"$D" = x ]; then mount -o remount,ro ${BOOT_PARTITION_MOUNTPOINT}; fi
-}

@@ -7,7 +7,7 @@ require bcm2835-bootfiles.inc
 
 SUMMARY = "Broadcom boot loader configuration files for StrBo recovery system"
 
-PR = "r3"
+PR = "r4"
 
 do_install_append() {
     #
