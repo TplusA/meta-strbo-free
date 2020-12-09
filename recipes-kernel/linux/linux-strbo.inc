@@ -49,19 +49,3 @@ do_install_append() {
         cp ${D}/${KERNEL_IMAGEDEST}/${DTB} ${D}/${BOOT_PARTITION_MOUNTPOINT}/${DTB}
     done
 }
-
-pkg_preinst_kernel-devicetree () {
-if [ x"$D" = x ]; then mount -o remount,rw ${BOOT_PARTITION_MOUNTPOINT}; fi
-}
-
-pkg_postinst_kernel-devicetree () {
-if [ x"$D" = x ]; then mount -o remount,ro ${BOOT_PARTITION_MOUNTPOINT}; fi
-}
-
-pkg_prerm_kernel-devicetree () {
-if [ x"$D" = x ]; then mount -o remount,rw ${BOOT_PARTITION_MOUNTPOINT}; fi
-}
-
-pkg_postrm_kernel-devicetree () {
-if [ x"$D" = x ]; then mount -o remount,ro ${BOOT_PARTITION_MOUNTPOINT}; fi
-}
