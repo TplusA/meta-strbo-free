@@ -4,6 +4,8 @@ SUMMARY = "T+A Streaming Board system information"
 DESCRIPTION = "The /usr/lib/strbo-release file contains StrBo information."
 LICENSE = "MIT"
 
+PV := "${DISTRO_VERSION}"
+
 FILES_${PN} += "${nonarch_libdir}/strbo-release"
 
 do_compile() {
