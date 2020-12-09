@@ -3,7 +3,7 @@ require u-boot-rpi.inc
 
 BOOT_PARTITION_MOUNTPOINT = "${RECOVERYBOOT_PARTITION_MOUNTPOINT}"
 
-PR = "r8"
+PR = "r9"
 
 do_configure_prepend() {
     cat <<EOF >>${S}/include/config_distro_bootcmd.h

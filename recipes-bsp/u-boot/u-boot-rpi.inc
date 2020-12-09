@@ -55,21 +55,3 @@ do_install() {
 
     install -m 0644 ${BOOT_SCR} ${D}${BOOT_PARTITION_MOUNTPOINT}
 }
-
-pkg_preinst_${PN} () {
-if [ x"$D" = x ]; then
-    if [ -f /var/lib/opkg/info/u-boot-rpi-main.postrm ]; then
-        echo 'exit 0' >/var/lib/opkg/info/u-boot-rpi-main.postrm
-    fi
-
-    mount -o remount,rw ${BOOT_PARTITION_MOUNTPOINT}
-fi
-}
-
-pkg_postinst_${PN} () {
-if [ x"$D" = x ]; then mount -o remount,ro ${BOOT_PARTITION_MOUNTPOINT}; fi
-}
-
-pkg_prerm_${PN} () {
-if [ x"$D" = x ]; then mount -o remount,rw ${BOOT_PARTITION_MOUNTPOINT}; fi
-}
