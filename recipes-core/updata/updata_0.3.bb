@@ -4,8 +4,8 @@ LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "81c572a5150d0c6af0848257adac1c2c85947ad0"
-PR = "r0"
+SRCREV = "6994c7a8699e504a3a819ccb77fe97bf680245a2"
+PR = "r1"
 
 SRC_URI = " \
     git://git.tua.local/repo/UpdaTA;branch=master;protocol=http \
