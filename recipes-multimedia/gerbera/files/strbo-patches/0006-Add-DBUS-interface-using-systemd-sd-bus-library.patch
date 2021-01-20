@@ -1,4 +1,4 @@
-From 7632fc90cb093ad65803e27718a452317f389c82 Mon Sep 17 00:00:00 2001
+From 2b19a9010261c44f76e78c2ab08d2f50fc0f276c Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Alp=20=C3=96zmert?= <info@ib-oezmert.de>
 Date: Fri, 30 Nov 2018 18:08:20 +0100
 Subject: [PATCH] Add DBUS interface using systemd/sd-bus library
@@ -8,17 +8,17 @@ The interface currently contains:
 - Property Busy
 - Signal BusyChangedTo (Might be deprecated)
 ---
- CMakeLists.txt              |  10 ++++
- src/content_manager.cc      | 134 ++++++++++++++++++++++++++++++++++++++++++--
- src/content_manager.h       |  16 ++++++
- src/sd-bus-vtable-for-cxx.c |  53 ++++++++++++++++++
- src/sd-bus-vtable-for-cxx.h |  36 ++++++++++++
- 5 files changed, 243 insertions(+), 6 deletions(-)
+ CMakeLists.txt              |  10 +++
+ src/content_manager.cc      | 139 ++++++++++++++++++++++++++++++++++--
+ src/content_manager.h       |  16 +++++
+ src/sd-bus-vtable-for-cxx.c |  53 ++++++++++++++
+ src/sd-bus-vtable-for-cxx.h |  36 ++++++++++
+ 5 files changed, 247 insertions(+), 7 deletions(-)
  create mode 100644 src/sd-bus-vtable-for-cxx.c
  create mode 100644 src/sd-bus-vtable-for-cxx.h
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 44f8b77..fe74cda 100644
+index 0352a0b9..6bc03fa3 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -165,6 +165,8 @@ set(libgerberaFILES
@@ -30,7 +30,7 @@ index 44f8b77..fe74cda 100644
          src/search_handler.cc
          src/search_handler.h
          src/server.cc
-@@ -548,11 +550,19 @@ if(WITH_SYSTEMD)
+@@ -562,11 +564,19 @@ if(WITH_SYSTEMD)
          configure_file(${CMAKE_SOURCE_DIR}/scripts/systemd/gerbera.service.cmake gerbera.service)
          message(STATUS "Configuring systemd unit file: gerbera.service" )
          INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/gerbera.service DESTINATION ${SYSTEMD_UNIT_DIR} COMPONENT init)
@@ -51,7 +51,7 @@ index 44f8b77..fe74cda 100644
  find_package (ZLIB REQUIRED)
  include_directories(${ZLIB_INCLUDE_DIRS})
 diff --git a/src/content_manager.cc b/src/content_manager.cc
-index 1515c1f..6d83082 100644
+index ea11cab8..7d59b9e1 100644
 --- a/src/content_manager.cc
 +++ b/src/content_manager.cc
 @@ -79,6 +79,9 @@ extern "C" {
@@ -101,20 +101,24 @@ index 1515c1f..6d83082 100644
  {
      int i;
      ignore_unknown_extensions = false;
-@@ -255,6 +287,12 @@ ContentManager::ContentManager()
+@@ -250,13 +282,61 @@ ContentManager::ContentManager()
+ #endif // ONLINE_SERVICES
+ }
  
- ContentManager::~ContentManager()
- {
+-ContentManager::~ContentManager() { log_debug("ContentManager destroyed\n"); }
++ContentManager::~ContentManager()
++{
 +    if (dbus_slot_) {
 +        sd_bus_slot_unref(dbus_slot_);
 +    }
 +    if (dbus_) {
 +        sd_bus_unref(dbus_);
 +    }
-     log_debug("ContentManager destroyed\n");
- }
++    log_debug("ContentManager destroyed\n");
++}
  
-@@ -263,6 +301,45 @@ void ContentManager::init()
+ void ContentManager::init()
+ {
      reMimetype = Ref<RExp>(new RExp());
      reMimetype->compile(_(MIMETYPE_REGEXP));
  
@@ -157,10 +161,10 @@ index 1515c1f..6d83082 100644
 +        throw std::system_error(-r, std::generic_category(), "Failed to set thread name");
 +    }
 +
-     int ret = pthread_create(
-         &taskThread,
+     int ret = pthread_create(&taskThread,
          nullptr, //&attr, // attr
-@@ -272,6 +349,11 @@ void ContentManager::init()
+         ContentManager::staticThreadProc, this);
+@@ -264,6 +344,11 @@ void ContentManager::init()
          throw _Exception(_("Could not start task thread"));
      }
  
@@ -172,7 +176,7 @@ index 1515c1f..6d83082 100644
      autoscan_timed->notifyAll(this);
  
  #ifdef HAVE_INOTIFY
-@@ -1244,23 +1326,63 @@ void ContentManager::reloadLayout()
+@@ -1235,23 +1320,63 @@ void ContentManager::reloadLayout()
      initLayout();
  }
  
@@ -243,21 +247,21 @@ index 1515c1f..6d83082 100644
          } else {
              currentTask = task;
 diff --git a/src/content_manager.h b/src/content_manager.h
-index f4eadd7..f27ef1c 100644
+index d67adf5a..73643c47 100644
 --- a/src/content_manager.h
 +++ b/src/content_manager.h
-@@ -64,6 +64,10 @@
+@@ -64,6 +64,10 @@ class PlaylistParserScript;
  
-     #include "executor.h"
+ #include "executor.h"
  
 +extern "C" {
 +#include <systemd/sd-bus.h>
 +}
 +
- class CMAddFileTask : public GenericTask
- {
+ class CMAddFileTask : public GenericTask {
  protected:
-@@ -436,6 +440,18 @@ protected:
+     zmm::String path;
+@@ -430,6 +434,18 @@ protected:
      friend void CMFetchOnlineContentTask::run();
  #endif
      friend void CMLoadAccountingTask::run();
@@ -278,7 +282,7 @@ index f4eadd7..f27ef1c 100644
  #endif // __CONTENT_MANAGER_H__
 diff --git a/src/sd-bus-vtable-for-cxx.c b/src/sd-bus-vtable-for-cxx.c
 new file mode 100644
-index 0000000..c39e56f
+index 00000000..c39e56fb
 --- /dev/null
 +++ b/src/sd-bus-vtable-for-cxx.c
 @@ -0,0 +1,53 @@
@@ -337,7 +341,7 @@ index 0000000..c39e56f
 +}
 diff --git a/src/sd-bus-vtable-for-cxx.h b/src/sd-bus-vtable-for-cxx.h
 new file mode 100644
-index 0000000..e2b3b5e
+index 00000000..e2b3b5e0
 --- /dev/null
 +++ b/src/sd-bus-vtable-for-cxx.h
 @@ -0,0 +1,36 @@
@@ -378,5 +382,5 @@ index 0000000..e2b3b5e
 +
 +#endif
 -- 
-2.7.4
+2.17.1
 

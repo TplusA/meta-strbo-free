@@ -2,12 +2,12 @@
 #
 # Changes:
 #
-# - Fixed version to 1.2.0
+# - Fixed version to 1.3.5
 # - Taglib is not optional. Let's keep it simple.
 # - Added custom user and group
 
 Description = "Gerbera UPnP media server"
-PR = "r14"
+PR = "r0"
 
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://LICENSE.md;md5=25cdec9afe3f1f26212ead6bd2f7fac8"

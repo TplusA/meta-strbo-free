@@ -1,4 +1,4 @@
-From f39faf47b17f4d499a54a3003d2be8d8808c6bbc Mon Sep 17 00:00:00 2001
+From 6e107e0db7142c7b431893d2d1871e03e46a893d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Alp=20=C3=96zmert?= <info@ib-oezmert.de>
 Date: Wed, 14 Nov 2018 18:55:42 +0100
 Subject: [PATCH] Write out file-count after addition/removal/rescan
@@ -14,10 +14,10 @@ to retriebe the file-count.
  4 files changed, 11 insertions(+), 5 deletions(-)
 
 diff --git a/src/content_manager.cc b/src/content_manager.cc
-index d480e4e..1515c1f 100644
+index 9739d243..ea11cab8 100644
 --- a/src/content_manager.cc
 +++ b/src/content_manager.cc
-@@ -446,7 +446,7 @@ Ref<Array<GenericTask>> ContentManager::getTasklist()
+@@ -435,7 +435,7 @@ Ref<Array<GenericTask>> ContentManager::getTasklist()
  void ContentManager::_loadAccounting()
  {
      Ref<Storage> storage = Storage::getInstance();
@@ -26,7 +26,7 @@ index d480e4e..1515c1f 100644
  }
  
  void ContentManager::addVirtualItem(Ref<CdsObject> obj, bool allow_fifo)
-@@ -820,6 +820,7 @@ void ContentManager::addRecursive(String path, bool hidden, Ref<GenericTask> tas
+@@ -810,6 +810,7 @@ void ContentManager::addRecursive(String path, bool hidden, Ref<GenericTask> tas
                          log_info("Adding file: %s\n", newPath.c_str());
                          addObject(obj);
                          parentID = obj->getParentID();
@@ -34,7 +34,7 @@ index d480e4e..1515c1f 100644
                      }
                  }
              }
-@@ -1252,6 +1253,8 @@ void ContentManager::threadProc()
+@@ -1243,6 +1244,8 @@ void ContentManager::threadProc()
      while (!shutdownFlag) {
          currentTask = nullptr;
          if (((task = taskQueue1->dequeue()) == nullptr) && ((task = taskQueue2->dequeue()) == nullptr)) {
@@ -44,32 +44,30 @@ index d480e4e..1515c1f 100644
              log_info("Content-manager-status: Idle\n");
              /* if nothing to do, sleep until awakened */
 diff --git a/src/storage.h b/src/storage.h
-index eddde52..4e75a1d 100644
+index 972521db..c949a76e 100644
 --- a/src/storage.h
 +++ b/src/storage.h
-@@ -236,7 +236,8 @@ public:
+@@ -246,7 +246,8 @@ public:
      virtual std::unique_ptr<std::vector<int>> getServiceObjectIDs(char servicePrefix) = 0;
-     
+ 
      /* accounting methods */
 -    virtual int getTotalFiles() = 0;
 +    // Use this instead of CMAccounting::totalFiles that doesn't decrease after removing files
 +    virtual int getTotalFiles(bool real_files_only=false) = 0;
-     
+ 
      /* internal setting methods */
      virtual zmm::String getInternalSetting(zmm::String key) = 0;
 diff --git a/src/storage/sql_storage.cc b/src/storage/sql_storage.cc
-index 9f36a32..55be2d4 100644
+index 598a66ed..7b6bc3a3 100644
 --- a/src/storage/sql_storage.cc
 +++ b/src/storage/sql_storage.cc
-@@ -1308,14 +1308,16 @@ Ref<Dictionary> SQLStorage::retrieveMetadataForObject(int objectId)
+@@ -1140,12 +1140,14 @@ Ref<Dictionary> SQLStorage::retrieveMetadataForObject(int objectId)
  }
  
  
 -int SQLStorage::getTotalFiles()
 +int SQLStorage::getTotalFiles(bool real_files_only)
  {
-     flushInsertBuffer();
- 
      std::ostringstream query;
      query << "SELECT COUNT(*) FROM " << TQ(CDS_OBJECT_TABLE) << " WHERE "
             << TQ("object_type") << " != " << quote(OBJECT_TYPE_CONTAINER);
@@ -81,10 +79,10 @@ index 9f36a32..55be2d4 100644
      Ref<SQLRow> row;
      if (res != nullptr && (row = res->nextRow()) != nullptr) {
 diff --git a/src/storage/sql_storage.h b/src/storage/sql_storage.h
-index c38c85d..eb6dc70 100644
+index 8292d9af..63550962 100644
 --- a/src/storage/sql_storage.h
 +++ b/src/storage/sql_storage.h
-@@ -122,7 +122,7 @@ public:
+@@ -121,7 +121,7 @@ public:
      virtual zmm::String findFolderImage(int id, zmm::String trackArtBase) override;
      
      /* accounting methods */
@@ -94,5 +92,5 @@ index c38c85d..eb6dc70 100644
      virtual zmm::Ref<zmm::Array<CdsObject> > browse(zmm::Ref<BrowseParam> param) override;
      // virtual _and_ override for consistency!
 -- 
-2.7.4
+2.17.1
 

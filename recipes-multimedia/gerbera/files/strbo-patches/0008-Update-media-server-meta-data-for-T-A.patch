@@ -1,4 +1,4 @@
-From 32280a801a867a678be3bf8c1cf47e21e283d468 Mon Sep 17 00:00:00 2001
+From 453538b3f1c2756c030a9d35febf4c84981861d4 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Alp=20=C3=96zmert?= <info@ib-oezmert.de>
 Date: Thu, 6 Dec 2018 15:19:14 +0100
 Subject: [PATCH] Update media server meta data for T+A
@@ -8,26 +8,26 @@ Subject: [PATCH] Update media server meta data for T+A
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/src/common.h b/src/common.h
-index 4fa7421..585f435 100644
+index a4a60fc4..fd031cfc 100644
 --- a/src/common.h
 +++ b/src/common.h
-@@ -139,11 +139,11 @@
- #define DESC_DEVICE_TYPE                "urn:schemas-upnp-org:device:MediaServer:1"
- #define DESC_SPEC_VERSION_MAJOR         "1"
- #define DESC_SPEC_VERSION_MINOR         "0"
--#define DESC_FRIENDLY_NAME              PACKAGE_NAME 
--#define DESC_MANUFACTURER               "Gerbera Contributors"
--#define DESC_MANUFACTURER_URL           "http://gerbera.io/"
--#define DESC_MODEL_DESCRIPTION          "Free UPnP AV MediaServer, GNU GPL"
--#define DESC_MODEL_NAME                 PACKAGE_NAME
-+#define DESC_FRIENDLY_NAME              "T+A media server"
-+#define DESC_MANUFACTURER               "T+A elektroakustik GmbH & Co. KG"
-+#define DESC_MANUFACTURER_URL           "http://ta-hifi.de/"
-+#define DESC_MODEL_DESCRIPTION          "USB Media"
-+#define DESC_MODEL_NAME                 "ta-mediaserver"
- #define DESC_MODEL_NUMBER               VERSION 
- #define DESC_SERIAL_NUMBER              "1"
+@@ -154,11 +154,11 @@
+ #define DESC_DEVICE_TYPE "urn:schemas-upnp-org:device:MediaServer:1"
+ #define DESC_SPEC_VERSION_MAJOR "1"
+ #define DESC_SPEC_VERSION_MINOR "0"
+-#define DESC_FRIENDLY_NAME PACKAGE_NAME
+-#define DESC_MANUFACTURER "Gerbera Contributors"
+-#define DESC_MANUFACTURER_URL "http://gerbera.io/"
+-#define DESC_MODEL_DESCRIPTION "Free UPnP AV MediaServer, GNU GPL"
+-#define DESC_MODEL_NAME PACKAGE_NAME
++#define DESC_FRIENDLY_NAME "T+A media server"
++#define DESC_MANUFACTURER "T+A elektroakustik GmbH & Co. KG"
++#define DESC_MANUFACTURER_URL "http://ta-hifi.de/"
++#define DESC_MODEL_DESCRIPTION "USB Media"
++#define DESC_MODEL_NAME "ta-mediaserver"
+ #define DESC_MODEL_NUMBER VERSION
+ #define DESC_SERIAL_NUMBER "1"
  
 -- 
-2.7.4
+2.17.1
 

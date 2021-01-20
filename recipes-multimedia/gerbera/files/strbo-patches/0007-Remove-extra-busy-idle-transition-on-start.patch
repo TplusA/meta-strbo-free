@@ -1,4 +1,4 @@
-From 10e708c15bb7568d192733f4b3a49bb8f0151db3 Mon Sep 17 00:00:00 2001
+From 7623ff375ff050788f2179f600d76a339974e5f8 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Alp=20=C3=96zmert?= <info@ib-oezmert.de>
 Date: Wed, 5 Dec 2018 17:36:20 +0100
 Subject: [PATCH] Remove extra busy-idle transition on start
@@ -8,10 +8,10 @@ Subject: [PATCH] Remove extra busy-idle transition on start
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/src/content_manager.cc b/src/content_manager.cc
-index 6d83082..fb5fa24 100644
+index 7d59b9e1..60204aad 100644
 --- a/src/content_manager.cc
 +++ b/src/content_manager.cc
-@@ -1351,6 +1351,8 @@ void ContentManager::threadProc()
+@@ -1345,6 +1345,8 @@ void ContentManager::threadProc()
  
        assert(lock.owns_lock());
  
@@ -20,7 +20,7 @@ index 6d83082..fb5fa24 100644
        working = value;
  
        int r = sd_bus_emit_signal(dbus_, DBUS_OBJECT, DBUS_INTERFACE, "BusyChangedTo", "b", value);
-@@ -1373,7 +1375,7 @@ void ContentManager::threadProc()
+@@ -1367,7 +1369,7 @@ void ContentManager::threadProc()
  
      Ref<GenericTask> task;
      std::unique_lock<mutex_type> lock(mutex);
@@ -29,7 +29,7 @@ index 6d83082..fb5fa24 100644
      while (!shutdownFlag) {
          currentTask = nullptr;
          if (((task = taskQueue1->dequeue()) == nullptr) && ((task = taskQueue2->dequeue()) == nullptr)) {
-@@ -1386,6 +1388,7 @@ void ContentManager::threadProc()
+@@ -1380,6 +1382,7 @@ void ContentManager::threadProc()
              continue;
          } else {
              currentTask = task;
@@ -38,5 +38,5 @@ index 6d83082..fb5fa24 100644
          lock.unlock();
  
 -- 
-2.7.4
+2.17.1
 
