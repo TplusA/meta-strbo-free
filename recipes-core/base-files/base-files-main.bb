@@ -10,7 +10,7 @@ SRC_URI = "file://fstab.common \
            file://01-dbus-session-from-systemd-env.sh \
            file://10-locale.sh"
 
-PR = "r6"
+PR = "r7"
 
 S = "${WORKDIR}"
 
