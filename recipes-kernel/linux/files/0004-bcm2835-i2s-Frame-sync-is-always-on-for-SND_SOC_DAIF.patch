@@ -1,4 +1,4 @@
-From 97c6d7c545490e6d85d265a7f7685a25cb6df82f Mon Sep 17 00:00:00 2001
+From 98eb98531cc52fea53182274246ce6d3443baf62 Mon Sep 17 00:00:00 2001
 From: Robert Tiemann <r.tiemann@ta-hifi.com>
 Date: Mon, 5 Aug 2019 16:59:03 +0200
 Subject: [PATCH] bcm2835-i2s: Frame sync is always on for SND_SOC_DAIFMT_CONT.
@@ -8,7 +8,7 @@ Subject: [PATCH] bcm2835-i2s: Frame sync is always on for SND_SOC_DAIFMT_CONT.
  1 file changed, 17 insertions(+), 5 deletions(-)
 
 diff --git a/sound/soc/bcm/bcm2835-i2s.c b/sound/soc/bcm/bcm2835-i2s.c
-index 49637b2f526d..05523a585d78 100644
+index 4876dbee784e..507682d0e0bb 100644
 --- a/sound/soc/bcm/bcm2835-i2s.c
 +++ b/sound/soc/bcm/bcm2835-i2s.c
 @@ -118,6 +118,7 @@ struct bcm2835_i2s_dev {
@@ -34,7 +34,7 @@ index 49637b2f526d..05523a585d78 100644
  	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
  		mask = BCM2835_I2S_RXON;
 -	else
-+	else if(!dai->active && !(dev->fmt & SND_SOC_DAIFMT_CONT))
++	else if(!snd_soc_dai_active(dai) && !(dev->fmt & SND_SOC_DAIFMT_CONT))
  		mask = BCM2835_I2S_TXON;
 +	else {
 +		mask = 0;
@@ -48,7 +48,7 @@ index 49637b2f526d..05523a585d78 100644
 +				BCM2835_I2S_CS_A_REG, mask, 0);
  
  	/* Stop also the clock when not SND_SOC_DAIFMT_CONT */
- 	if (!dai->active && !(dev->fmt & SND_SOC_DAIFMT_CONT))
+ 	if (!snd_soc_dai_active(dai) && !(dev->fmt & SND_SOC_DAIFMT_CONT))
 @@ -671,8 +678,10 @@ static int bcm2835_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
  
  		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
@@ -61,7 +61,7 @@ index 49637b2f526d..05523a585d78 100644
  
  		regmap_update_bits(dev->i2s_regmap,
  				BCM2835_I2S_CS_A_REG, mask, mask);
-@@ -887,6 +896,9 @@ static int bcm2835_i2s_probe(struct platform_device *pdev)
+@@ -890,6 +899,9 @@ static int bcm2835_i2s_probe(struct platform_device *pdev)
  	dev->dma_data[SNDRV_PCM_STREAM_CAPTURE].flags =
  		SND_DMAENGINE_PCM_DAI_FLAG_PACK;
  
@@ -72,5 +72,5 @@ index 49637b2f526d..05523a585d78 100644
  	dev->dev = &pdev->dev;
  	dev_set_drvdata(&pdev->dev, dev);
 -- 
-2.26.1
+2.30.1
 

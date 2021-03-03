@@ -1,4 +1,4 @@
-From ea130ff295fe6660fe273df10b817d8ae3e96418 Mon Sep 17 00:00:00 2001
+From 07c37f7b9a4a7a48d22d1f689aee1aa6d5d5c988 Mon Sep 17 00:00:00 2001
 From: Robert Tiemann <r.tiemann@ta-hifi.com>
 Date: Mon, 5 Aug 2019 14:47:26 +0200
 Subject: [PATCH] bcm2835-i2s: Bit clock is always on for SND_SOC_DAIFMT_CONT
@@ -8,7 +8,7 @@ Subject: [PATCH] bcm2835-i2s: Bit clock is always on for SND_SOC_DAIFMT_CONT
  1 file changed, 8 insertions(+), 10 deletions(-)
 
 diff --git a/sound/soc/bcm/bcm2835-i2s.c b/sound/soc/bcm/bcm2835-i2s.c
-index e6a12e271b07..49637b2f526d 100644
+index dc34fe1559c6..4876dbee784e 100644
 --- a/sound/soc/bcm/bcm2835-i2s.c
 +++ b/sound/soc/bcm/bcm2835-i2s.c
 @@ -208,7 +208,7 @@ static void bcm2835_i2s_clear_fifos(struct bcm2835_i2s_dev *dev,
@@ -51,5 +51,5 @@ index e6a12e271b07..49637b2f526d 100644
  
  static const struct snd_soc_dai_ops bcm2835_i2s_dai_ops = {
 -- 
-2.26.1
+2.30.1
 

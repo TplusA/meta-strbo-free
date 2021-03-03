@@ -1,20 +1,21 @@
-From fb9b0af98af33abe55f2623f4aa7b1f129e9df65 Mon Sep 17 00:00:00 2001
+From dc86f28106b79fc662ebe2b487830f7237770ce2 Mon Sep 17 00:00:00 2001
 From: Robert Tiemann <r.tiemann@ta-hifi.com>
 Date: Wed, 8 Jul 2015 11:29:21 +0200
-Subject: [PATCH] ASoC: Add T+A HiFi appliances codec driver.
+Subject: [PATCH] ASoC: tahifi-codec-generic: Add T+A HiFi appliances codec
+ driver.
 
 ---
  sound/soc/codecs/Kconfig                |   3 +
  sound/soc/codecs/Makefile               |   2 +
- sound/soc/codecs/tahifi-codec-generic.c | 157 ++++++++++++++++++++++++
- 3 files changed, 162 insertions(+)
+ sound/soc/codecs/tahifi-codec-generic.c | 180 ++++++++++++++++++++++++
+ 3 files changed, 185 insertions(+)
  create mode 100644 sound/soc/codecs/tahifi-codec-generic.c
 
 diff --git a/sound/soc/codecs/Kconfig b/sound/soc/codecs/Kconfig
-index 41d9413b02b8..86842f895ed3 100644
+index e9be75318723..1743834c5b8f 100644
 --- a/sound/soc/codecs/Kconfig
 +++ b/sound/soc/codecs/Kconfig
-@@ -1206,6 +1206,9 @@ config SND_SOC_STAC9766
+@@ -1311,6 +1311,9 @@ config SND_SOC_STAC9766
  config SND_SOC_STI_SAS
  	tristate "codec Audio support for STI SAS codec"
  
@@ -25,10 +26,10 @@ index 41d9413b02b8..86842f895ed3 100644
  	tristate "Texas Instruments TAS2552 Mono Audio amplifier"
  	depends on I2C
 diff --git a/sound/soc/codecs/Makefile b/sound/soc/codecs/Makefile
-index b2cd5679e9df..d5b957ba9f39 100644
+index 42dbabda8e14..3b5952c53065 100644
 --- a/sound/soc/codecs/Makefile
 +++ b/sound/soc/codecs/Makefile
-@@ -204,6 +204,7 @@ snd-soc-sta350-objs := sta350.o
+@@ -212,6 +212,7 @@ snd-soc-sta350-objs := sta350.o
  snd-soc-sta529-objs := sta529.o
  snd-soc-stac9766-objs := stac9766.o
  snd-soc-sti-sas-objs := sti-sas.o
@@ -36,7 +37,7 @@ index b2cd5679e9df..d5b957ba9f39 100644
  snd-soc-tas5086-objs := tas5086.o
  snd-soc-tas571x-objs := tas571x.o
  snd-soc-tas5720-objs := tas5720.o
-@@ -502,6 +503,7 @@ obj-$(CONFIG_SND_SOC_SSM4567)	+= snd-soc-ssm4567.o
+@@ -521,6 +522,7 @@ obj-$(CONFIG_SND_SOC_SSM4567)	+= snd-soc-ssm4567.o
  obj-$(CONFIG_SND_SOC_STA32X)   += snd-soc-sta32x.o
  obj-$(CONFIG_SND_SOC_STA350)   += snd-soc-sta350.o
  obj-$(CONFIG_SND_SOC_STA529)   += snd-soc-sta529.o
@@ -46,14 +47,14 @@ index b2cd5679e9df..d5b957ba9f39 100644
  obj-$(CONFIG_SND_SOC_TAS2552)	+= snd-soc-tas2552.o
 diff --git a/sound/soc/codecs/tahifi-codec-generic.c b/sound/soc/codecs/tahifi-codec-generic.c
 new file mode 100644
-index 000000000000..03c906948267
+index 000000000000..d46e138f5bba
 --- /dev/null
 +++ b/sound/soc/codecs/tahifi-codec-generic.c
-@@ -0,0 +1,157 @@
+@@ -0,0 +1,180 @@
 +/*
 + * ALSA SoC codec driver for T+A high-end audio platforms
 + *
-+ * Copyright (C) 2015, 2019 T+A elektroakustik GmbH & Co. KG
++ * Copyright (C) 2015, 2019, 2020 T+A elektroakustik GmbH & Co. KG
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -112,7 +113,26 @@ index 000000000000..03c906948267
 +	return 0;
 +}
 +
++static const u32 tahifi_dai_rates[] = {
++	8000, 11025, 16000, 22050, 32000, 44100, 48000, 64000, 88200, 96000,
++	176400, 192000, 352800, 384000, 705600, 768000
++};
++
++static const struct snd_pcm_hw_constraint_list constraints = {
++	.count = ARRAY_SIZE(tahifi_dai_rates),
++	.list  = tahifi_dai_rates,
++};
++
++static int tahifi_codec_generic_dai_startup(struct snd_pcm_substream *substream,
++					    struct snd_soc_dai *dai)
++{
++	return snd_pcm_hw_constraint_list(substream->runtime, 0,
++					  SNDRV_PCM_HW_PARAM_RATE,
++					  &constraints);
++}
++
 +static const struct snd_soc_dai_ops tahifi_codec_generic_dai_ops = {
++	.startup = tahifi_codec_generic_dai_startup,
 +	.mute_stream = tahifi_codec_generic_mute_stream,
 +};
 +
@@ -163,8 +183,12 @@ index 000000000000..03c906948267
 +		.playback = {
 +			.channels_min = 2,
 +			.channels_max = 2,
-+			.rates        = SNDRV_PCM_RATE_8000_192000,
-+			.formats      = SNDRV_PCM_FMTBIT_S32_LE,
++			.rates        = SNDRV_PCM_RATE_CONTINUOUS,
++			.rate_min     = 8000,
++			.rate_max     = 768000,
++			.formats      = SNDRV_PCM_FMTBIT_S32_LE |
++					SNDRV_PCM_FMTBIT_S24_LE |
++					SNDRV_PCM_FMTBIT_S16_LE,
 +		},
 +		.ops = &tahifi_codec_generic_dai_ops,
 +	}
@@ -208,5 +232,5 @@ index 000000000000..03c906948267
 +MODULE_DESCRIPTION("ALSA SoC codec driver for T+A high-end audio platforms");
 +MODULE_LICENSE("GPL");
 -- 
-2.26.1
+2.30.1
 

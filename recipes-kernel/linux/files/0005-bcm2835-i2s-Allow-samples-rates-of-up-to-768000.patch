@@ -1,4 +1,4 @@
-From 917f4d1f527581736e592292a1a82c12e5cd2de0 Mon Sep 17 00:00:00 2001
+From 1bc4337606180ac884e69a7e4da83cbc97422631 Mon Sep 17 00:00:00 2001
 From: Robert Tiemann <r.tiemann@ta-hifi.com>
 Date: Sat, 18 Apr 2020 11:52:06 +0200
 Subject: [PATCH] bcm2835-i2s: Allow samples rates of up to 768000
@@ -8,7 +8,7 @@ Subject: [PATCH] bcm2835-i2s: Allow samples rates of up to 768000
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/sound/soc/bcm/bcm2835-i2s.c b/sound/soc/bcm/bcm2835-i2s.c
-index 05523a585d78..a0e711237fb4 100644
+index 507682d0e0bb..6f094865c6ab 100644
 --- a/sound/soc/bcm/bcm2835-i2s.c
 +++ b/sound/soc/bcm/bcm2835-i2s.c
 @@ -774,7 +774,7 @@ static struct snd_soc_dai_driver bcm2835_i2s_dai = {
@@ -30,5 +30,5 @@ index 05523a585d78..a0e711237fb4 100644
  				| SNDRV_PCM_FMTBIT_S24_LE
  				| SNDRV_PCM_FMTBIT_S32_LE
 -- 
-2.26.1
+2.30.1
 

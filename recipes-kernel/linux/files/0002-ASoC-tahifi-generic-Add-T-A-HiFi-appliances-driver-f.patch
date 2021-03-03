@@ -1,20 +1,21 @@
-From d7da0ccc7e1837b5f79c42170aab20f3b2c1f67d Mon Sep 17 00:00:00 2001
+From b45ec5a773d923dfcc0aa263c69d49fc21109883 Mon Sep 17 00:00:00 2001
 From: Robert Tiemann <r.tiemann@ta-hifi.com>
 Date: Wed, 8 Jul 2015 11:48:41 +0200
-Subject: [PATCH] ASoC: Add T+A HiFi appliances driver for RasPi.
+Subject: [PATCH] ASoC: tahifi-generic: Add T+A HiFi appliances driver for
+ RasPi.
 
 ---
  sound/soc/bcm/Kconfig          |   7 ++
  sound/soc/bcm/Makefile         |   2 +
- sound/soc/bcm/tahifi-generic.c | 207 +++++++++++++++++++++++++++++++++
- 3 files changed, 216 insertions(+)
+ sound/soc/bcm/tahifi-generic.c | 209 +++++++++++++++++++++++++++++++++
+ 3 files changed, 218 insertions(+)
  create mode 100644 sound/soc/bcm/tahifi-generic.c
 
 diff --git a/sound/soc/bcm/Kconfig b/sound/soc/bcm/Kconfig
-index fdaccbfd79ce..670e0c656fd2 100644
+index 94c2a8e8ad2d..ac5394f45e3e 100644
 --- a/sound/soc/bcm/Kconfig
 +++ b/sound/soc/bcm/Kconfig
-@@ -26,6 +26,13 @@ config SND_BCM2708_SOC_GOOGLEVOICEHAT_SOUNDCARD
+@@ -35,6 +35,13 @@ config SND_BCM2708_SOC_GOOGLEVOICEHAT_SOUNDCARD
  	help
            Say Y or M if you want to add support for voiceHAT soundcard.
  
@@ -29,10 +30,10 @@ index fdaccbfd79ce..670e0c656fd2 100644
          tristate "Support for HifiBerry DAC"
          depends on SND_BCM2708_SOC_I2S || SND_BCM2835_SOC_I2S
 diff --git a/sound/soc/bcm/Makefile b/sound/soc/bcm/Makefile
-index cab392690974..773d80715c74 100644
+index 942464a729b3..bbe6606e54a3 100644
 --- a/sound/soc/bcm/Makefile
 +++ b/sound/soc/bcm/Makefile
-@@ -13,6 +13,7 @@ obj-$(CONFIG_SND_SOC_CYGNUS) += snd-soc-cygnus.o
+@@ -18,6 +18,7 @@ obj-$(CONFIG_SND_BCM63XX_I2S_WHISTLER) += snd-soc-63xx.o
  snd-soc-googlevoicehat-codec-objs := googlevoicehat-codec.o
  
  # BCM2708 Machine Support
@@ -40,9 +41,9 @@ index cab392690974..773d80715c74 100644
  snd-soc-hifiberry-dacplus-objs := hifiberry_dacplus.o
  snd-soc-hifiberry-dacplushd-objs := hifiberry_dacplushd.o
  snd-soc-hifiberry-dacplusadc-objs := hifiberry_dacplusadc.o
-@@ -41,6 +42,7 @@ snd-soc-fe-pi-audio-objs := fe-pi-audio.o
- snd-soc-rpi-simple-soundcard-objs := rpi-simple-soundcard.o
+@@ -48,6 +49,7 @@ snd-soc-rpi-simple-soundcard-objs := rpi-simple-soundcard.o
  snd-soc-rpi-wm8804-soundcard-objs := rpi-wm8804-soundcard.o
+ snd-soc-pifi-40-objs := pifi-40.o
  
 +obj-$(CONFIG_SND_BCM2708_SOC_TAHIFI_GENERIC) += snd-soc-tahifi-generic.o
  obj-$(CONFIG_SND_BCM2708_SOC_GOOGLEVOICEHAT_SOUNDCARD)  += snd-soc-googlevoicehat-codec.o
@@ -50,10 +51,10 @@ index cab392690974..773d80715c74 100644
  obj-$(CONFIG_SND_BCM2708_SOC_HIFIBERRY_DACPLUSHD) += snd-soc-hifiberry-dacplushd.o
 diff --git a/sound/soc/bcm/tahifi-generic.c b/sound/soc/bcm/tahifi-generic.c
 new file mode 100644
-index 000000000000..04c0620c3f6d
+index 000000000000..b3349986ec71
 --- /dev/null
 +++ b/sound/soc/bcm/tahifi-generic.c
-@@ -0,0 +1,207 @@
+@@ -0,0 +1,209 @@
 +/*
 + * ALSA SoC driver for T+A high-end audio platforms
 + *
@@ -83,7 +84,7 @@ index 000000000000..04c0620c3f6d
 +				    struct snd_pcm_hw_params *params)
 +{
 +	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-+	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
++	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
 +
 +	return snd_soc_dai_set_bclk_ratio(cpu_dai, 32 * 2);
 +}
@@ -149,21 +150,21 @@ index 000000000000..04c0620c3f6d
 +	if(dai_fmt == dai_link->dai_fmt)
 +		return 0;
 +
-+	rtd = snd_soc_get_pcm_runtime(card, dai_link->name);
++	rtd = snd_soc_get_pcm_runtime(card, dai_link);
 +
 +	if(rtd->num_codecs < 1)
 +		return 0;
 +
-+	codec_dai = rtd->codec_dais[0];
++	codec_dai = asoc_rtd_to_codec(rtd, 0);
 +
 +	ret = snd_soc_dai_set_fmt(codec_dai, dai_fmt);
 +	if (ret != 0 && ret != -ENOTSUPP)
 +		dev_warn(codec_dai->dev,
 +			 "Failed to set codec DAI format: %d\n", ret);
 +
-+	ret = snd_soc_dai_set_fmt(rtd->cpu_dai, dai_fmt);
++	ret = snd_soc_dai_set_fmt(asoc_rtd_to_cpu(rtd, 0), dai_fmt);
 +	if (ret != 0 && ret != -ENOTSUPP)
-+		dev_warn(rtd->cpu_dai->dev,
++		dev_warn(asoc_rtd_to_cpu(rtd, 0)->dev,
 +			 "Failed to set CPU DAI format: %d\n", ret);
 +
 +	dai_link->dai_fmt = dai_fmt;
@@ -186,16 +187,18 @@ index 000000000000..04c0620c3f6d
 +		     tahifi_generic_i2s_format_put),
 +};
 +
++SND_SOC_DAILINK_DEFS(tahifi,
++		DAILINK_COMP_ARRAY(COMP_CPU("bcm2708-i2s.0")),
++		DAILINK_COMP_ARRAY(COMP_CODEC("tahifi-codec", "tahifi-i2s")),
++		DAILINK_COMP_ARRAY(COMP_PLATFORM("bcm2708-i2s.0")));
++
 +static struct snd_soc_dai_link snd_tahifi_generic_dai[] = {
 +	{
 +		.name           = "T+A generic HiFi appliance",
 +		.stream_name    = "T+A HiFi",
-+		.cpu_dai_name   = "bcm2708-i2s.0",
-+		.codec_dai_name = "tahifi-i2s",
-+		.platform_name  = "bcm2708-i2s.0",
-+		.codec_name     = "tahifi-codec",
 +		.dai_fmt        = TAHIFI_GENERIC_DAI_FMT_I2S,
 +		.ops            = &snd_tahifi_generic_ops,
++		SND_SOC_DAILINK_REG(tahifi),
 +	},
 +};
 +
@@ -232,10 +235,10 @@ index 000000000000..04c0620c3f6d
 +	i2s_node = of_parse_phandle(pdev->dev.of_node, "i2s-controller", 0);
 +
 +	if (i2s_node) {
-+		dai->cpu_dai_name = NULL;
-+		dai->cpu_of_node = i2s_node;
-+		dai->platform_name = NULL;
-+		dai->platform_of_node = i2s_node;
++		dai->cpus->dai_name = NULL;
++		dai->cpus->of_node = i2s_node;
++		dai->platforms->name = NULL;
++		dai->platforms->of_node = i2s_node;
 +	}
 +
 +	ret = devm_snd_soc_register_card(&pdev->dev, &tahifi_generic_card);
@@ -262,5 +265,5 @@ index 000000000000..04c0620c3f6d
 +MODULE_DESCRIPTION("ALSA SoC driver for T+A high-end audio platforms");
 +MODULE_LICENSE("GPL");
 -- 
-2.26.1
+2.30.1
 
