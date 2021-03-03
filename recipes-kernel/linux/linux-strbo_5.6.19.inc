@@ -1,7 +1,7 @@
-LINUX_VERSION = "5.6.2"
-SRCREV = "35fc9e5412ac2a6491ee1a5787128bc555909d7c"
+LINUX_VERSION = "5.6.19"
+SRCREV = "ff0aa78166a59d44bc8d472386699624c8db6da5"
 SRC_URI = " \
-    git://git.tua.local/repo/RPI-Kernel.git;protocol=http;branch=rpi-5.6.2 \
+    git://git.tua.local/repo/RPI-Kernel.git;protocol=http;branch=rpi-5.6.19-tahifi \
     file://0001-ASoC-Add-T-A-HiFi-appliances-codec-driver.patch \
     file://0002-ASoC-Add-T-A-HiFi-appliances-driver-for-RasPi.patch \
     file://0003-bcm2835-i2s-Bit-clock-is-always-on-for-SND_SOC_DAIFM.patch \
