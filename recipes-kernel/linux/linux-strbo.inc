@@ -7,6 +7,40 @@ PR = "${STRBO_KERNEL_PR}"
 inherit kernel siteinfo
 require recipes-kernel/linux/linux-yocto.inc
 
+#
+# We have a problem during kernel update here. As a matter of fact, the kernel
+# build class puts the kernel version number into the package name. That is,
+# for versions 5.6.2 and 5.6.3 we don't get packages "kernel-image-uimage" for
+# these two versions; instead, we get packages "kernel-image-uimage-5.6.2" and
+# "kernel-image-uimage-5.6.3". Their versions are 5.6.2 and 5.6.3,
+# respectively, but from the package manager's point of view, these packages
+# are completely unrelated because their basename are different.
+#
+# This wouldn't be a problem if these packages wouldn't share a common file, a
+# symlink named "/boot/uImage" which points to the real uImage file with a
+# version number appended in /boot/. Trying to step from one kernel version to
+# the other involves installing the new package, then removing the old one.
+# Asking dnf/rpm to do this yields an error about the symlink being owned by
+# two different packages. Since dnf has no option for ignoring this error, the
+# upgrade can only be done by hand using rpm, double-crossing dnf and thus
+# introducing inconsistencies into the package management system.
+#
+# Removing the symlink in do_install_append() from the packages and managing it
+# in postinst scriptlets is tricky because the build system plays stupid tricks
+# in Python functions and it also requires the symlink to be around to finish
+# its job. Moving the symlink to a dummy package is also tricky and it works,
+# sort of, but the automatic update procedure still doesn't quite succeed.
+#
+# Since the root of the problem is the version number encoded into the package
+# name, we simply remove it. The build class adds the version version number in
+# a Python function, so we the same to revert the deed.
+#
+python __anonymous () {
+    kname = d.getVar('KERNEL_PACKAGE_NAME')
+    typelower = d.getVar('KERNEL_IMAGETYPE').lower()
+    d.setVar('PKG_' + kname + '-image-' + typelower, kname + '-image-' + typelower)
+}
+
 SECTION = "kernel"
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = " \
