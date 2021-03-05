@@ -3,8 +3,6 @@
 KERNEL_DEVICETREE := "bcm2708-rpi-cm.dtb bcm2710-rpi-cm3.dtb"
 
 PR = "${STRBO_KERNEL_PR}"
-PE = "1"
-PV = "${LINUX_VERSION}+git${SRCPV}"
 
 inherit kernel siteinfo
 require recipes-kernel/linux/linux-yocto.inc
