@@ -6,16 +6,8 @@ SUMMARY = "Extra packages used on the T+A Streaming Board recovery system"
 LICENSE = "MIT"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-PR = "r1"
+PR = "r2"
 
 inherit packagegroup
 
-RDEPENDS_${PN} += " \
-    less \
-    vim \
-    joe \
-    nano \
-    diffutils \
-    systemd-analyze \
-    strbo-logging \
-"
+RDEPENDS_${PN} += "strbo-logging"
