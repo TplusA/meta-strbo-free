@@ -15,7 +15,7 @@ SRC_URI = " \
 
 S = "${WORKDIR}"
 
-PR = "r16"
+PR = "r17"
 
 INITSCRIPT_NAME = "startup"
 INITSCRIPT_PARAMS = "start 30 S ."
