@@ -16,11 +16,23 @@ PACKAGE_EXCLUDE_COMPLEMENTARY = "openssh"
 
 LICENSE = "MIT"
 
-PR = "r3"
+PR = "r4"
 
 inherit core-image
 
-IMAGE_PREPROCESS_COMMAND_append = "remove_boot_files"
+ROOTFS_POSTPROCESS_COMMAND_append = "log_to_console; "
+
+#
+# The recovery system shall log to console, but we don't want to maintain a
+# special package just for the recovery system (always shipped as full image
+# without package management anyway). So we edit the journald configuration
+# right here.
+#
+log_to_console() {
+    sed -i -e 's,#ForwardToConsole=no,ForwardToConsole=yes,' ${IMAGE_ROOTFS}/${sysconfdir}/systemd/journald.conf
+}
+
+IMAGE_PREPROCESS_COMMAND_append = "remove_boot_files; "
 
 #
 # Remove files installed by the u-boot-rpi-recovery package (and its
