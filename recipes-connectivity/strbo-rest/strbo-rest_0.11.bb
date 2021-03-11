@@ -3,7 +3,7 @@ SECTION = "net"
 LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
-SRCREV = "a075bdac2eee64703147b93c1c3f288d3257bf71"
+SRCREV = "9fdd567feb1c6045fbba5e273567e95645cdd3b8"
 PR = "r0"
 
 SRC_URI = " \
