@@ -10,3 +10,6 @@ ExecStart=/usr/bin/dcpd
 KillMode=process
 UMask=0007
 User=strbo-dcpd
+
+[Install]
+WantedBy=strbo.target
