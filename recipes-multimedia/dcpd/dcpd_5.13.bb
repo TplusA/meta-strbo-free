@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
 SRCREV = "bb0691fffa9fb7b095a34c591bc728c355899011"
-PR = "r0"
+PR = "r1"
 
 SRC_URI = " \
     gitsm://git.tua.local/repo/DCPD;branch=master;protocol=http \
@@ -78,12 +78,4 @@ do_install_append() {
 
     install -d ${D}${sysconfdir}/sudoers.d
     install -m 644 ${WORKDIR}/dcpd.sudoers ${D}${sysconfdir}/sudoers.d/50-dcpd
-}
-
-pkg_preinst_${PN} () {
-if [ x"$D" = x ]; then systemctl stop dcpd; fi
-}
-
-pkg_postinst_${PN} () {
-if [ x"$D" = x ]; then systemctl restart strbo.target; fi
 }
