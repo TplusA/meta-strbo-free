@@ -1,0 +1,19 @@
+[Unit]
+Description=StrBo UpdaTA
+DefaultDependencies=no
+Requires=sysinit.target var-local-data.mount var-local-etc.mount bootpartm.mount bootpartr.mount
+After=sysinit.target system-update-pre.target
+Before=system-update.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'test -e /var/local/data/system_update_data/system_update.sh && exec /var/local/data/system_update_data/system_update.sh || exit 0'
+StandardOutput=syslog
+StandardError=syslog
+UMask=0007
+User=updata
+Group=updata
+FailureAction=reboot
+
+[Install]
+WantedBy=system-update.target

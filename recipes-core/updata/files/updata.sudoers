@@ -1,6 +1,9 @@
+updata ALL = (root) NOPASSWD: /usr/bin/dnf clean packages --assumeyes
 updata ALL = (root) NOPASSWD: /usr/bin/dnf install --assumeyes *
 updata ALL = (root) NOPASSWD: /usr/bin/dnf remove --assumeyes *
 updata ALL = (root) NOPASSWD: /usr/bin/dnf list --installed
 updata ALL = (root) NOPASSWD: /usr/bin/dnf distro-sync --assumeyes
 updata ALL = (root) NOPASSWD: /bin/systemctl isolate reboot.target
 updata ALL = (root) NOPASSWD: /bin/mount, /bin/umount
+updata ALL = (root) NOPASSWD: /bin/rm /system-update
+updata ALL = (root) NOPASSWD: /bin/ln -s /var/local/data/dnf /system-update

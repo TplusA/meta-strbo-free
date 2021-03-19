@@ -4,7 +4,7 @@ LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "5e195fc365b701ea52153712f8565b5d0fb41b7f"
+SRCREV = "14043252d95c853a4ac253ec91295e6dad43e72c"
 PR = "r0"
 
 SRC_URI = " \
@@ -12,6 +12,7 @@ SRC_URI = " \
     file://strbo_base.repo \
     file://strbo_flavor.repo \
     file://strbo_dev.repo \
+    file://updata.service \
     file://updata.sudoers \
 "
 
@@ -29,9 +30,12 @@ FILES_${PN} += " \
     ${sysconfdir}/dnf/vars \
     ${sysconfdir}/sudoers.d/50-updata \
     ${datadir}/${PN}/updata_system_update.template.sh \
+    ${systemd_unitdir}/system/updata.service \
 "
 
 DIRFILES = "1"
+
+SYSTEMD_SERVICE_${PN} = "updata.service"
 
 USERADD_PACKAGES = "${PN}"
 USERADD_PARAM_${PN} = "-r -N -g updata updata"
@@ -41,6 +45,8 @@ inherit allarch setuptools3 useradd
 
 do_install_append() {
     install -d \
+        ${D}${systemd_unitdir} \
+        ${D}${systemd_unitdir}/system \
         ${D}${sysconfdir} \
         ${D}${sysconfdir}/yum.repos.d \
         ${D}${sysconfdir}/dnf \
@@ -48,6 +54,7 @@ do_install_append() {
         ${D}${sysconfdir}/sudoers.d \
         ${D}${datadir} \
         ${D}${datadir}/${PN}
+    install -m 644 ${WORKDIR}/updata.service ${D}${systemd_unitdir}/system
     install -m 644 ${WORKDIR}/strbo_base.repo ${D}${sysconfdir}/yum.repos.d
     install -m 644 ${WORKDIR}/strbo_flavor.repo ${D}${sysconfdir}/yum.repos.d
     install -m 644 ${WORKDIR}/strbo_dev.repo ${D}${sysconfdir}/yum.repos.d
