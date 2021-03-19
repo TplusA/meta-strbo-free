@@ -4,7 +4,7 @@ LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
 SRCREV = "9fdd567feb1c6045fbba5e273567e95645cdd3b8"
-PR = "r1"
+PR = "r2"
 
 SRC_URI = " \
     git://git.tua.local/repo/StrBo-REST;branch=master;protocol=http \
@@ -104,52 +104,4 @@ do_install() {
 
     install -d ${D}${sysconfdir}/polkit-1 ${D}${sysconfdir}/polkit-1/rules.d
     install -m 644 ${WORKDIR}/polkit.rules ${D}${sysconfdir}/polkit-1/rules.d/99-strbo-rest-api.rules
-}
-
-pkg_postinst_${PN} () {
-#!/bin/sh -e
-
-if type systemctl >/dev/null 2>/dev/null
-then
-    if [ x"$D" = x ]
-    then
-        systemctl restart lighttpd
-    fi
-fi
-}
-
-pkg_prerm_${PN} () {
-#!/bin/sh -e
-
-if type systemctl >/dev/null 2>/dev/null
-then
-    if [ x"$D" = x ]
-    then
-        systemctl stop lighttpd
-    fi
-fi
-}
-
-pkg_postinst_${PN}-lighttpd () {
-#!/bin/sh -e
-
-if type systemctl >/dev/null 2>/dev/null
-then
-    if [ x"$D" = x ]
-    then
-        systemctl restart lighttpd
-    fi
-fi
-}
-
-pkg_prerm_${PN}-lighttpd () {
-#!/bin/sh -e
-
-if type systemctl >/dev/null 2>/dev/null
-then
-    if [ x"$D" = x ]
-    then
-        systemctl stop lighttpd
-    fi
-fi
 }
