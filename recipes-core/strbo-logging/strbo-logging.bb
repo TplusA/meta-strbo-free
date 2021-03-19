@@ -2,7 +2,7 @@ SUMMARY = "Enable HTTP access to systemd journal"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-PR = "r3"
+PR = "r4"
 
 ALLOW_EMPTY_${PN} = "1"
 DEPENDS = "systemd-systemctl-native"
@@ -22,11 +22,6 @@ fi
 if type systemctl >/dev/null 2>/dev/null
 then
     systemctl $SYSTEMCTL_OPTS enable systemd-journal-gatewayd.socket
-
-    if [ x"$D" = x ]
-    then
-        systemctl $SYSTEMCTL_OPTS restart systemd-journal-gatewayd.socket
-    fi
 fi
 }
 
@@ -40,11 +35,6 @@ fi
 
 if type systemctl >/dev/null 2>/dev/null
 then
-    if [ x"$D" = x ]
-    then
-        systemctl stop systemd-journal-gatewayd.socket
-    fi
-
-    systemctl $OPTS disable systemd-journal-gatewayd.socket
+    systemctl $SYSTEMCTL_OPTS disable systemd-journal-gatewayd.socket
 fi
 }
