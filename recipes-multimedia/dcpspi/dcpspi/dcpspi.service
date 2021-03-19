@@ -11,3 +11,6 @@ User=strbo-spi
 ExecStartPre=/usr/libexec/dcpspi_gpio start
 ExecStopPost=/usr/libexec/dcpspi_gpio stop
 PermissionsStartOnly=true
+
+[Install]
+WantedBy=strbo.target
