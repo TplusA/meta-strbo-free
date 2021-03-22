@@ -8,14 +8,13 @@ SRC_URI = " \
     file://strbo-startup.service \
     file://recovery.target \
     file://recovery-prepare.service \
-    file://startup.init \
     file://format-fs \
     file://flash.rules \
 "
 
 S = "${WORKDIR}"
 
-PR = "r17"
+PR = "r18"
 
 INITSCRIPT_NAME = "startup"
 INITSCRIPT_PARAMS = "start 30 S ."
@@ -33,25 +32,14 @@ GROUPADD_PARAM_${PN} = "-r strbo"
 inherit allarch update-rc.d systemd useradd
 
 do_install() {
-    # SysV
-    if ${@bb.utils.contains('DISTRO_FEATURES','sysvinit','true','false',d)}
-    then
-        install -d ${D}${sysconfdir} ${D}${sysconfdir}/init.d
-        install -m 755 ${WORKDIR}/startup.init ${D}${sysconfdir}/init.d/startup
-    fi
+    install -d ${D}${systemd_unitdir} ${D}${systemd_unitdir}/system ${D}${libexecdir}
 
-    # systemd
-    if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}
-    then
-        install -d ${D}${systemd_unitdir} ${D}${systemd_unitdir}/system ${D}${libexecdir}
+    for f in strbo.target strbo-startup.service recovery.target recovery-prepare.service
+    do
+        install -m 644 ${WORKDIR}/${f} ${D}${systemd_unitdir}/system
+    done
 
-        for f in strbo.target strbo-startup.service recovery.target recovery-prepare.service
-        do
-            install -m 644 ${WORKDIR}/${f} ${D}${systemd_unitdir}/system
-        done
-
-        install -m 755 ${WORKDIR}/format-fs ${D}${libexecdir}
-    fi
+    install -m 755 ${WORKDIR}/format-fs ${D}${libexecdir}
 
     install -d ${D}${sysconfdir} ${D}${sysconfdir}/udev ${D}${sysconfdir}/udev/rules.d
     install -m 644 ${WORKDIR}/flash.rules ${D}${sysconfdir}/udev/rules.d
