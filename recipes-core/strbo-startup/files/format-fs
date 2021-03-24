@@ -41,6 +41,9 @@ set_permissions()
 
 /usr/sbin/iw reg reload
 
+/bin/chown root:updata /etc/dnf/vars/strbo_*
+/bin/chmod 664 /etc/dnf/vars/strbo_*
+
 PATTERN="$(echo $PARTITION_CONFIGFS_DEVICE | sed 's,/,\\/,g')"
 MOUNTPOINT="$(awk '/^'$PATTERN'/ { print $2 }' /etc/fstab)"
 if test ! -d "${MOUNTPOINT}/."
