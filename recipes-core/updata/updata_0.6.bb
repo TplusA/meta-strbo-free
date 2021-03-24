@@ -4,7 +4,7 @@ LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "14043252d95c853a4ac253ec91295e6dad43e72c"
+SRCREV = "d650cffde9e7543737d0d9f8d0a63438d04455f4"
 PR = "r0"
 
 SRC_URI = " \
@@ -31,6 +31,7 @@ FILES_${PN} += " \
     ${sysconfdir}/sudoers.d/50-updata \
     ${datadir}/${PN}/updata_system_update.template.sh \
     ${systemd_unitdir}/system/updata.service \
+    ${systemd_unitdir}/system/system-update.target.wants/updata.service \
 "
 
 DIRFILES = "1"
@@ -47,6 +48,7 @@ do_install_append() {
     install -d \
         ${D}${systemd_unitdir} \
         ${D}${systemd_unitdir}/system \
+        ${D}${systemd_unitdir}/system/system-update.target.wants \
         ${D}${sysconfdir} \
         ${D}${sysconfdir}/yum.repos.d \
         ${D}${sysconfdir}/dnf \
@@ -60,6 +62,9 @@ do_install_append() {
     install -m 644 ${WORKDIR}/strbo_dev.repo ${D}${sysconfdir}/yum.repos.d
     install -m 644 ${WORKDIR}/updata.sudoers ${D}${sysconfdir}/sudoers.d/50-updata
     install -m 644 ${S}/updata_system_update.template.sh ${D}${datadir}/${PN}
+
+    ln -sf ../updata.service ${D}${systemd_unitdir}/system/system-update.target.wants/updata.service
+    chown root:root ${D}${systemd_unitdir}/system/system-update.target.wants/updata.service
 
     for V in strbo_update_baseurl strbo_release_line strbo_flavor strbo_flavor_enabled
     do
