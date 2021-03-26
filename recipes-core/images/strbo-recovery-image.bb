@@ -6,6 +6,7 @@ IMAGE_ROOTFS_SIZE = "${RECOVERYROOTFS_PARTITION_SIZE}"
 IMAGE_ROOTFS_EXTRA_SPACE_append = "${@bb.utils.contains("PACKAGE_INSTALL", "dnf", " - 102400", "" ,d)}"
 IMAGE_FSTYPES += "${RECOVERYROOTFS_TYPE}"
 EXTRA_IMAGECMD_${RECOVERYROOTFS_TYPE} ?= "${RECOVERYROOTFS_MKFS_EXTRA}"
+XZ_COMPRESSION_LEVEL = "-1"
 
 IMAGE_INSTALL = "packagegroup-strbo-recovery-base packagegroup-strbo-recovery-extra"
 IMAGE_FEATURES += "read-only-rootfs"
