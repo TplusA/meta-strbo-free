@@ -1,1 +1,5 @@
 strbo-dcpd ALL = (root) NOPASSWD: /usr/bin/gerbera-reset-database
+
+Cmnd_Alias MIITOOL = /sbin/mii-tool -R eth0
+Defaults!MIITOOL !syslog
+strbo-dcpd ALL = (root) NOPASSWD: MIITOOL
