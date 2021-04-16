@@ -4,7 +4,7 @@ LICENSE = "GPLv3"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "a5929fa6e50c9a2c79778464cec3e5812555c220"
+SRCREV = "90e0c862ebf2e4c6a50ee6152eb284695b0e35f6"
 PR = "r0"
 
 SRC_URI = "gitsm://git.tua.local/repo/Streamplayer;branch=master;protocol=http \

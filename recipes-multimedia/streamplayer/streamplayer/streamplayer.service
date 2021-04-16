@@ -6,7 +6,7 @@ BindsTo=strbo-dbus.service
 [Service]
 Type=dbus
 BusName=de.tahifi.Streamplayer
-ExecStart=/usr/bin/streamplayer
+ExecStart=/usr/bin/streamplayer --default-buffers
 KillMode=process
 UMask=0007
 Nice=-20
