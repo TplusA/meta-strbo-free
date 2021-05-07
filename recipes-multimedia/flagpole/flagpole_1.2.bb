@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 DEPENDS = "gupnp gupnp-dlna"
 
 SRCREV = "8cb91b64c3febea6e8c7730981d1327de9c1b3b4"
-PR = "r1"
+PR = "r2"
 
 SRC_URI = "git://git.tua.local/repo/Flagpole;branch=master;protocol=http \
            file://flagpole.xml.in \
@@ -33,6 +33,7 @@ FILES_${PN}-upnpgate= " \
 
 SYSTEMD_SERVICE_${PN} = "flagpole.service"
 SYSTEMD_SERVICE_${PN}-upnpgate = "upnpgate.service"
+YSTEMD_AUTO_ENABLE_${PN}-upnpgate = "disable"
 
 DEPENDENCIES = "glib-2.0 gobject-2.0 gupnp-1.2 libsoup-2.4"
 CFLAGS += "`pkg-config --cflags-only-other ${DEPENDENCIES}`"

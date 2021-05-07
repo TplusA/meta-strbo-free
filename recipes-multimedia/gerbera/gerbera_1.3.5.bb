@@ -7,7 +7,7 @@
 # - Added custom user and group
 
 Description = "Gerbera UPnP media server"
-PR = "r0"
+PR = "r1"
 
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://LICENSE.md;md5=25cdec9afe3f1f26212ead6bd2f7fac8"
@@ -57,6 +57,7 @@ RDEPENDS_${PN} += "xmlstarlet \
 RRECOMMENDS_${PN} += "listbrokers (>= 4.1)"
 
 SYSTEMD_SERVICE_${PN} = "gerbera.service"
+SYSTEMD_AUTO_ENABLE_${PN} = "disable"
 
 USERADD_PACKAGES = "${PN}"
 USERADD_PARAM_${PN} = "-r -N -g strbo strbo-mediaserver"
