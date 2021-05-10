@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
 SRCREV = "8f7ddd594a149017984a5f674e49a300dfa5b216"
-PR = "r0"
+PR = "r1"
 
 SRC_URI = " \
     gitsm://git.tua.local/repo/DCPD;branch=master;protocol=http \

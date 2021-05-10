@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
 SRCREV = "d2ea97bac2fa09b37857a8ed49f182c1e963143e"
-PR = "r0"
+PR = "r1"
 
 SRC_URI = "gitsm://git.tua.local/repo/TACAMan;branch=master;protocol=http \
            file://0001-extract_documentation-Use-Python-3-shebang.patch \
