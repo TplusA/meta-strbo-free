@@ -113,3 +113,5 @@ else
 fi
 
 /usr/sbin/setquota -u strbo-mediaserver 0 1G 0 0 /var/local/data
+
+exit 0
