@@ -6,8 +6,9 @@ include recipes-bsp/common/raspberrypi-firmware.inc
 require bcm2835-bootfiles.inc
 
 SUMMARY = "Broadcom boot loader configuration files for StrBo recovery system"
+DEPENDS += "strbo-recovery-boot-image"
 
-PR = "r4"
+PR = "r5"
 
 do_install_append() {
     #
