@@ -6,7 +6,7 @@ SUMMARY = "Basic packages used on the T+A Streaming Board"
 LICENSE = "MIT"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-PR = "r0"
+PR = "r1"
 
 inherit packagegroup
 
@@ -52,6 +52,7 @@ RDEPENDS_${PN} = " \
     net-tools \
     ethtool \
     netcat \
+    socat \
     connman \
     connman-tools \
     connman-client \
