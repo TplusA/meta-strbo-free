@@ -4,8 +4,7 @@ LICENSE = "GPLv3"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "d366119bcedf621276ac5426c13688a1e8aba572"
-PR = "r1"
+SRCREV = "d5e6458ba6dd6760f9b72ebe6739711c5d4244cf"
 
 SRC_URI = "gitsm://git.tua.local/repo/Streamplayer;branch=master;protocol=http \
            file://0001-extract_documentation-Use-Python-3-shebang.patch \

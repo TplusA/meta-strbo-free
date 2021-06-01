@@ -3,8 +3,7 @@ SECTION = "net"
 LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
-SRCREV = "e0b4f7d37bfd81a777a84447f2b336048c8eacaf"
-PR = "r0"
+SRCREV = "fda2ddbff99577b851cf6bb64112cab32ee48ddd"
 
 SRC_URI = " \
     git://git.tua.local/repo/StrBo-REST;branch=master;protocol=http \
@@ -48,6 +47,7 @@ RDEPENDS_${PN}-lighttpd = " \
     lighttpd-module-alias \
     lighttpd-module-fastcgi \
     lighttpd-module-rewrite \
+    lighttpd-module-wstunnel \
     coreutils \
     sed \
     shadow-base \

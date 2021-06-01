@@ -1,1 +1,1 @@
-strbo ALL = (root) NOPASSWD: /bin/mount, /bin/umount, /sbin/blkid
+strbo ALL = (root) NOPASSWD: /bin/mount, /bin/umount
