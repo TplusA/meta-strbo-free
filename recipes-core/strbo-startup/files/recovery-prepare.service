@@ -1,0 +1,12 @@
+[Unit]
+Description=Tell system to boot alternative system
+DefaultDependencies=no
+Requires=recovery.target umount.target
+Before=recovery.target umount.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c ". /etc/systeminfo.rc; /bin/systemctl reboot $(echo $$PARTITION_RECOVERYBOOT_NUMBER)"
+
+[Install]
+WantedBy=recovery.target

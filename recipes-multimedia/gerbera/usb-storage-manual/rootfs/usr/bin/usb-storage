@@ -1,0 +1,105 @@
+#! /bin/bash -e
+
+shopt -s nullglob
+
+WAIT_SECONDS=0
+PRETTY_NAME_DIRS=("/home/root/named-usb-devices" "/usr/share/named-usb-devices")
+
+declare POSITIONAL=()	
+while [ $# -gt 0 ]; do
+	case $1 in
+		-v|--verbose)
+			declare STRBO_VERBOSE=1
+			shift
+			;;
+		-x)
+			set -x
+			shift
+			;;
+        -d|--disable-autoprobe)
+            declare DISABLE_AUTOPROBE=1
+            shift
+            ;;
+        -w|--wait)
+            WAIT_SECONDS=${2:?Error: Missing parameter WAIT_SECONDS.}
+            shift 2
+            ;;
+        -f|--from)
+            declare FROM=${2:?Error: Missing parameter to $1.}
+            shift 2
+            set -- "$@" $(tr '\n' ' ' <$FROM)
+            ;;
+		-h|--help)
+			echo "${FUNCNAME[0]} [-x] [-v] [-h|help] [bind|unbind] [-w|--wait WAIT_SECONDS] DEVICE_NAMES"
+			echo "Install and backup set of files on the image listed by /image-extension-files."
+			return 1
+			;;
+		-*)
+			fail "Unknown parameter $1."
+			;;
+		*)
+			POSITIONAL+=("$1")
+			shift
+	esac
+done
+set -- "${POSITIONAL[@]}"
+
+subcommand=${1:?Error:Missing command}
+shift
+
+device_names=()
+for device_spec in "${@?Missing parameter DEVICE_NAMES.}"; do
+    for pretty_name_dir in "${PRETTY_NAME_DIRS[@]}"; do
+        if test -e $pretty_name_dir && test -e $pretty_name_dir/$device_spec; then
+            device_name="$(<$pretty_name_dir/$device_spec)"
+            echo "Translated $device_spec to $device_name ."
+            device_names+=("$device_name")
+            continue
+        fi
+    done
+    if test -e "/sys/bus/usb/devices/$device_spec"; then
+        device_names+=("$device_spec")
+    fi
+done
+
+case $subcommand in
+    bind)
+        for device_name in ${device_names[@]}; do
+            if test "0" == "$(</sys/bus/usb/drivers_autoprobe)"; then
+                echo "Requesting driver probe for usb device $device_name..."
+                echo "$device_name" > /sys/bus/usb/drivers_probe
+            else
+                if test -e /sys/bus/usb/drivers/usb-storage/$device_name; then
+	                echo "Binding usb-storage driver to usb device $device_name..."
+	                echo "$device_name" > /sys/bus/usb/drivers/usb-storage/bind
+                else
+                    echo "Skipping already bound $name..."
+                fi
+            fi
+        done
+        ;;
+    
+    unbind)
+        if test -n "$DISABLE_AUTOPROBE"; then
+            echo "Disabling auto driver probing for USB devices..."
+            echo "0" > /sys/bus/usb/drivers_autoprobe
+        fi
+        for device_name in ${device_names[@]}; do
+            while ! test -e /sys/bus/usb/drivers/usb-storage/$device_name && test $WAIT_SECONDS -gt 0; do
+                echo "Waiting..."
+                sleep 1
+                let WAIT_SECONDS=$WAIT_SECONDS-1
+            done
+            if test -e /sys/bus/usb/drivers/usb-storage/$device_name; then
+	            echo "Unbinding usb-storage driver to $device_name..."
+	            echo "$device_name" > /sys/bus/usb/drivers/usb-storage/unbind
+            else
+                echo "Skipping already unbound $device_name..."
+            fi
+        done
+        ;;
+    *)
+        echo "Uknnown command $1"
+        exit 1
+esac
+

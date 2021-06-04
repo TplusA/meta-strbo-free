@@ -1,0 +1,59 @@
+From 5dc1a4a14e55825ce5b1b6c94b58e7f5994900a1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Alp=20=C3=96zmert?= <info@ib-oezmert.de>
+Date: Fri, 7 Dec 2018 16:06:31 +0100
+Subject: [PATCH] Add graceful exit on unhandled exception
+
+Replace standard implementation calling std::abort by
+an implementation logging an error message and exiting gracefully via
+std::exit.
+---
+ src/main.cc | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/src/main.cc b/src/main.cc
+index c1565adc..5c8b4055 100644
+--- a/src/main.cc
++++ b/src/main.cc
+@@ -78,6 +78,30 @@ void log_copyright()
+ 
+ void signal_handler(int signum);
+ 
++void cxx_terminate()
++{
++    std::exception_ptr p = std::current_exception();
++    if (p) {
++        try {
++            std::rethrow_exception(p);
++        }
++        catch(const std::exception& e) {
++            std::string msg = std::string(e.what()) + '\n';
++            log_error(msg.c_str());
++        }
++        catch (...) {
++            log_error("Unknown exception.\n");
++        }
++    }
++    else  {
++        log_error("Terminate was called.\n");
++    }
++
++    SingletonManager::getInstance()->shutdown(true);
++    log_info("Gerbera terminating. Please wait...\n");
++    std::exit(EXIT_FAILURE);
++}
++
+ int main(int argc, char** argv, char** envp)
+ {
+ #ifdef SOLARIS
+@@ -94,6 +118,8 @@ int main(int argc, char** argv, char** envp)
+     }
+ #endif
+ 
++    std::set_terminate(&cxx_terminate);
++
+     cxxopts::Options options("gerbera", "Gerbera UPnP Media Server - https://gerbera.io");
+ 
+     options.add_options()
+-- 
+2.17.1
+

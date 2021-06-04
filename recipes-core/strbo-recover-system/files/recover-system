@@ -1,0 +1,91 @@
+#! /bin/sh
+
+. /etc/systeminfo.rc
+
+error()
+{
+    if test $? -eq 1
+    then
+        PREFIX="ERROR"
+    else
+        PREFIX="$1"
+        shift
+    fi
+
+    echo "$PREFIX: $@"
+}
+
+fatal()
+{
+    error "FATAL ERROR" "$1"
+    exit 1
+}
+
+echo "System recovery"
+
+cd "/src/images" || fatal "Recovery data not available"
+
+KEEP_USER_DATA=no
+
+if mount -o ro ${PARTITION_CONFIGFS_DEVICE} /mnt
+then
+    if test -f /mnt/recovery_system_boot.rc
+    then
+        echo "Reading recovery system configuration"
+        source /mnt/recovery_system_boot.rc
+    else
+        echo "No recovery system configuration found"
+    fi
+
+    if test "x${KEEP_USER_DATA}" != xyes
+    then
+        # we keep the file system mounted if we should preverse user data so
+        # that we can delete the configuration file after the system partitions
+        # have been written, but if we are going to shred it anyway, then we
+        # may as well unmount it right here
+        umount /mnt
+    fi
+else
+    echo "Failed mounting configuration partition"
+fi
+
+echo "Checking recovery data integrity..."
+sha256sum -c SHA256SUMS || fatal "Corrupt recovery data"
+
+echo "Reverting to version:"
+test -f version.txt && cat version.txt
+test -f strbo-release && cat strbo-release
+
+for IMAGE in *.bin
+do
+    DEV="${FLASH_BLOCKDEV_PREFIX}${IMAGE/.bin/}"
+
+    if test -b "$DEV"
+    then
+        echo "Writing ${IMAGE} to ${DEV}..."
+        xz -d <"$IMAGE" | dd of="$DEV" bs=4M
+        sync
+    else
+        error "Device ${DEV} does not exist, not flashing image ${IMAGE}"
+    fi
+done
+
+echo "Done writing images to partitions"
+
+if test "x${KEEP_USER_DATA}" = xyes
+then
+    echo "Preserving user data partitions"
+    mount -o remount,rw /mnt && rm /mnt/recovery_system_boot.rc
+    umount /mnt
+else
+    for P in ${PARTITION_CONFIGFS_DEVICE} ${PARTITION_SPAREFS_DEVICE}
+    do
+        echo "Invalidating partition ${P}..."
+        dd if=/dev/zero bs=4M count=1 of="${P}"
+        sync
+    done
+fi
+
+echo "Done."
+
+/sbin/shutdown -r now

@@ -1,0 +1,15 @@
+[Unit]
+Description=T+A Player Switch
+After=syslog.target strbo-dbus.service
+BindsTo=strbo-dbus.service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/tapswitch
+KillMode=process
+UMask=0007
+User=strbo
+Group=strbo
+
+[Install]
+WantedBy=strbo.target

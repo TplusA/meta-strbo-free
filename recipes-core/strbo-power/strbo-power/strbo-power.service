@@ -1,0 +1,14 @@
+[Unit]
+Description=StrBo power down event handling
+After=syslog.target strbo-dbus.service
+BindsTo=strbo-dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/watch_power_gpio
+StandardOutput=syslog
+User=strbo
+Group=input
+
+[Install]
+WantedBy=strbo.target

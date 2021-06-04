@@ -1,0 +1,2 @@
+strbo ALL=(root) NOPASSWD: /usr/bin/usb-storage
+Defaults !requiretty

@@ -1,0 +1,6 @@
+[Unit]
+Description=StrBo software stack
+Requires=basic.target connman.service strbo-startup.service drcpd.service streamplayer.service
+After=basic.target rescue.service rescue.target connman.service
+AllowIsolate=yes
+OnFailure=recovery.target

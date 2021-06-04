@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+    <specVersion>
+        <major>1</major>
+        <minor>0</minor>
+    </specVersion>
+
+    <device>
+        <deviceType>urn:schemas-upnp-org:device:MediaRenderer:1</deviceType>
+        <friendlyName>@FRIENDLY_NAME@</friendlyName>
+        <manufacturer>T+A elektroakustik GmbH &amp; Co. KG</manufacturer>
+        <modelName>T+A Streaming Board</modelName>
+        <manufacturerURL>http://www.ta-hifi.de/</manufacturerURL>
+        <UDN>uuid:@UUID@</UDN>
+        <serialNumber>@SERIAL_NUMBER@</serialNumber>
+        <modelNumber>@VERSION_NUMBER@</modelNumber>
+        <modelDescription>@MODEL_DESCRIPTION@</modelDescription>
+        <presentationURL>/</presentationURL>
+
+        <serviceList>
+            <service>
+                <serviceType>urn:schemas-upnp-org:service:RenderingControl:1</serviceType>
+                <serviceId>urn:upnp-org:serviceId:RenderingControl</serviceId>
+            </service>
+            <service>
+                <serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType>
+                <serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId>
+            </service>
+            <service>
+                <serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType>
+                <serviceId>urn:upnp-org:serviceId:AVTransport</serviceId>
+            </service>
+        </serviceList>
+
+        <iconList>
+            <icon>
+                <mimetype>image/png</mimetype>
+                <width>552</width>
+                <height>240</height>
+                <depth>32</depth>
+                <url>/images/@APPLIANCE_ID@/device-552x240.png</url>
+            </icon>
+            <icon>
+                <mimetype>image/png</mimetype>
+                <width>368</width>
+                <height>160</height>
+                <depth>32</depth>
+                <url>/images/@APPLIANCE_ID@/device-368x160.png</url>
+            </icon>
+            <icon>
+                <mimetype>image/png</mimetype>
+                <width>184</width>
+                <height>80</height>
+                <depth>32</depth>
+                <url>/images/@APPLIANCE_ID@/device-184x80.png</url>
+            </icon>
+            <icon>
+                <mimetype>image/bmp</mimetype>
+                <width>32</width>
+                <height>32</height>
+                <depth>16</depth>
+                <url>/images/generic/logo-32x32.bmp</url>
+            </icon>
+            <icon>
+                <mimetype>image/bmp</mimetype>
+                <width>64</width>
+                <height>64</height>
+                <depth>16</depth>
+                <url>/images/generic/logo-64x64.bmp</url>
+            </icon>
+        </iconList>
+    </device>
+</root>

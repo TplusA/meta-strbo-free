@@ -1,0 +1,14 @@
+[Unit]
+Description=StrBo system check
+DefaultDependencies=no
+After=systemd-tmpfiles-setup-dev.service
+Before=connman.service sysinit.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=Yes
+ExecStart=/usr/libexec/format-fs
+StandardOutput=syslog
+
+[Install]
+WantedBy=strbo.target strbo-remote.target

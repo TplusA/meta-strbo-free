@@ -1,0 +1,29 @@
+From 0f601f0e740e90166392661cbf34e8fed22d5d7b Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <rtie@gmx.de>
+Date: Wed, 2 Dec 2020 16:19:03 +0100
+Subject: [PATCH] groff: Do not use sys_siglist.
+
+---
+ src/roff/groff/pipeline.c | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/src/roff/groff/pipeline.c b/src/roff/groff/pipeline.c
+index 2e3236f..9f70cc0 100644
+--- a/src/roff/groff/pipeline.c
++++ b/src/roff/groff/pipeline.c
+@@ -569,12 +569,6 @@ static const char *xstrsignal(int n)
+ {
+   static char buf[sizeof("Signal ") + 1 + sizeof(int) * 3];
+ 
+-#ifdef NSIG
+-#if HAVE_DECL_SYS_SIGLIST
+-  if (n >= 0 && n < NSIG && sys_siglist[n] != 0)
+-    return sys_siglist[n];
+-#endif /* HAVE_DECL_SYS_SIGLIST */
+-#endif /* NSIG */
+   sprintf(buf, "Signal %d", n);
+   return buf;
+ }
+-- 
+2.29.2
+

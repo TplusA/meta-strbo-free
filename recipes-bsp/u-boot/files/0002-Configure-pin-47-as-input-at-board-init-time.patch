@@ -1,0 +1,56 @@
+From 08ccfa6502e870f5b63100a028ee061b6ab98fda Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Mon, 24 Oct 2016 13:25:15 +0200
+Subject: [PATCH] Configure pin 47 as input at board init time.
+
+CAUTION: This will probably not work on CM3. It may (or may not)
+         prevent the flash indicator LED from functioning. GPIO 47
+         cannot be used as boot select pin on those boards anymore.
+
+The Broadcom bootloader seems to configure that pin as output, that's
+why our boot script had to read out the GPIO twice.
+
+Longer version: We had a problem with the system recovery occasional
+being triggered. It happened because the boot select pin (GPIO 47) was
+low in those situations. Now, the boot script reads out the GPIO
+twice, once to skip a known bad 0, once to get at the real value (1
+for normal boot). The second read is used to decide what to do. As it
+turned out, the GPIO in question was left configured as output pin by
+the Broadcom bootloader, and it was only configured as input pin the
+instant it was read the first time by the boot script. The second read
+follows quickly, but usually slow enough to see a 1. Usually---not
+always... It takes around 15 ms for a safe high level to show up, and
+our timing was just on the edge.
+
+Configuring the GPIO as input at board initialization time gives the
+boot select line enough time to recover from pulled to GND to high
+level (there is an external capacitor on that pin) before the boot
+script is executed.
+
+Change-Id: I0a5ce50420d91f27eeb47f39a791392ae7ae2abd
+---
+ board/raspberrypi/rpi/rpi.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/board/raspberrypi/rpi/rpi.c b/board/raspberrypi/rpi/rpi.c
+index e367ba3092..f00153b6aa 100644
+--- a/board/raspberrypi/rpi/rpi.c
++++ b/board/raspberrypi/rpi/rpi.c
+@@ -468,6 +468,14 @@ int board_init(void)
+ 	return bcm2835_power_on_module(BCM2835_MBOX_POWER_DEVID_USB_HCD);
+ }
+ 
++int arch_early_init_r(void)
++{
++	if (gpio_request(47, "boot select") == 0)
++		gpio_direction_input(47);
++
++	return 0;
++}
++
+ /*
+  * If the firmware passed a device tree use it for U-Boot.
+  */
+-- 
+2.26.2
+

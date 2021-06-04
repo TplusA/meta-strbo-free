@@ -1,0 +1,11 @@
+[Unit]
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=root
+Group=root
+ExecStart=/usr/bin/gerbera-web
+
+[Install]
+WantedBy=strbo.target

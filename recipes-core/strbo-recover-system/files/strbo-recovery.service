@@ -1,0 +1,10 @@
+[Unit]
+Description=Reinstall main system from image files
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/recover-system
+StandardOutput=syslog
+
+[Install]
+WantedBy=basic.target

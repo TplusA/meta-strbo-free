@@ -1,0 +1,83 @@
+From e93884a9c03843e74a0ffac9304d5a63191deb85 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <rtie@gmx.de>
+Date: Fri, 9 Aug 2019 10:17:08 +0200
+Subject: [PATCH] qtdemux: Gapless AAC playback for files with iTunes info.
+
+---
+ gst/isomp4/qtdemux.c | 46 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 46 insertions(+)
+
+diff --git a/gst/isomp4/qtdemux.c b/gst/isomp4/qtdemux.c
+index ee14e4880..72d66e765 100644
+--- a/gst/isomp4/qtdemux.c
++++ b/gst/isomp4/qtdemux.c
+@@ -1054,6 +1054,50 @@ gst_qtdemux_push_event (GstQTDemux * qtdemux, GstEvent * event)
+   }
+ }
+ 
++static void
++adjust_segment_in_event (GstQTDemux * qtdemux, GstEvent ** event)
++{
++  guint64 known_duration;
++  GstSegment segment;
++  GstEvent *new_event;
++
++  if (GST_EVENT_TYPE (*event) != GST_EVENT_SEGMENT)
++    return;
++
++  if (qtdemux->encoder_delay_samples == 0 &&
++      qtdemux->encoder_padding_samples == 0)
++    return;
++
++  gst_event_copy_segment (*event, &segment);
++
++  known_duration = QTTIME_TO_GSTTIME (qtdemux, qtdemux->original_samples_count);
++
++  segment.start +=
++      QTTIME_TO_GSTTIME (qtdemux, qtdemux->encoder_delay_samples) + 1;
++
++  if (segment.stop != -1) {
++    guint64 padding =
++        QTTIME_TO_GSTTIME (qtdemux, qtdemux->encoder_padding_samples);
++    if (segment.stop >= padding) {
++      segment.stop -= padding;
++    }
++  } else {
++    segment.stop = segment.start + known_duration;
++  }
++
++  if (segment.duration != -1) {
++    if (segment.stop != -1) {
++      segment.duration = segment.stop - segment.start;
++    } else {
++      segment.duration = known_duration;
++    }
++  }
++
++  new_event = gst_event_new_segment (&segment);
++  gst_event_set_seqnum (new_event, gst_event_get_seqnum (*event));
++  gst_event_replace (event, new_event);
++}
++
+ typedef struct
+ {
+   guint64 media_time;
+@@ -5054,6 +5098,7 @@ gst_qtdemux_stream_update_segment (GstQTDemux * qtdemux, QtDemuxStream * stream,
+     if (qtdemux->segment_seqnum != GST_SEQNUM_INVALID) {
+       gst_event_set_seqnum (event, qtdemux->segment_seqnum);
+     }
++    adjust_segment_in_event (qtdemux, &event);
+     gst_pad_push_event (stream->pad, event);
+     /* assume we can send more data now */
+     GST_PAD_LAST_FLOW_RETURN (stream->pad) = GST_FLOW_OK;
+@@ -6818,6 +6863,7 @@ gst_qtdemux_check_send_pending_segment (GstQTDemux * demux)
+       segment_event = gst_event_new_segment (&demux->segment);
+       if (demux->segment_seqnum != GST_SEQNUM_INVALID)
+         gst_event_set_seqnum (segment_event, demux->segment_seqnum);
++      adjust_segment_in_event (demux, &segment_event);
+       gst_qtdemux_push_event (demux, segment_event);
+     }
+ 
+-- 
+2.17.1
+

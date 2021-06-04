@@ -1,0 +1,11 @@
+--- a/extra/dt-blob.dts	2019-08-14 08:07:19.601688317 +0200
++++ b/extra/dt-blob.dts	2019-08-14 08:07:38.865047879 +0200
+@@ -2028,7 +2028,7 @@
+             }; // pin
+             pin@p14 { function = "uart0";  termination = "no_pulling"; }; // TX uart0
+             pin@p15 { function = "uart0";  termination = "pull_up"; }; // RX uart0
+-            pin@p47 { function = "output"; termination = "no_pulling"; polarity = "active_low"; }; // EMMC_ENABLE_N
++            pin@p47 { function = "input";  termination = "no_pulling"; }; // EMMC_ENABLE_N
+             pin@p48 { function = "sdcard"; termination = "pull_up";    drive_strength_mA = < 8 >; }; // SD CLK
+             pin@p49 { function = "sdcard"; termination = "pull_up";    drive_strength_mA = < 8 >; }; // SD CMD
+             pin@p50 { function = "sdcard"; termination = "pull_up";    drive_strength_mA = < 8 >; }; // SD D0

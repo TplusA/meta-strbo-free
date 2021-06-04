@@ -1,0 +1,44 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <&sound>;
+
+		__overlay__ {
+			compatible = "tahifi,tahifi-generic";
+			i2s-controller = <&i2s>;
+			status = "okay";
+		};
+	};
+
+	fragment@1 {
+		target-path = "/";
+
+		__overlay__ {
+			tahifi-codec {
+				compatible = "tahifi,tahifi-codec-generic";
+
+				#sound-dai-cells = <0>;
+				status = "okay";
+
+				mute-gpio = <&gpio 36 0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&mute_pin>;
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&gpio>;
+
+		__overlay__ {
+			mute_pin: mute_pin {
+				brcm,function = <1>;
+				brcm,pins = <36>;
+			};
+		};
+	};
+};

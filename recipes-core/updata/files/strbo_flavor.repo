@@ -1,0 +1,8 @@
+[strbo_flavor]
+name=T+A StrBo flavor $strbo_flavor
+baseurl=$strbo_update_baseurl/$strbo_release_line/$strbo_flavor
+enabled=$strbo_flavor_enabled
+cost=500
+metadata_expire=0
+gpgcheck=1
+gpgkey=file:///etc/pki/packagefeed-gpg/PACKAGEFEED-GPG-KEY-strbo-main-$strbo_release_line

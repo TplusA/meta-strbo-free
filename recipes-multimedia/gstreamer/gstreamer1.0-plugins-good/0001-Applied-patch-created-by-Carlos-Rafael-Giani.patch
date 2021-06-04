@@ -1,0 +1,61 @@
+From 124d535f1196a52b5d8d7a081a32750db9ea1f86 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Wed, 2 Sep 2015 17:48:34 +0200
+Subject: [PATCH] Applied patch created by Carlos Rafael Giani.
+
+See https://gitlab.freedesktop.org/gstreamer/gst-plugins-good/issues/31
+Patch 300237
+---
+ gst/audioparsers/gstmpegaudioparse.c | 36 ++++++++++++++++++++++++++++
+ 1 file changed, 36 insertions(+)
+
+diff --git a/gst/audioparsers/gstmpegaudioparse.c b/gst/audioparsers/gstmpegaudioparse.c
+index cfad8833a..5dbfd89f3 100644
+--- a/gst/audioparsers/gstmpegaudioparse.c
++++ b/gst/audioparsers/gstmpegaudioparse.c
+@@ -1143,6 +1143,42 @@ gst_mpeg_audio_parse_handle_first_frame (GstMpegAudioParse * mp3parse,
+         mp3parse->vbri_total_time, 0);
+   }
+ 
++  /* inform baseclass about padding areas to get gapless playback */
++  if ((mp3parse->rate != -1) && ((mp3parse->encoder_delay != 0)
++          || (mp3parse->encoder_padding != 0))) {
++    /* This is a delay, in sample units, that has historically been used in
++     * decoders. The gap at the start of the segment consists of this and the
++     * encoder delay. Unlike the encoder delay, the decoder delay is a fixed
++     * value, which is the same in every player and decoder in existence
++     * (529 samples).
++     */
++    static guint32 const decoder_delay = 529;
++
++    guint32 num_delay_samples = 0;
++    guint32 num_padding_samples = 0;
++    GstClockTime delay_in_ns, padding_in_ns;
++
++    /* The encoder delay value describes the gap at the start, the encoder padding
++     * value the gap at the end of the segment. The decoder delay "shifts" these
++     * two forward. As a result, the delay at the start is increased, but the
++     * padding at the end is decreased. */
++    num_delay_samples = mp3parse->encoder_delay + decoder_delay;
++    if (mp3parse->encoder_padding < decoder_delay)
++      num_padding_samples = 0;
++    else
++      num_padding_samples = mp3parse->encoder_padding - decoder_delay;
++
++    /* Delay and padding values are in sample units. They need to be converted
++     * to nanoseconds. */
++    delay_in_ns =
++        gst_util_uint64_scale (num_delay_samples, GST_SECOND, mp3parse->rate);
++    padding_in_ns =
++        gst_util_uint64_scale (num_padding_samples, GST_SECOND, mp3parse->rate);
++
++    gst_base_parse_set_padding (GST_BASE_PARSE (mp3parse), delay_in_ns,
++        padding_in_ns);
++  }
++
+   /* tell baseclass how nicely we can seek, and a bitrate if one found */
+   /* FIXME: fill index with seek table */
+ #if 0
+-- 
+2.17.1
+

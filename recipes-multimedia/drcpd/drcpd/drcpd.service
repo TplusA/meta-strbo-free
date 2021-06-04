@@ -1,0 +1,12 @@
+[Unit]
+Description=StrBo DRC protocol daemon
+After=syslog.target strbo-dbus.service dcpd.service
+BindsTo=strbo-dbus.service dcpd.service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/drcpd
+KillMode=process
+UMask=0007
+User=strbo
+Group=strbo

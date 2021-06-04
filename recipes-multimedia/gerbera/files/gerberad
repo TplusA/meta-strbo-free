@@ -1,0 +1,76 @@
+#! /usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+""" T+A Streaming board gerbera launcher
+
+Wait for a configured network interface via NETLINK and launch gerbera
+
+Outlook:
+- Cover all states and events (interface disconfigured or configuration changes)
+- Include functionality from gerbera-update-config-from-strbo
+- Include deletion of gerbera.db
+- Monitor gerbera configuration files and restart
+- After SIGTERM wait X seconds and send SIGKILL
+"""
+
+import os
+import subprocess
+import threading
+import pyroute2
+
+# pylint: disable=missing-docstring
+
+class GerberaLauncher:
+    """ Manages an instance of Gerbera """
+
+    EXCLUDED_INTERFACES = ['lo']
+    GERBERA_PATH = '/usr/bin/gerbera'
+
+    def __init__(self):
+        self.ipdb = pyroute2.IPDB()
+        self.gerbera = None
+        self.ifname = None
+        self.new_netlink_event = threading.Condition()
+
+    def on_netlink_event(self, ipdb, msg, action):
+        with self.new_netlink_event:
+            del ipdb
+            del action
+            self.new_netlink_event.notify()
+
+    def run_forever(self):
+        self.ipdb.register_callback(self.on_netlink_event)
+        print('Waiting for a configured network interface...')
+        while True:
+            try:
+                with self.new_netlink_event:
+                    for index in sorted(self.ipdb.by_index.keys()):
+                        interface = self.ipdb.interfaces[index]
+                        if interface.ifname in self.EXCLUDED_INTERFACES:
+                            continue
+                        if self.ifname != interface.ifname and interface.ipaddr:
+                            print('Found new configured network interface: {}'.format(
+                                interface.ifname))
+                            if self.gerbera and self.gerbera.poll() is None:
+                                print('Terminating running instance of Gerbera...')
+                                self.gerbera.terminate()
+                                self.gerbera.wait()
+                            print('Database size is {} kiB'.format(int(os.stat(self.GERBERA_PATH).st_size/1024)))
+                            cmd = [self.GERBERA_PATH,
+                                   '-e', interface.ifname,
+                                   '-c', '/etc/gerbera/config.xml']
+                            print("Starting Gerbera with '{}'".format(' '.join(cmd)))
+                            self.gerbera = subprocess.Popen(cmd)
+                            self.ifname = interface.ifname
+                            break
+                    self.new_netlink_event.wait()
+            except KeyboardInterrupt:
+                print("Keyboard interrupt received. Stopping...")
+                if self.gerbera:
+                    self.gerbera.terminate()
+                    self.gerbera.wait()
+                break
+
+if __name__ == "__main__":
+    GerberaLauncher().run_forever()
+    print('Database size is {} kiB'.format(int(os.stat(self.GERBERA_PATH).st_size/1024)))

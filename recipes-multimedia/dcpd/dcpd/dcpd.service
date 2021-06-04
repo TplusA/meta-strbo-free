@@ -1,0 +1,15 @@
+[Unit]
+Description=StrBo DC protocol daemon
+After=syslog.target strbo-dbus.service dcpspi.service
+Wants=connman.service
+BindsTo=strbo-dbus.service dcpspi.service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/dcpd --enable-phy-reset
+KillMode=process
+UMask=0007
+User=strbo-dcpd
+
+[Install]
+WantedBy=strbo.target

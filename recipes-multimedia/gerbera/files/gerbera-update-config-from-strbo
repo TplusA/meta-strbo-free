@@ -1,0 +1,39 @@
+#! /bin/bash -e
+
+! . /var/local/etc/upnp_settings.rc
+
+VERSION_ID=$(grep '^VERSION_ID=' /etc/os-release | cut -f 2 -d '=')
+VERSION_SHA1=$(grep '^BUILD_GIT_COMMIT=' /etc/os-release | cut -f 2 -d '=')
+MODEL_DESCRIPTION=$(grep '^PRETTY_NAME=' /etc/os-release | cut -f 2 -d '=')
+
+CONFIG_FILE=$(readlink /etc/gerbera/config.xml)
+CONFIG_FILE_DEFAULT=/etc/gerbera/config-default.xml
+
+if test ! -e $CONFIG_FILE || test $CONFIG_FILE_DEFAULT -nt $CONFIG_FILE; then
+    echo "Copying config file from $CONFIG_FILE_DEFAULT to $CONFIG_FILE..."
+    install -D -m 660 $CONFIG_FILE_DEFAULT $CONFIG_FILE
+fi
+
+echo "Updating config file $CONFIG_FILE..."
+
+SERVER_NAME=${FRIENDLY_NAME_OVERRIDE:-T+A Media Server}
+echo "Updating server name to '$SERVER_NAME'...."
+xml ed -L \
+       -N mt=http://mediatomb.cc/config/2 \
+       -u /mt:config/mt:server/mt:name -v "$SERVER_NAME" \
+       $CONFIG_FILE
+
+UDN=$(xml sel -N mt=http://mediatomb.cc/config/2 -t -v /mt:config/mt:server/mt:udn $CONFIG_FILE)
+if [ -z "$UDN" ] || [ "$UDN" == "uuid:ac13eb5d-cc76-4fc0-b92f-5bfa3c0c9a07" ]; then
+    NEW_UDN=$(gerbera --create-config | xml sel -N mt=http://mediatomb.cc/config/2 -t -v /mt:config/mt:server/mt:udn)
+    if [ -n "$NEW_UDN" ]; then
+        echo "Replacing old UDN '$UDN' by random generated '$NEW_UDN'."
+        xml ed -L \
+            -N mt=http://mediatomb.cc/config/2 \
+            -u /mt:config/mt:server/mt:udn -v "$NEW_UDN" \
+            $CONFIG_FILE
+    else
+        echo "Error replacing old UDN." >&2
+        exit 1
+    fi
+fi

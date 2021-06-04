@@ -1,0 +1,14 @@
+[Unit]
+Description=Flagpole UPnP root device announcer
+After=tmp.mount lighttpd.service dcpd.service drcpd.service streamplayer.service
+BindsTo=tmp.mount lighttpd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/flagpole_launcher
+UMask=0007
+User=strbo
+Group=strbo
+
+[Install]
+WantedBy=strbo.target

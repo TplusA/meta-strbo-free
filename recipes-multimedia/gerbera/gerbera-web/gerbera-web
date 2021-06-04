@@ -1,0 +1,154 @@
+#! /usr/bin/python3 -u
+# -*- coding: utf-8 -*-
+
+"""StrBo media server web page
+
+The daemon contains a http server and a websocket server. The web page is served via http and
+displays continous updates through a websocket via Javascript.
+
+Outlook:
+
+- DONE Fix chromium getting stuck beyond an output size
+- Add graphical display and keep log in a separate tab
+- Lint embedded HTML & Javascript
+"""
+
+import asyncio
+import websockets
+import subprocess
+import sys
+import threading
+import http.server
+import socket
+import fcntl
+import time
+import os
+
+HTTP_PORT = 8080
+WEBSOCK_PORT = 8081
+
+KIOSK_HTML = """\
+<html>
+  <head>
+     <script language="javascript">
+       var url = 'ws://' + window.location.hostname + ':%WEBSOCK_PORT%'
+       var ws = new WebSocket(url);
+       ws.onopen = function() {
+         console.log('Connected to ' + url);
+         document.getElementById('connection-state').innerHTML = 'Connected.'
+         ws.send('Hello');
+       }
+       ws.onmessage = function(msg) {
+         var div = document.getElementById('journal-div')
+         var pre = document.getElementById('journal-pre')
+         pre.innerHTML += msg.data;
+         div.scrollTop = div.scrollHeight;
+       }
+       ws.onerror = function(event) {
+         console.log(event);
+         document.getElementById('connection-state').innerHTML = 'Error!'
+       }
+       ws.onclose = function() {
+         console.log('Disconnected.');
+         document.getElementById('connection-state').innerHTML = 'Disconnected. <a href=http://'+ window.location.hostname + ':%HTTP_PORT%>Reconnect</a>'
+       }
+    </script>
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+  </head>
+  <body>
+    <div id=header>
+       <h1> T+A streaming board UPnP media server </h1>
+    </div>
+    <div id=system>
+      <b>HOST:</b> %HOSTNAME% <br/>
+      <b> Connection state:</b> <div style="display:inline;" id="connection-state">Starting...</div> <br/>
+    </div>
+    <hr />
+    <div id="journal-div" style="display:inline-block; height:65vh; width:98vw; overflow:auto;">
+      <p> System log: </p>
+      <pre id="journal-pre">Empty.</pre>
+    </div>
+  </body>
+</html>
+"""
+
+KIOSK_HTML_PLACEHOLDERS = {
+    '%HOSTNAME%':socket.gethostbyaddr(socket.gethostname())[0],
+    '%WEBSOCK_PORT%':str(WEBSOCK_PORT),
+    '%HTTP_PORT%':str(HTTP_PORT)
+}
+for k, v in KIOSK_HTML_PLACEHOLDERS.items():
+    KIOSK_HTML = KIOSK_HTML.replace(k, v)
+
+HTTP_CONTENT_MAP = {
+    '/' :  {
+        'Headers' : [('Content-Type', 'text/html'), ('Expires', '0')],
+        'Content' : bytes(KIOSK_HTML, "utf8")
+    }
+}
+
+class HTTPServerThread(threading.Thread):
+    def __init__(self, server_address, content, **args):
+        class RequestHandler(http.server.BaseHTTPRequestHandler):
+            #pylint: disable=invalid-name
+            def do_GET(self):
+                if self.path in content.keys():
+                    self.send_response(200)
+                    for h in content[self.path]['Headers']:
+                        self.send_header(*h)
+                    self.end_headers()
+                    self.wfile.write(content[self.path]['Content'])
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+        threading.Thread.__init__(self)
+        self.httpd = http.server.HTTPServer(server_address, RequestHandler, **args)
+    def run(self):
+        self.httpd.serve_forever()
+
+server_thread = HTTPServerThread(('', HTTP_PORT), HTTP_CONTENT_MAP)
+server_thread.start()
+
+# With Python 3.5 this has a much nicer sytax
+@asyncio.coroutine
+def journalctl(websocket, path):
+    proc = subprocess.Popen(['/bin/journalctl',  '-u', 'gerbera', '-b'],
+                            bufsize=1,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    yield from websocket.send(proc.stdout.read().decode('utf-8'))
+
+    proc = subprocess.Popen(['/bin/journalctl', '-u', 'gerbera', '-f'],
+                            bufsize=1,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+
+    fd = proc.stdout.fileno()
+    fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+    fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+
+    buf = ''
+    while True:
+        try:
+            data = proc.stdout.read()
+            if data:
+                buf += data.decode('utf-8')
+        except IOError:
+            pass
+        lines,sep,buf=buf.rpartition('\n')
+        if lines:
+            yield from websocket.send(lines + sep)
+        time.sleep(.1)
+
+
+try:
+    start_server = websockets.serve(journalctl, '', WEBSOCK_PORT)
+    asyncio.get_event_loop().run_until_complete(start_server)
+    print('Listening for http ({}) and websock ({})...'.format(HTTP_PORT,WEBSOCK_PORT))
+    asyncio.get_event_loop().run_forever()
+except KeyboardInterrupt:
+    print("Keyboard interrupt received.")
+
+print("Stopping....")
+server_thread.httpd.shutdown()
+server_thread.join()

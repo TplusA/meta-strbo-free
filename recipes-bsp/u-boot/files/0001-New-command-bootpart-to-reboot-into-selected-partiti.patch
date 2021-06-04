@@ -1,0 +1,140 @@
+From 1d6eba0db6a16673c8f599167c1fad9a0cdc9153 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Tue, 27 Jan 2015 16:57:20 +0100
+Subject: [PATCH] New command "bootpart" to reboot into selected partition.
+
+Code was mostly taken from Linux kernel and U-Boot sources, and turned
+into a command callable from within a U-Boot script.
+
+Change-Id: I1c6271203413bf6090a35988a4171a209be6a06c
+---
+ cmd/Kconfig    |  7 +++++
+ cmd/Makefile   |  1 +
+ cmd/bootpart.c | 85 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 93 insertions(+)
+ create mode 100644 cmd/bootpart.c
+
+diff --git a/cmd/Kconfig b/cmd/Kconfig
+index 1e4cf146c5..3c434f3231 100644
+--- a/cmd/Kconfig
++++ b/cmd/Kconfig
+@@ -348,6 +348,13 @@ config CMD_BOOTMENU
+ 	help
+ 	  Add an ANSI terminal boot menu command.
+ 
++config CMD_BOOTPART
++	bool "bootpart"
++	depends on ARCH_BCM283X
++	default n
++	help
++	  Select boot partition on BCM283x.
++
+ config CMD_DTIMG
+ 	bool "dtimg"
+ 	help
+diff --git a/cmd/Makefile b/cmd/Makefile
+index 3ac7104546..465379fa10 100644
+--- a/cmd/Makefile
++++ b/cmd/Makefile
+@@ -105,6 +105,7 @@ obj-$(CONFIG_CMD_ONENAND) += onenand.o
+ obj-$(CONFIG_CMD_OSD) += osd.o
+ obj-$(CONFIG_CMD_PART) += part.o
+ obj-$(CONFIG_CMD_PCAP) += pcap.o
++obj-$(CONFIG_CMD_BOOTPART) += bootpart.o
+ ifdef CONFIG_PCI
+ obj-$(CONFIG_CMD_PCI) += pci.o
+ endif
+diff --git a/cmd/bootpart.c b/cmd/bootpart.c
+new file mode 100644
+index 0000000000..1506fb37e4
+--- /dev/null
++++ b/cmd/bootpart.c
+@@ -0,0 +1,85 @@
++/*
++ * Reboot system using a specific boot partition
++ *
++ * (C) Copyright 2015
++ * T+A elektroakustik GmbH & Co. KG  <R.Tiemann@ta-hifi.com>
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of
++ * the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
++ * MA 02111-1307 USA
++ */
++
++#include <common.h>
++
++#ifdef CONFIG_CMD_BOOTPART
++#include <command.h>
++#include <asm/io.h>
++#include <asm/arch/wdog.h>
++
++#define PM_WDOG_TIME_SET		0x000fffff
++#define PM_RSTC_WRCFG_CLR		0xffffffcf
++#define PM_RSTC_WRCFG_FULL_RESET	0x00000020
++#define TIMEOUT				10U
++
++/*
++ * Code below was taken from Linux kernel, defined in
++ * arch/arm/mach-bcm2708/bcm2708.c
++ */
++static uint32_t calc_rsts(uint32_t partition)
++{
++	return BCM2835_WDOG_PASSWORD |
++		((partition & (1 << 0)) << 0) |
++		((partition & (1 << 1)) << 1) |
++		((partition & (1 << 2)) << 2) |
++		((partition & (1 << 3)) << 3) |
++		((partition & (1 << 4)) << 4) |
++		((partition & (1 << 5)) << 5);
++}
++
++/*
++ * Code below was adapted from Linux kernel, function bcm2708_restart() in
++ * arch/arm/mach-bcm2708/bcm2708.c, and further mixed with the U-Boot reset
++ * code found in arch/arm/cpu/arm1176/bcm2835/reset.c
++ */
++static int set_bootpart_and_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
++{
++	if(argc != 2)
++		return CMD_RET_USAGE;
++
++	const int partition = simple_strtoul(argv[1], NULL, 10);
++	if(partition < 0)
++		return CMD_RET_USAGE;
++
++	const uint32_t pm_rsts = calc_rsts(partition);
++
++	struct bcm2835_wdog_regs *regs =
++		(struct bcm2835_wdog_regs *)BCM2835_WDOG_PHYSADDR;
++
++	writel(pm_rsts, &regs->rsts);
++
++	uint32_t pm_rstc = readl(&regs->rstc);
++	const uint32_t pm_wdog = BCM2835_WDOG_PASSWORD | (TIMEOUT & PM_WDOG_TIME_SET);
++	pm_rstc = BCM2835_WDOG_PASSWORD | (pm_rstc & PM_RSTC_WRCFG_CLR) | PM_RSTC_WRCFG_FULL_RESET;
++
++	writel(pm_wdog, &regs->wdog);
++	writel(pm_rstc, &regs->rstc);
++
++	return CMD_RET_SUCCESS;
++}
++
++U_BOOT_CMD(bootpart, 2, 0, set_bootpart_and_reset,
++	   "Select boot partition and reset chip",
++	   "<partition>\n"
++	   "    - number of the partition to boot from after reset");
++#endif /* CONFIG_CMD_BOOTPART */
+-- 
+2.26.2
+
