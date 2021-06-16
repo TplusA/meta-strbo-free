@@ -2,7 +2,7 @@ inherit allarch
 
 require conf/distro/include/partitions.inc
 
-PR = "r5"
+PR = "r6"
 
 S = "${WORKDIR}"
 
