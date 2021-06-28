@@ -4,8 +4,8 @@ LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "c469df849e6f16b476507cc4e813aa9a72b6aff9"
-PR = "r1"
+SRCREV = "96c84e97b717f9a21580de9f0f2c3b5fe6cf97d8"
+PR = "r0"
 
 SRC_URI = "gitsm://git.tua.local/repo/AuPaD;branch=master;protocol=http \
            file://0001-extract_documentation-Use-Python-3-shebang.patch \
