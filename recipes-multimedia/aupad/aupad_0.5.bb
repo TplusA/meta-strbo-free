@@ -4,7 +4,7 @@ LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "96c84e97b717f9a21580de9f0f2c3b5fe6cf97d8"
+SRCREV = "897f452b29af7f5eec4fa50f715a5d748dd27230"
 PR = "r0"
 
 SRC_URI = "gitsm://git.tua.local/repo/AuPaD;branch=master;protocol=http \
