@@ -3,7 +3,7 @@ LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "5978693ec7f557307a131c3e2d68d62e086b3a54"
+SRCREV = "38009f16e3b416b5b877168380a9818b3659e910"
 
 SRC_URI = " \
     gitsm://git.tua.local/repo/MounTA;branch=master;protocol=http \
