@@ -6,7 +6,6 @@ SRC_URI = " \
     file://0002-ASoC-tahifi-generic-Add-T-A-HiFi-appliances-driver-f.patch \
     file://0003-bcm2835-i2s-Bit-clock-is-always-on-for-SND_SOC_DAIFM.patch \
     file://0004-bcm2835-i2s-Frame-sync-is-always-on-for-SND_SOC_DAIF.patch \
-    file://0005-bcm2835-i2s-Allow-samples-rates-of-up-to-768000.patch \
     file://strbo_cm_${LINUX_VERSION}.config \
     file://defconfig \
 "
