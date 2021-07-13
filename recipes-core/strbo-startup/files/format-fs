@@ -114,4 +114,13 @@ fi
 
 /usr/sbin/setquota -u strbo-mediaserver 0 1G 0 0 /var/local/data
 
+# clean up lost+found directories
+for d in $(cut -f 2 -d ' ' /proc/mounts | sort -u)
+do
+    LAF="${d}/lost+found"
+    if test ! -d "${LAF}"; then continue; fi
+    if test "x$(find "${LAF}" -maxdepth 0 -empty)" != x; then continue; fi
+    ( cd "${LAF}" && find . -maxdepth 1 ! -name . -exec rm -rf {} \; )
+done
+
 exit 0
