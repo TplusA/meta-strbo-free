@@ -1,0 +1,31 @@
+From 4b3cb8de716b58fa817371fca39e53b05a2f1e92 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <rtie@gmx.de>
+Date: Thu, 2 Sep 2021 11:30:59 +0200
+Subject: [PATCH 3/3] linux-cm: Fix filtering for address families
+
+---
+ libgupnp/gupnp-linux-context-manager.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libgupnp/gupnp-linux-context-manager.c b/libgupnp/gupnp-linux-context-manager.c
+index 8f46e7b..64804a2 100644
+--- a/libgupnp/gupnp-linux-context-manager.c
++++ b/libgupnp/gupnp-linux-context-manager.c
+@@ -982,11 +982,11 @@ create_netlink_socket (GUPnPLinuxContextManager *self, GError **error)
+         /* Listen for interface changes and IP address changes */
+         sa.nl_groups = RTMGRP_LINK;
+         if (gupnp_context_manager_get_socket_family (GUPNP_CONTEXT_MANAGER (self)) == G_SOCKET_FAMILY_INVALID) {
+-                sa.nl_groups = RTMGRP_IPV6_IFADDR | RTMGRP_IPV4_IFADDR;
++                sa.nl_groups |= RTMGRP_IPV6_IFADDR | RTMGRP_IPV4_IFADDR;
+         } else if (gupnp_context_manager_get_socket_family (GUPNP_CONTEXT_MANAGER (self)) == G_SOCKET_FAMILY_IPV4) {
+-                sa.nl_groups = RTMGRP_IPV4_IFADDR;
++                sa.nl_groups |= RTMGRP_IPV4_IFADDR;
+         } else if (gupnp_context_manager_get_socket_family (GUPNP_CONTEXT_MANAGER (self)) == G_SOCKET_FAMILY_IPV6) {
+-                sa.nl_groups = RTMGRP_IPV6_IFADDR;
++                sa.nl_groups |= RTMGRP_IPV6_IFADDR;
+         }
+ 
+         status = bind (fd, (struct sockaddr *) &sa, sizeof (sa));
+-- 
+2.25.1
+
