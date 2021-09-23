@@ -3,7 +3,7 @@ SECTION = "net"
 LICENSE = "GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
-SRCREV = "85f30eaf5affb6a00115c4882fd531bf6ebb7d38"
+SRCREV = "caea5ae477e8a91ad5d9a98663678b66bb054aa2"
 
 SRC_URI = " \
     git://git.tua.local/repo/StrBo-REST;branch=master;protocol=http \
