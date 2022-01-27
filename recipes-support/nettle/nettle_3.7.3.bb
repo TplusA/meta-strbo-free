@@ -47,5 +47,3 @@ do_install_ptest() {
 
 RDEPENDS_${PN}-ptest += "${PN}-dev"
 INSANE_SKIP_${PN}-ptest += "dev-deps"
-
-BBCLASSEXTEND = "native nativesdk"
