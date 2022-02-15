@@ -1,0 +1,11 @@
+--- a/build/autoconf/arch.m4	2019-09-01 15:09:05.000000000 +0200
++++ b/build/autoconf/arch.m4	2022-02-14 15:42:43.568703572 +0100
+@@ -216,7 +216,7 @@
+ 
+   AC_MSG_CHECKING(ARM version support in compiler)
+   dnl Determine the target ARM architecture (5 for ARMv5, v5T, v5E, etc.; 6 for ARMv6, v6K, etc.)
+-  ARM_ARCH=`${CC-cc} ${CFLAGS} -dM -E - < /dev/null | sed -n 's/.*__ARM_ARCH_\([[0-9]][[0-9]]*\).*/\1/p'`
++  ARM_ARCH=`${CC-cc} ${CFLAGS} -dM -E - < /dev/null | sed -n 's/.*__ARM_ARCH_\([[0-9]][[0-9]]*\).*/\1/p' | sort -u`
+   AC_MSG_RESULT("$ARM_ARCH")
+ 
+   AC_MSG_CHECKING(for ARM NEON support in compiler)

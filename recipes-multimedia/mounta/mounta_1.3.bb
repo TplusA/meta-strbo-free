@@ -22,7 +22,7 @@ DEPENDS = " \
     util-linux \
     autoconf-archive \
 "
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     glib-2.0 \
     glib-2.0-utils \
     glib-2.0-codegen \
@@ -35,7 +35,7 @@ RDEPENDS_${PN} += " \
 
 PACKAGES += "${PN}-dbus-service"
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${systemd_unitdir}/system/mounta.service \
     ${sysconfdir}/sudoers.d/50-mounta \
     ${sysconfdir}/tmpfiles.d/50-mounta.conf \
@@ -43,14 +43,14 @@ FILES_${PN} += " \
 
 DIRFILES = "1"
 
-SYSTEMD_SERVICE_${PN} = "mounta.service"
+SYSTEMD_SERVICE:${PN} = "mounta.service"
 
 CFLAGS += "-std=c11"
 CPPFLAGS += "-DMSG_BACKTRACE_ENABLED=0"
 
 inherit autotools pkgconfig systemd
 
-do_install_append() {
+do_install:append() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}
     then
         install -d ${D}${systemd_unitdir} ${D}${systemd_unitdir}/system
@@ -64,7 +64,7 @@ do_install_append() {
     install -d ${D}${bindir}
 }
 
-pkg_postinst_${PN}() {
+pkg_postinst:${PN}() {
     if [ -z "$D" ]; then
         if command -v systemd-tmpfiles >/dev/null; then
             systemd-tmpfiles --create ${sysconfdir}/tmpfiles.d/50-mounta.conf

@@ -1,15 +1,10 @@
 require conf/distro/include/partitions.inc
 
-FILESEXTRAPATHS_prepend := "${COREBASE}/meta/recipes-connectivity/${PN}/${PN}:"
-FILESEXTRAPATHS_append := ":${THISDIR}/${PN}"
-
-PR = "r1"
+FILESEXTRAPATHS:append := ":${THISDIR}/${PN}"
 
 SRC_URI += "file://main.conf"
 
-DEPENDS += "libmnl"
-
-do_install_append() {
+do_install:append() {
     install -d ${D}/${sysconfdir} ${D}/${sysconfdir}/connman
     install -m 644 ${WORKDIR}/main.conf ${D}/${sysconfdir}/connman
 

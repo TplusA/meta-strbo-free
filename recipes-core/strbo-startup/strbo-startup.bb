@@ -14,20 +14,19 @@ SRC_URI = " \
 
 S = "${WORKDIR}"
 
-PR = "r19"
-
 INITSCRIPT_NAME = "startup"
 INITSCRIPT_PARAMS = "start 30 S ."
 
-SYSTEMD_SERVICE_${PN} = "strbo-startup.service"
+SYSTEMD_SERVICE:${PN} = "strbo-startup.service"
 
-DEPENDS_append = " update-rc.d-native"
-RDEPENDS_${PN} += "gawk sed util-linux strbo-systeminfo-main"
-RDEPENDS_${PN} += "quota"
+DEPENDS:append = " update-rc.d-native"
+RDEPENDS:${PN} += "gawk sed util-linux strbo-systeminfo-main"
+RDEPENDS:${PN} += "quota"
 
 USERADD_PACKAGES = "${PN}"
-USERADD_PARAM_${PN} = "-r -N -g strbo strbo"
-GROUPADD_PARAM_${PN} = "-r strbo"
+USERADD_PARAM:${PN} = "-r -N -g strbo strbo"
+GROUPADD_PARAM:${PN} = "-r strbo"
+GROUPMEMS_PARAM:${PN} = ""
 
 inherit allarch update-rc.d systemd useradd
 
@@ -46,9 +45,9 @@ do_install() {
 }
 
 # need to append and specialize because simply adding recovery-prepare.service
-# to SYSTEMD_SERVICE_${PN} would cause the postinst script to restart the
+# to SYSTEMD_SERVICE:${PN} would cause the postinst script to restart the
 # service, resulting in reboot during upgrade
-systemd_postinst_append() {
+systemd_postinst:append() {
 if type systemctl >/dev/null 2>/dev/null; then
 	systemctl $OPTS ${SYSTEMD_AUTO_ENABLE} recovery-prepare.service
 fi
@@ -56,11 +55,11 @@ systemctl $OPTS mask systemd-quotacheck.service
 systemctl $OPTS mask quotaon.service
 }
 
-systemd_prerm_append() {
+systemd_prerm:append() {
 	systemctl $OPTS disable recovery-prepare.service
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${systemd_unitdir}/system/strbo.target \
     ${systemd_unitdir}/system/strbo-startup.service \
     ${systemd_unitdir}/system/recovery.target \

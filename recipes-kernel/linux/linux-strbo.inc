@@ -1,6 +1,7 @@
 # File is based on linux-raspberrypi.inc from Raspberry Pi BSP
 
 KERNEL_DEVICETREE := "bcm2708-rpi-cm.dtb bcm2710-rpi-cm3.dtb"
+KERNEL_DANGLING_FEATURES_WARN_ONLY = "1"
 
 PR = "${STRBO_KERNEL_PR}"
 
@@ -25,7 +26,7 @@ require recipes-kernel/linux/linux-yocto.inc
 # upgrade can only be done by hand using rpm, double-crossing dnf and thus
 # introducing inconsistencies into the package management system.
 #
-# Removing the symlink in do_install_append() from the packages and managing it
+# Removing the symlink in do_install:append() from the packages and managing it
 # in postinst scriptlets is tricky because the build system plays stupid tricks
 # in Python functions and it also requires the symlink to be around to finish
 # its job. Moving the symlink to a dummy package is also tricky and it works,
@@ -55,26 +56,26 @@ KERNEL_DEFCONFIG_raspberrypi = "strbo_cm_${LINUX_VERSION}.config"
 
 KERNEL_EXTRA_ARGS += "LOADADDR=0x00008000"
 
-FILES_${KERNEL_PACKAGE_NAME}-devicetree := "${BOOT_PARTITION_MOUNTPOINT}/*.dtb"
+FILES:${KERNEL_PACKAGE_NAME}-devicetree := "${BOOT_PARTITION_MOUNTPOINT}/*.dtb"
 
 DIRFILES = "1"
 
 # dummy package to make do_deploy and QA checks happy while still getting the
 # -devicetree packages we want and need; moving dtb files away from the
-# original installation directory in do_install_append messes up do_deploy, so
+# original installation directory in do_install:append messes up do_deploy, so
 # we keep the files in place instead and package them as required by QA
 PACKAGES += "${KERNEL_PACKAGE_NAME}-devicetree-dummy"
-FILES_${KERNEL_PACKAGE_NAME}-devicetree-dummy = " \
+FILES:${KERNEL_PACKAGE_NAME}-devicetree-dummy = " \
     ${KERNEL_IMAGEDEST}/bcm2708-rpi-cm.dtb \
     ${KERNEL_IMAGEDEST}/bcm2710-rpi-cm3.dtb \
 "
 
-do_configure_prepend() {
+do_configure:prepend() {
     rm -f "${WORKDIR}/defconfig" "${B}/.config"
     install -m 0644 ${WORKDIR}/${KERNEL_DEFCONFIG_${MACHINE}} ${WORKDIR}/defconfig || die "Kernel configuration ${KERNEL_DEFCONFIG_${MACHINE}} not available."
 }
 
-do_install_append() {
+do_install:append() {
     install -d ${D}${BOOT_PARTITION_MOUNTPOINT}
 
     for DTB in ${KERNEL_DEVICETREE}; do

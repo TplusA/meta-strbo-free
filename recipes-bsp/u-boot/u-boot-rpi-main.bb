@@ -1,5 +1,5 @@
 SUMMARY = "U-Boot configuration for StrBo main system"
-RDEPENDS_${PN} += "bcm2835-bootfiles-config-main"
+RDEPENDS:${PN} += "bcm2835-bootfiles-config-main"
 UBOOT_CONFIG = "main"
 BOOT_SCR = "boot.scr"
 KERNEL_IMG = "kernel.img"

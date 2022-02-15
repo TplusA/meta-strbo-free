@@ -21,7 +21,7 @@ DEPENDS = " \
     strbo-startup (>= 1.0-r15) \
 "
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     python3-werkzeug \
     python3-flipflop \
     python3-halogen \
@@ -39,9 +39,9 @@ RDEPENDS_${PN} = " \
     polkit \
 "
 
-RRECOMMENDS_${PN} = "updata"
+RRECOMMENDS:${PN} = "updata"
 
-RDEPENDS_${PN}-lighttpd = " \
+RDEPENDS:${PN}-lighttpd = " \
     ${PN} \
     lighttpd \
     lighttpd-module-alias \
@@ -56,14 +56,14 @@ RDEPENDS_${PN}-lighttpd = " \
 
 PACKAGE_WRITE_DEPS += "systemd-systemctl-native"
 
-FILES_${PN} = " \
+FILES:${PN} = " \
     /www/strbo-rest/strbo/*.py \
     /www/strbo-rest/helpers/*.sh \
     ${sysconfdir}/sudoers.d/50-rest \
     ${sysconfdir}/polkit-1/rules.d/99-strbo-rest-api.rules \
 "
 
-FILES_${PN}-lighttpd = " \
+FILES:${PN}-lighttpd = " \
     /www/strbo-rest/v1_wsgi.py \
     /www/strbo-rest/v1_wsgi.sh \
     ${sysconfdir}/lighttpd.d \
@@ -74,8 +74,9 @@ DIRFILES = "1"
 EXTRA_OEMAKE = "SPHINXBUILD=echo"
 
 USERADD_PACKAGES = "${PN}"
-USERADD_PARAM_${PN} = " -r -N -g rest -G strbo -M -d /www/strbo-rest strbo-rest"
-GROUPADD_PARAM_${PN} = "-r rest; -r strbo"
+USERADD_PARAM:${PN} = " -r -N -g rest -G strbo -M -d /www/strbo-rest strbo-rest"
+GROUPADD_PARAM:${PN} = "-r rest; -r strbo"
+GROUPMEMS_PARAM:${PN} = ""
 
 inherit allarch useradd
 

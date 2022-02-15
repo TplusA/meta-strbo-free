@@ -8,9 +8,7 @@ require bcm2835-bootfiles.inc
 SUMMARY = "Broadcom boot loader configuration files for StrBo recovery system"
 DEPENDS += "strbo-recovery-boot-image"
 
-PR = "r5"
-
-do_install_append() {
+do_install:append() {
     #
     # The rootfs archive is assumed to exist at this point.
     #

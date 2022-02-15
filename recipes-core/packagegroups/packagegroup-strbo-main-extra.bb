@@ -10,7 +10,7 @@ PR = "r1"
 
 inherit packagegroup
 
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     systemd-analyze \
     less \
     vim \

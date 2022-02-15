@@ -5,7 +5,6 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
 SRCREV = "caa0148a536a4f8e5eb3bfb2904fa9f895e074e5"
-PR = "r0"
 
 SRC_URI = " \
     gitsm://git.tua.local/repo/Listbrokers;branch=master;protocol=http \
@@ -22,7 +21,7 @@ DEPENDS = " \
     autorevision-native \
 "
 
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     glib-2.0 \
     glib-2.0-utils \
     glib-2.0-codegen \
@@ -34,7 +33,7 @@ RDEPENDS_${PN} += " \
 
 PACKAGES += "${PN}-dbus-service"
 
-FILES_${PN}-dbus-service += " \
+FILES:${PN}-dbus-service += " \
     ${datadir}/dbus-1/services/de.tahifi.FileBroker.service \
     ${datadir}/dbus-1/services/de.tahifi.UPnPBroker.service \
 "
@@ -44,11 +43,11 @@ CPPFLAGS += "-DMSG_BACKTRACE_ENABLED=0"
 
 inherit autotools pkgconfig
 
-do_install_append() {
+do_install:append() {
     install -d ${D}${bindir}
 }
 
-pkg_postinst_${PN} () {
+pkg_postinst:${PN} () {
 if [ x"$D" = x ]; then
     pkill strbo_lb_usb
     pkill strbo_lb_upnp
@@ -56,7 +55,7 @@ fi
 exit 0
 }
 
-pkg_prerm_${PN} () {
+pkg_prerm:${PN} () {
 if [ x"$D" = x ]; then
     pkill strbo_lb_usb
     pkill strbo_lb_upnp

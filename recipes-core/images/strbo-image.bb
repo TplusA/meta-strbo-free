@@ -8,7 +8,7 @@ IMAGE_LINGUAS = " "
 
 require conf/distro/include/partitions.inc
 
-inherit nopackages
+inherit nopackages image-artifact-names
 
 ###
 ### Image dependencies

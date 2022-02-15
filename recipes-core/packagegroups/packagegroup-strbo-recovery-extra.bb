@@ -10,4 +10,4 @@ PR = "r2"
 
 inherit packagegroup
 
-RDEPENDS_${PN} += "strbo-logging"
+RDEPENDS:${PN} += "strbo-logging"

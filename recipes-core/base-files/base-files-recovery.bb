@@ -9,15 +9,13 @@ SRC_URI = "file://fstab.common \
            file://locale.conf \
            file://10-locale.sh"
 
-PR = "r3"
-
 S = "${WORKDIR}"
 
 DEPENDS = "base-files"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
-CONFFILES_${PN} = "${sysconfdir}/fstab"
-FILES_${PN} = "/"
+CONFFILES:${PN} = "${sysconfdir}/fstab"
+FILES:${PN} = "/"
 
 require conf/distro/include/partitions.inc
 
@@ -45,17 +43,17 @@ do_install () {
     install -m 0644 ${WORKDIR}/10-locale.sh ${D}${sysconfdir}/profile.d/10-locale.sh
 }
 
-pkg_preinst_${PN} () {
+pkg_preinst:${PN} () {
     umount /src || true
 }
 
-pkg_postinst_${PN} () {
+pkg_postinst:${PN} () {
     if [ x"$D" = "x" ]
     then
         mount /src || true
     fi
 }
 
-pkg_prerm_${PN} () {
+pkg_prerm:${PN} () {
     umount /src || true
 }

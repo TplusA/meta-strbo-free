@@ -1,6 +1,4 @@
-PR = "r1"
-
-do_install_append() {
+do_install:append() {
     cat >>${D}${sysconfdir}/dnf/dnf.conf <<EOF
 color=never
 keepcache=False

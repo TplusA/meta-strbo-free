@@ -1,6 +1,4 @@
-PR = "r2"
-
-FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 WRITE_KEYS_TO_TMPFS = '${@bb.utils.contains("IMAGE_FEATURES", "read-only-rootfs", "yes", "no", d)}'
 
@@ -9,7 +7,7 @@ SRC_URI += "file://allow_password \
 
 DEFAULT_CONFIG = "${@bb.utils.contains("HAVE_DEVELOPER_ACCOUNT", "yes", "allow_password", "disallow_password", d)}"
 
-do_install_append() {
+do_install:append() {
     if test "x${WRITE_KEYS_TO_TMPFS}" = 'xyes'
     then
         rmdir ${D}${sysconfdir}/dropbear

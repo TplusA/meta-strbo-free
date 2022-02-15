@@ -5,7 +5,6 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
 SRCREV = "5cf292bfea75e5f23b0675b9469ff985e2929036"
-PR = "r0"
 
 SRC_URI = " \
     gitsm://git.tua.local/repo/DCPD;branch=master;protocol=http \
@@ -25,7 +24,7 @@ DEPENDS = " \
     autoconf-archive \
     autorevision-native \
 "
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     glib-2.0 \
     glib-2.0-utils \
     glib-2.0-codegen \
@@ -39,28 +38,29 @@ RDEPENDS_${PN} += " \
 
 PACKAGES += "${PN}-dbus-service"
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${systemd_unitdir}/system/dcpd.service \
     ${sysconfdir}/polkit-1/rules.d/99-flagpole-restart.rules \
     ${sysconfdir}/sudoers.d/50-dcpd \
 "
 
-FILES_${PN}-dbus-service += "${datadir}/dbus-1/services/de.tahifi.Dcpd.service"
+FILES:${PN}-dbus-service += "${datadir}/dbus-1/services/de.tahifi.Dcpd.service"
 
 DIRFILES = "1"
 
-SYSTEMD_SERVICE_${PN} = "dcpd.service"
+SYSTEMD_SERVICE:${PN} = "dcpd.service"
 
 CFLAGS += "-std=c11"
 CPPFLAGS += "-DMSG_BACKTRACE_ENABLED=0"
 
 USERADD_PACKAGES = "${PN}"
-USERADD_PARAM_${PN} = "-r -N -g strbo -G netcfg strbo-dcpd"
-GROUPADD_PARAM_${PN} = "-r strbo; -r netcfg"
+USERADD_PARAM:${PN} = "-r -N -g strbo -G netcfg strbo-dcpd"
+GROUPADD_PARAM:${PN} = "-r strbo; -r netcfg"
+GROUPMEMS_PARAM:${PN} = ""
 
 inherit autotools pkgconfig systemd useradd
 
-do_install_append() {
+do_install:append() {
     install -d \
         ${D}${bindir} \
         ${D}${sysconfdir}

@@ -15,8 +15,11 @@ PYPI_PACKAGE = "halogen"
 
 CLEANBROKEN = "1"
 
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     ${PYTHON_PN}-cached-property \
     ${PYTHON_PN}-datetime \
+    ${PYTHON_PN}-dateutil \
+    ${PYTHON_PN}-isodate \
+    ${PYTHON_PN}-pytz \
     ${PYTHON_PN}-json \
 "

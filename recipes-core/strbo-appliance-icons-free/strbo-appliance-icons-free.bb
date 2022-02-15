@@ -18,10 +18,10 @@ inherit allarch
 
 PACKAGES += "${PN}-lighttpd"
 
-FILES_${PN} = "${datadir}/strbo-appliance-icons"
+FILES:${PN} = "${datadir}/strbo-appliance-icons"
 
-RDEPENDS_${PN}-lighttpd = "lighttpd"
-FILES_${PN}-lighttpd = "${sysconfdir} /www"
+RDEPENDS:${PN}-lighttpd = "lighttpd"
+FILES:${PN}-lighttpd = "${sysconfdir} /www"
 
 APPLIANCES = "\
     MP1000E \

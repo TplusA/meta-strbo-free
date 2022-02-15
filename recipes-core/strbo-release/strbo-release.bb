@@ -6,7 +6,7 @@ LICENSE = "MIT"
 
 PV := "${DISTRO_VERSION}"
 
-FILES_${PN} += "${nonarch_libdir}/strbo-release"
+FILES:${PN} += "${nonarch_libdir}/strbo-release"
 
 do_compile() {
     echo -n '' >${B}/strbo-release

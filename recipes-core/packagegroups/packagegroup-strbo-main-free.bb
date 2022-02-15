@@ -10,7 +10,7 @@ PR = "r0"
 
 inherit packagegroup
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     strbo-appliance-icons-free \
     strbo-appliance-icons-free-lighttpd \
 "

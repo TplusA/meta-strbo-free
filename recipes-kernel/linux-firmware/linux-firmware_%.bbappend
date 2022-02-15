@@ -1,6 +1,4 @@
-PR = "r2"
-
-do_install_append() {
+do_install:append() {
     # Remove useless stuff
     FW="${D}${nonarch_base_libdir}/firmware"
 

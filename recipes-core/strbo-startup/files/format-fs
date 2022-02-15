@@ -98,22 +98,6 @@ else
     /bin/chown strbo-tacaman:tacaman "$d"
 fi
 
-d='/var/local/data/gerbera'
-if test -d "$d"
-then
-    PERM="$(/bin/stat -c '%a %U %G' "$d")"
-    if test "x${PERM}" != 'x2755 strbo-mediaserver strbo'
-    then
-        /bin/chown strbo-mediaserver:strbo "$d"
-        /bin/chmod 02755 "$d"
-    fi
-else
-    /bin/mkdir -m 02755 "$d"
-    /bin/chown strbo-mediaserver:strbo "$d"
-fi
-
-/usr/sbin/setquota -u strbo-mediaserver 0 1G 0 0 /var/local/data
-
 # clean up lost+found directories
 for d in $(cut -f 2 -d ' ' /proc/mounts | sort -u)
 do

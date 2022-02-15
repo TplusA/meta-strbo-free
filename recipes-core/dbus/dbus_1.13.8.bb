@@ -5,13 +5,13 @@ SECTION = "base"
 LICENSE = "AFL-2.1 | GPLv2+"
 LIC_FILES_CHKSUM = "file://COPYING;md5=10dded3b58148f3f1fd804b26354af3e \
                     file://dbus/dbus.h;beginline=6;endline=20;md5=7755c9d7abccd5dbd25a6a974538bb3c"
-FILESEXTRAPATHS_append := ":${THISDIR}/${PN}:${COREBASE}/meta/recipes-core/dbus/dbus"
+FILESEXTRAPATHS:append := ":${THISDIR}/${PN}:${COREBASE}/meta/recipes-core/dbus/dbus"
 DEPENDS = "expat virtual/libintl autoconf-archive"
-RDEPENDS_dbus_class-native = ""
-RDEPENDS_dbus_class-nativesdk = ""
+RDEPENDS:dbus:class-native = ""
+RDEPENDS:dbus:class-nativesdk = ""
 PACKAGES += "${@bb.utils.contains('DISTRO_FEATURES', 'ptest', '${PN}-ptest', '', d)}"
-ALLOW_EMPTY_dbus-ptest = "1"
-RDEPENDS_dbus-ptest_class-target = "dbus-test-ptest"
+ALLOW_EMPTY:dbus-ptest = "1"
+RDEPENDS:dbus-ptest:class-target = "dbus-test-ptest"
 
 SRC_URI = "https://dbus.freedesktop.org/releases/dbus/dbus-${PV}.tar.xz \
            file://0001-Revert-Only-support-systemd-transport-if-we-have-sys.patch \
@@ -26,8 +26,6 @@ SRC_URI = "https://dbus.freedesktop.org/releases/dbus/dbus-${PV}.tar.xz \
 SRC_URI[md5sum] = "dc83da313e716506451b1cb8d8477fe6"
 SRC_URI[sha256sum] = "82a89f64e1b55e459725186467770995f33cac5eb8a050b5d8cbeb338078c4f6"
 
-PR = "r2"
-
 inherit useradd autotools pkgconfig gettext update-rc.d
 
 INITSCRIPT_NAME = "dbus-1"
@@ -39,25 +37,26 @@ python __anonymous() {
 }
 
 USERADD_PACKAGES = "${PN}"
-GROUPADD_PARAM_${PN} = "-r netdev"
-USERADD_PARAM_${PN} = "--system --home ${localstatedir}/lib/dbus \
+GROUPADD_PARAM:${PN} = "-r netdev"
+USERADD_PARAM:${PN} = "--system --home-dir ${localstatedir}/lib/dbus \
                        --no-create-home --shell /bin/false \
                        --user-group messagebus"
+GROUPMEMS_PARAM:${PN} = ""
 
-CONFFILES_${PN} = "${sysconfdir}/dbus-1/system.conf ${sysconfdir}/dbus-1/session.conf"
+CONFFILES:${PN} = "${sysconfdir}/dbus-1/system.conf ${sysconfdir}/dbus-1/session.conf"
 
-DEBIANNAME_${PN} = "dbus-1"
+DEBIANNAME:${PN} = "dbus-1"
 
 PACKAGES =+ "${PN}-lib"
 
 OLDPKGNAME = "dbus-x11"
-OLDPKGNAME_class-nativesdk = ""
+OLDPKGNAME:class-nativesdk = ""
 
 # for compatibility
-RPROVIDES_${PN} = "${OLDPKGNAME}"
-RREPLACES_${PN} += "${OLDPKGNAME}"
+RPROVIDES:${PN} = "${OLDPKGNAME}"
+RREPLACES:${PN} += "${OLDPKGNAME}"
 
-FILES_${PN} = "${bindir}/dbus-daemon* \
+FILES:${PN} = "${bindir}/dbus-daemon* \
                ${bindir}/dbus-uuidgen \
                ${bindir}/dbus-cleanup-sockets \
                ${bindir}/dbus-send \
@@ -80,12 +79,12 @@ FILES_${PN} = "${bindir}/dbus-daemon* \
                ${nonarch_libdir}/sysusers.d/dbus.conf \
                ${nonarch_libdir}/tmpfiles.d/dbus.conf \
 "
-FILES_${PN}-lib = "${libdir}/lib*.so.*"
-RRECOMMENDS_${PN}-lib = "${PN}"
-FILES_${PN}-dev += "${libdir}/dbus-1.0/include ${libdir}/cmake/DBus1 ${bindir}/dbus-test-tool"
+FILES:${PN}-lib = "${libdir}/lib*.so.*"
+RRECOMMENDS:${PN}-lib = "${PN}"
+FILES:${PN}-dev += "${libdir}/dbus-1.0/include ${libdir}/cmake/DBus1 ${bindir}/dbus-test-tool"
 
 PACKAGE_WRITE_DEPS += "${@bb.utils.contains('DISTRO_FEATURES','systemd sysvinit','systemd-systemctl-native','',d)}"
-pkg_postinst_dbus() {
+pkg_postinst:dbus() {
 	# If both systemd and sysvinit are enabled, mask the dbus-1 init script
         if ${@bb.utils.contains('DISTRO_FEATURES','systemd sysvinit','true','false',d)}; then
 		if [ -n "$D" ]; then
@@ -108,16 +107,16 @@ EXTRA_OECONF = "--disable-tests \
                 --with-system-socket=/run/dbus/system_bus_socket \
                 "
 
-EXTRA_OECONF_append_class-target = " SYSTEMCTL=${base_bindir}/systemctl"
-EXTRA_OECONF_append_class-native = " --disable-selinux"
+EXTRA_OECONF:append:class-target = " SYSTEMCTL=${base_bindir}/systemctl"
+EXTRA_OECONF:append:class-native = " --disable-selinux"
 
 PACKAGECONFIG ??= "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)} \
                    ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'x11', '', d)} \
                    user-session \
                   "
 
-PACKAGECONFIG_class-native = ""
-PACKAGECONFIG_class-nativesdk = ""
+PACKAGECONFIG:class-native = ""
+PACKAGECONFIG:class-nativesdk = ""
 
 # Would like to --enable-systemd but that's a circular build-dependency between
 # systemd<->dbus
@@ -164,7 +163,7 @@ do_install() {
 	rm -rf ${D}${localstatedir}/run
 }
 
-do_install_class-native() {
+do_install:class-native() {
 	autotools_do_install
 
 	# dbus-launch has no X support so lets not install it in case the host
@@ -172,7 +171,7 @@ do_install_class-native() {
 	rm -f ${D}${bindir}/dbus-launch
 }
 
-do_install_class-nativesdk() {
+do_install:class-nativesdk() {
 	autotools_do_install
 
 	# dbus-launch has no X support so lets not install it in case the host
@@ -184,4 +183,4 @@ do_install_class-nativesdk() {
 }
 BBCLASSEXTEND = "native nativesdk"
 
-INSANE_SKIP_${PN}-ptest += "build-deps"
+INSANE_SKIP:${PN}-ptest += "build-deps"

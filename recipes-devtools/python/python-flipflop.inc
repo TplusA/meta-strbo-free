@@ -8,6 +8,6 @@ SRC_URI[sha256sum] = "32a23ed7bdb53bab03271c4c92abceae1ee3a337dd7fd5a18334fd6493
 
 PYPI_PACKAGE = "flipflop"
 
-RDEPENDS_${PN} += "${PYTHON_PN}-fcntl ${PYTHON_PN}-resource ${PYTHON_PN}-threading"
+RDEPENDS:${PN} += "${PYTHON_PN}-fcntl ${PYTHON_PN}-resource ${PYTHON_PN}-threading"
 
 CLEANBROKEN = "1"

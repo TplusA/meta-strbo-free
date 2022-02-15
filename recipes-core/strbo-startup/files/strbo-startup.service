@@ -8,7 +8,7 @@ Before=connman.service sysinit.target
 Type=oneshot
 RemainAfterExit=Yes
 ExecStart=/usr/libexec/format-fs
-StandardOutput=syslog
+StandardOutput=journal
 
 [Install]
 WantedBy=strbo.target strbo-remote.target

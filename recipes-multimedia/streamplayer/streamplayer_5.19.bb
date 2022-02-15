@@ -21,7 +21,7 @@ DEPENDS = " \
     gstreamer1.0-plugins-ugly \
     autorevision-native \
 "
-RDEPENDS_${PN} += " \
+RDEPENDS:${PN} += " \
     glib-2.0 \
     glib-2.0-utils \
     glib-2.0-codegen \
@@ -40,11 +40,11 @@ RDEPENDS_${PN} += " \
 
 PACKAGES += "${PN}-dbus-service"
 
-FILES_${PN} += "${systemd_unitdir}/system/streamplayer.service"
+FILES:${PN} += "${systemd_unitdir}/system/streamplayer.service"
 
-FILES_${PN}-dbus-service += "${datadir}/dbus-1/services/de.tahifi.Streamplayer.service"
+FILES:${PN}-dbus-service += "${datadir}/dbus-1/services/de.tahifi.Streamplayer.service"
 
-SYSTEMD_SERVICE_${PN} = "streamplayer.service"
+SYSTEMD_SERVICE:${PN} = "streamplayer.service"
 SYSTEMD_AUTO_ENABLE = "enable"
 
 CFLAGS += "-std=c11"
@@ -52,7 +52,7 @@ CPPFLAGS += "-DMSG_BACKTRACE_ENABLED=0"
 
 inherit autotools pkgconfig systemd
 
-do_install_append() {
+do_install:append() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}
     then
         install -d ${D}${systemd_unitdir} ${D}${systemd_unitdir}/system

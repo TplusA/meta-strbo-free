@@ -10,7 +10,7 @@ PR = "r1"
 
 inherit packagegroup
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     which \
     kernel \
     kernel-modules \
@@ -67,6 +67,7 @@ RDEPENDS_${PN} = " \
     strbo-power \
     strbo-rest-lighttpd \
     updata \
+    strbo-package-repo \
     drcpd \
     drcpd-locale-de-de \
     drcpd-locale-en-us \
@@ -78,7 +79,6 @@ RDEPENDS_${PN} = " \
     dbusdl \
     dbusdl-dbus-service \
     flagpole \
-    gerbera \
     quota \
     \
     drcpd-locale-de-de \

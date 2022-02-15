@@ -5,7 +5,7 @@ BOOT_PARTITION_MOUNTPOINT = "${MAINBOOT_PARTITION_MOUNTPOINT}"
 
 PR = "r11"
 
-do_configure_prepend() {
+do_configure:prepend() {
     cat <<EOF >>${S}/include/config_distro_bootcmd.h
 
 #ifndef _CONFIG_CMD_DISTRO_BOOTCMD_H_MORE
@@ -17,7 +17,7 @@ do_configure_prepend() {
 EOF
 }
 
-do_compile_append() {
+do_compile:append() {
     cat <<EOF >${WORKDIR}/boot.cmd
 if test \${recovery_requested} -ne 0
 then
