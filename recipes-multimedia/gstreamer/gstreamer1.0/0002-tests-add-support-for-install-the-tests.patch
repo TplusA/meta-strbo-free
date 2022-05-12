@@ -68,11 +68,11 @@ index 506606684d..00a138a568 100644
  if get_option('check').disabled()
    if get_option('tests').enabled()
 @@ -151,6 +157,8 @@ foreach t : core_tests
-       include_directories : [configinc],
-       link_with : link_with_libs,
-       dependencies : test_deps + glib_deps + gst_deps,
-+      install_dir: installed_tests_execdir,
-+      install: installed_tests_enabled,
+         include_directories : [configinc],
+         link_with : link_with_libs,
+         dependencies : gst_deps + test_deps,
++        install_dir: installed_tests_execdir,
++        install: installed_tests_enabled,
      )
  
      env = environment()
