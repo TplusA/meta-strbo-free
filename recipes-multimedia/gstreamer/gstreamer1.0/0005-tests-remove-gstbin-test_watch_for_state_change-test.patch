@@ -1,4 +1,4 @@
-From b935abba3d8fa3ea1ce384c08e650afd8c20b78a Mon Sep 17 00:00:00 2001
+From 1acb91c4903e01d784810df203d3fecd29e12e9b Mon Sep 17 00:00:00 2001
 From: Claudius Heine <ch@denx.de>
 Date: Wed, 2 Feb 2022 13:47:02 +0100
 Subject: [PATCH] tests: remove gstbin:test_watch_for_state_change testcase
@@ -11,12 +11,13 @@ This patch removes the testcase to avoid it interfering with out ptest.
 Signed-off-by: Claudius Heine <ch@denx.de>
 
 Upstream-Status: Inappropriate [needs proper upstream fix]
+
 ---
- tests/check/gst/gstbin.c        | 69 -------------------
+ tests/check/gst/gstbin.c | 69 ----------------------------------------
  1 file changed, 69 deletions(-)
 
 diff --git a/tests/check/gst/gstbin.c b/tests/check/gst/gstbin.c
-index e366d5fe20..ac29d81474 100644
+index e366d5f..ac29d81 100644
 --- a/tests/check/gst/gstbin.c
 +++ b/tests/check/gst/gstbin.c
 @@ -691,74 +691,6 @@ GST_START_TEST (test_message_state_changed_children)
@@ -102,6 +103,3 @@ index e366d5fe20..ac29d81474 100644
    tcase_add_test (tc_chain, test_state_change_error_message);
    tcase_add_test (tc_chain, test_add_linked);
    tcase_add_test (tc_chain, test_add_self);
--- 
-2.33.1
-
