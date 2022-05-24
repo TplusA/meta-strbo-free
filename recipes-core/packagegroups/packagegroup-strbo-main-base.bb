@@ -53,6 +53,17 @@ RDEPENDS:${PN} = " \
     ethtool \
     netcat \
     socat \
+    inetutils \
+    iproute2-devlink \
+    iproute2-genl \
+    iproute2-ifstat \
+    iproute2-ip \
+    iproute2-lnstat \
+    iproute2-nstat \
+    iproute2-rtacct \
+    iproute2-ss \
+    iproute2-tc \
+    iproute2-tipc \
     connman \
     connman-tools \
     connman-client \
