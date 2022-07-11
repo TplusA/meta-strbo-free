@@ -13,14 +13,14 @@ Signed-off-by: Claudius Heine <ch@denx.de>
 Upstream-Status: Inappropriate [needs proper upstream fix]
 
 ---
- tests/check/gst/gstbin.c | 69 ----------------------------------------
- 1 file changed, 69 deletions(-)
+ tests/check/gst/gstbin.c | 71 -------------------
+ 1 file changed, 71 deletions(-)
 
 diff --git a/tests/check/gst/gstbin.c b/tests/check/gst/gstbin.c
-index e366d5f..ac29d81 100644
+index 88ff44db0c..a5b9a690fb 100644
 --- a/tests/check/gst/gstbin.c
 +++ b/tests/check/gst/gstbin.c
-@@ -691,74 +691,6 @@ GST_START_TEST (test_message_state_changed_children)
+@@ -737,76 +737,6 @@ GST_START_TEST (test_message_state_changed_children)
  
  GST_END_TEST;
  
@@ -29,6 +29,7 @@ index e366d5f..ac29d81 100644
 -  GstElement *src, *sink, *bin;
 -  GstBus *bus;
 -  GstStateChangeReturn ret;
+-  gboolean had_latency = FALSE;
 -
 -  bin = gst_element_factory_make ("bin", NULL);
 -  fail_unless (bin != NULL, "Could not create bin");
@@ -55,9 +56,9 @@ index e366d5f..ac29d81 100644
 -      GST_CLOCK_TIME_NONE);
 -  fail_unless (ret == GST_STATE_CHANGE_SUCCESS);
 -
--  pop_state_changed (bus, 6);
--  pop_async_done (bus);
--  pop_latency (bus);
+-  pop_state_changed (bus, 6, &had_latency);
+-  pop_async_done (bus, &had_latency);
+-  pop_latency (bus, &had_latency);
 -
 -  fail_unless (gst_bus_have_pending (bus) == FALSE,
 -      "Unexpected messages on bus");
@@ -65,16 +66,17 @@ index e366d5f..ac29d81 100644
 -  ret = gst_element_set_state (GST_ELEMENT (bin), GST_STATE_PLAYING);
 -  fail_unless (ret == GST_STATE_CHANGE_SUCCESS);
 -
--  pop_state_changed (bus, 3);
+-  pop_state_changed (bus, 3, &had_latency);
 -
+-  had_latency = FALSE;
 -  /* this one might return either SUCCESS or ASYNC, likely SUCCESS */
 -  ret = gst_element_set_state (GST_ELEMENT (bin), GST_STATE_PAUSED);
 -  gst_element_get_state (GST_ELEMENT (bin), NULL, NULL, GST_CLOCK_TIME_NONE);
 -
--  pop_state_changed (bus, 3);
+-  pop_state_changed (bus, 3, &had_latency);
 -  if (ret == GST_STATE_CHANGE_ASYNC) {
--    pop_async_done (bus);
--    pop_latency (bus);
+-    pop_async_done (bus, &had_latency);
+-    pop_latency (bus, &had_latency);
 -  }
 -
 -  fail_unless (gst_bus_have_pending (bus) == FALSE,
@@ -95,7 +97,7 @@ index e366d5f..ac29d81 100644
  GST_START_TEST (test_state_change_error_message)
  {
    GstElement *src, *sink, *bin;
-@@ -1956,7 +1888,6 @@ gst_bin_suite (void)
+@@ -2008,7 +1938,6 @@ gst_bin_suite (void)
    tcase_add_test (tc_chain, test_message_state_changed);
    tcase_add_test (tc_chain, test_message_state_changed_child);
    tcase_add_test (tc_chain, test_message_state_changed_children);

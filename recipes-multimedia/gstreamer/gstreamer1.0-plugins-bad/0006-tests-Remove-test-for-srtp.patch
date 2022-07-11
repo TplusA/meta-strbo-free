@@ -11,13 +11,13 @@ diff --git a/subprojects/gst-plugins-bad/tests/check/meson.build b/subprojects/g
 index e1b975a69d..e94e139853 100644
 --- a/subprojects/gst-plugins-bad/tests/check/meson.build
 +++ b/subprojects/gst-plugins-bad/tests/check/meson.build
-@@ -64,7 +64,6 @@ base_tests = [
-   [['elements/rtponviftimestamp.c']],
-   [['elements/rtpsrc.c']],
-   [['elements/rtpsink.c']],
+@@ -65,7 +65,6 @@ base_tests = [
+   [['elements/rtponviftimestamp.c'], get_option('onvif').disabled()],
+   [['elements/rtpsrc.c'], get_option('rtp').disabled()],
+   [['elements/rtpsink.c'], get_option('rtp').disabled()],
 -  [['elements/srtp.c'], not srtp_dep.found(), [srtp_dep]],
-   [['elements/switchbin.c']],
-   [['elements/videoframe-audiolevel.c']],
+   [['elements/switchbin.c'], get_option('switchbin').disabled()],
+   [['elements/videoframe-audiolevel.c'], get_option('videoframe_audiolevel').disabled()],
    [['elements/viewfinderbin.c']],
 -- 
 2.25.1
