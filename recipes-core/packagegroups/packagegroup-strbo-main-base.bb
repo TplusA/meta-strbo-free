@@ -26,6 +26,7 @@ RDEPENDS:${PN} = " \
     util-linux-agetty \
     util-linux-mount \
     util-linux-mkfs \
+    e2fsprogs \
     systemd \
     systemd-journal-gatewayd \
     udev \
