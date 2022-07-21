@@ -11,7 +11,7 @@
 # Different major version implies need for repartitioning and may involve a
 # risky update procedure.
 PARTITION_LAYOUT_MAJOR_VERSION = "2"
-PARTITION_LAYOUT_MINOR_VERSION = "0"
+PARTITION_LAYOUT_MINOR_VERSION = "1"
 
 
 #
@@ -37,13 +37,13 @@ MAIN_KERNEL_ROOTFS_DEVICE          ?= "/dev/mmcblk0p7"
 MAINROOTFS_PARTITION_NUMBER        ?= "7"
 MAINROOTFS_PARTITION_SIZE          ?= "1048576"
 MAINROOTFS_TYPE                    ?= "ext4"
-MAINROOTFS_MKFS_EXTRA              ?= "-i 4096 -m 0 -L Rootfs"
+MAINROOTFS_MKFS_EXTRA              ?= "-i 4096 -I 256 -m 0 -L Rootfs"
 
 # 128 MiB for user settings
 MAINCONFIGFS_PARTITION_NUMBER      ?= "5"
 MAINCONFIGFS_PARTITION_SIZE        ?= "131072"
 MAINCONFIGFS_TYPE                  ?= "ext4"
-MAINCONFIGFS_MKFS_EXTRA            ?= "-i 4096 -m 0 -O quota -L Settings"
+MAINCONFIGFS_MKFS_EXTRA            ?= "-i 4096 -I 256 -m 0 -O quota -L Settings"
 MAINCONFIGFS_MOUNTPOINT            ?= "${localstatedir}/local/etc"
 
 
@@ -75,7 +75,7 @@ RECOVERY_KERNEL_PATH_UBOOT         ?= ""
 RECOVERYDATAFS_PARTITION_NUMBER    ?= "6"
 RECOVERYDATAFS_PARTITION_SIZE      ?= "1048576"
 RECOVERYDATAFS_TYPE                ?= "ext4"
-RECOVERYDATAFS_MKFS_EXTRA          ?= "-i 4096 -m 0 -T largefile -L DataR"
+RECOVERYDATAFS_MKFS_EXTRA          ?= "-i 4096 -I 256 -m 0 -T largefile -L DataR"
 RECOVERYDATAFS_MOUNTPOINT          ?= "/src"
 
 
@@ -86,5 +86,5 @@ RECOVERYDATAFS_MOUNTPOINT          ?= "/src"
 # Spare partition
 SPAREFS_PARTITION_NUMBER           ?= "8"
 SPAREFS_TYPE                       ?= "ext4"
-SPAREFS_MKFS_EXTRA                 ?= "-i 4096 -m 0 -O quota -L Data"
+SPAREFS_MKFS_EXTRA                 ?= "-i 4096 -I 256 -m 0 -O quota -L Data"
 SPAREFS_MOUNTPOINT                 ?= "${localstatedir}/local/data"
