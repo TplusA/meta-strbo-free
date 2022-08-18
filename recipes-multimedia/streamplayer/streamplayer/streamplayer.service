@@ -6,7 +6,7 @@ BindsTo=strbo-dbus.service
 [Service]
 Type=dbus
 BusName=de.tahifi.Streamplayer
-ExecStart=/usr/bin/streamplayer --alsa-latency 100 --alsa-buffer 1000
+ExecStart=/usr/bin/streamplayer
 KillMode=process
 UMask=0007
 Nice=-20

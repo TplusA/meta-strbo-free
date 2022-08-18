@@ -64,11 +64,17 @@ DIRFILES = "1"
 # -devicetree packages we want and need; moving dtb files away from the
 # original installation directory in do_install:append messes up do_deploy, so
 # we keep the files in place instead and package them as required by QA
-PACKAGES += "${KERNEL_PACKAGE_NAME}-devicetree-dummy"
+PACKAGES += " \
+    ${KERNEL_PACKAGE_NAME}-devicetree-dummy \
+    ${KERNEL_PACKAGE_NAME}-debug \
+"
+
 FILES:${KERNEL_PACKAGE_NAME}-devicetree-dummy = " \
     ${KERNEL_IMAGEDEST}/bcm2708-rpi-cm.dtb \
     ${KERNEL_IMAGEDEST}/bcm2710-rpi-cm3.dtb \
 "
+
+FILES:${KERNEL_PACKAGE_NAME}-debug = "${libdir}/debug"
 
 do_configure:prepend() {
     rm -f "${WORKDIR}/defconfig" "${B}/.config"
