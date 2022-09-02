@@ -1,0 +1,22 @@
+From 36d7d6a5c3ff07d796248b57581101a3628bab24 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Fri, 2 Sep 2022 10:29:29 +0200
+Subject: [PATCH] dbus: Run service at nice level 19.
+
+---
+ server/com.intel.dleyna-server.service.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/server/com.intel.dleyna-server.service.in b/server/com.intel.dleyna-server.service.in
+index 68014c0..b08ddd2 100644
+--- a/server/com.intel.dleyna-server.service.in
++++ b/server/com.intel.dleyna-server.service.in
+@@ -1,4 +1,4 @@
+ [D-BUS Service]
+ Name=com.intel.dleyna-server
+-Exec=@libexecdir@/dleyna-server-service
++Exec=/bin/nice -n 19 @libexecdir@/dleyna-server-service
+ 
+-- 
+2.25.1
+
