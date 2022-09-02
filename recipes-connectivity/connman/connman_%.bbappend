@@ -2,7 +2,10 @@ require conf/distro/include/partitions.inc
 
 FILESEXTRAPATHS:append := ":${THISDIR}/${PN}"
 
-SRC_URI += "file://main.conf"
+SRC_URI += " \
+    file://0001-systemd-Run-service-at-nice-level-10.patch \
+    file://main.conf \
+"
 
 do_install:append() {
     install -d ${D}/${sysconfdir} ${D}/${sysconfdir}/connman
