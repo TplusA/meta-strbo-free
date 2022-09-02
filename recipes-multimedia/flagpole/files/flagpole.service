@@ -9,6 +9,7 @@ ExecStart=/usr/bin/flagpole_launcher
 UMask=0007
 User=strbo
 Group=strbo
+Nice=19
 
 [Install]
 WantedBy=strbo.target
