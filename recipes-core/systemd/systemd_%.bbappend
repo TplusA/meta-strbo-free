@@ -1,3 +1,7 @@
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
+
+SRC_URI += "file://0001-journal-Run-at-nice-level-19.patch"
+
 PACKAGECONFIG:remove = " \
     backlight \
     timesyncd \

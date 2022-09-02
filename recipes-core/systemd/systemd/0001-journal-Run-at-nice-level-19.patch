@@ -1,0 +1,37 @@
+From d77cd64a85476cae958b3c9080e96d2142cf2b47 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Fri, 2 Sep 2022 10:43:00 +0200
+Subject: [PATCH] journal: Run at nice level 19.
+
+---
+ units/systemd-journal-gatewayd.service.in | 1 +
+ units/systemd-journald.service.in         | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/units/systemd-journal-gatewayd.service.in b/units/systemd-journal-gatewayd.service.in
+index 81c53fa01f..726658e306 100644
+--- a/units/systemd-journal-gatewayd.service.in
++++ b/units/systemd-journal-gatewayd.service.in
+@@ -32,6 +32,7 @@ RestrictRealtime=yes
+ SupplementaryGroups=systemd-journal
+ SystemCallArchitectures=native
+ User=systemd-journal-gateway
++Nice=19
+ 
+ # If there are many split up journal files we need a lot of fds to access them
+ # all in parallel.
+diff --git a/units/systemd-journald.service.in b/units/systemd-journald.service.in
+index cd17b6b4e7..631eba79f1 100644
+--- a/units/systemd-journald.service.in
++++ b/units/systemd-journald.service.in
+@@ -39,6 +39,7 @@ SystemCallArchitectures=native
+ SystemCallErrorNumber=EPERM
+ SystemCallFilter=@system-service
+ Type=notify
++Nice=19
+ {{SERVICE_WATCHDOG}}
+ 
+ # In case you're wondering why CAP_SYS_PTRACE is needed, access to
+-- 
+2.25.1
+
