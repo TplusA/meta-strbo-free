@@ -13,6 +13,8 @@ RestrictRealtime=no
 KillMode=process
 UMask=0007
 Nice=-20
+StartupCPUWeight=1800
+CPUWeight=100
 User=strbo-audio
 
 [Install]

@@ -10,3 +10,5 @@ KillMode=process
 UMask=0007
 User=strbo
 Group=strbo
+StartupCPUWeight=10
+CPUWeight=100

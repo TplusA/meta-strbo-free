@@ -9,6 +9,8 @@ Type=oneshot
 RemainAfterExit=Yes
 ExecStart=/usr/libexec/format-fs
 StandardOutput=journal
+StartupCPUWeight=10000
+CPUWeight=100
 
 [Install]
 WantedBy=strbo.target strbo-remote.target
