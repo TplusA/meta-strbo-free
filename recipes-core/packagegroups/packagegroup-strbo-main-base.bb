@@ -92,6 +92,7 @@ RDEPENDS:${PN} = " \
     dbusdl-dbus-service \
     flagpole \
     quota \
+    libcap-bin \
     \
     drcpd-locale-de-de \
     drcpd-locale-en-us \
