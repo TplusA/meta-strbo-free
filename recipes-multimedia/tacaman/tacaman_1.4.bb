@@ -1,14 +1,14 @@
-SUMMARY = "T+A Audio Path Daemon"
+SUMMARY = "T+A Cover Art Manager"
 SECTION = "sound"
 LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "7afe0bde67453715e43c25d22678ad639aa364c9"
+SRCREV = "a8c63ce11ea895965e596c82985c575ef22ff24d"
 
-SRC_URI = "gitsm://git.tua.local/repo/AuPaD;branch=master;protocol=http \
+SRC_URI = "gitsm://git.tua.local/repo/TACAMan;branch=master;protocol=http \
            file://0001-extract_documentation-Use-Python-3-shebang.patch \
-           file://aupad.service"
+           file://tacaman.service"
 
 S = "${WORKDIR}/git"
 
@@ -24,31 +24,29 @@ RDEPENDS:${PN} += " \
     glib-2.0-utils \
     glib-2.0-codegen \
     strbo-dbus \
-    dcpd \
+    imagemagick \
+    wget \
 "
 
-RRECOMMENDS:${PN} += "${PN}-data"
+FILES:${PN} += "${systemd_unitdir}/system/tacaman.service"
 
-PACKAGES += "${PN}-data"
-
-FILES:${PN} += "${systemd_unitdir}/system/aupad.service"
-
-FILES:${PN}-data += "${datadir}/aupad/models.json"
-
-SYSTEMD_SERVICE:${PN} = "aupad.service"
+SYSTEMD_SERVICE:${PN} = "tacaman.service"
 SYSTEMD_AUTO_ENABLE = "enable"
 
+CFLAGS += "-std=c11"
 CPPFLAGS += "-DMSG_BACKTRACE_ENABLED=0"
 
-inherit autotools pkgconfig systemd
+USERADD_PACKAGES = "${PN}"
+USERADD_PARAM:${PN} = "-r -N -g tacaman strbo-tacaman"
+GROUPADD_PARAM:${PN} = "-r tacaman"
+GROUPMEMS_PARAM:${PN} = " "
+
+inherit autotools pkgconfig systemd useradd
 
 do_install:append() {
-    install -d ${D}${datadir}/aupad
-    install -m 644 ${S}/documentation/models.json ${D}${datadir}/aupad/models.json
-
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}
     then
         install -d ${D}${systemd_unitdir} ${D}${systemd_unitdir}/system
-        install -m 644 ${WORKDIR}/aupad.service ${D}${systemd_unitdir}/system
+        install -m 644 ${WORKDIR}/tacaman.service ${D}${systemd_unitdir}/system
     fi
 }

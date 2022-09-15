@@ -4,7 +4,7 @@ LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "1a80c45cfd15776373a4811e4f603acce59a6428"
+SRCREV = "79a15bab70cfe04bfab0fad5b9e98c922ed62163"
 
 SRC_URI = " \
     gitsm://git.tua.local/repo/Listbrokers;branch=master;protocol=http \
