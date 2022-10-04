@@ -11,6 +11,7 @@ PACKAGECONFIG:remove = " \
 "
 PACKAGECONFIG:append = "\
     coredump \
+    elfutils \
 "
 
 do_install:append() {
