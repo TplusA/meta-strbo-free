@@ -4,7 +4,7 @@ LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "35e681b8a2fad09048c12ebf875a22a30297779c"
+SRCREV = "362507c79829b6062aa6d5927d507b67dc7c105a"
 
 SRC_URI = "gitsm://git.tua.local/repo/DRCPD;branch=master;protocol=http \
            file://0001-extract_documentation-Use-Python-3-shebang.patch \
