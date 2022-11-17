@@ -24,7 +24,6 @@ SRC_URI = "file:///home/rt/StrBo/build/pc/GStreamer/gstsubs/gstreamer-${PV}.tar.
 
 PACKAGECONFIG ??= "${@bb.utils.contains('PTEST_ENABLED', '1', 'tests', '', d)} \
                    check \
-                   debug \
                    tools"
 
 PACKAGECONFIG[debug] = "-Dgst_debug=true,-Dgst_debug=false"
