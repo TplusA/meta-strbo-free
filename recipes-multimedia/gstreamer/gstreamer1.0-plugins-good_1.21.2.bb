@@ -4,9 +4,11 @@ DESCRIPTION = "'Good' GStreamer plugins"
 HOMEPAGE = "https://gstreamer.freedesktop.org/"
 BUGTRACKER = "https://gitlab.freedesktop.org/gstreamer/gst-plugins-good/-/issues"
 
-SRC_URI = "file:///home/rt/StrBo/build/pc/GStreamer/gstsubs/gst-plugins-good-${PV}.tar.xz \
+SRC_URI = "https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${PV}.tar.xz \
            file://0001-qt-include-ext-qt-gstqtgl.h-instead-of-gst-gl-gstglf.patch \
            "
+
+SRC_URI[sha256sum] = "9fa448eba2f766d87d4bc776fb7359f0882f66839163e50c926f7a12c0e8e43f"
 
 S = "${WORKDIR}/gst-plugins-good-${PV}"
 

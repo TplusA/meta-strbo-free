@@ -11,8 +11,9 @@ LICENSE = "LGPL-2.1-or-later & GPL-2.0-or-later"
 LICENSE_FLAGS = "commercial"
 
 SRC_URI = " \
-            file:///home/rt/StrBo/build/pc/GStreamer/gstsubs/gst-plugins-ugly-${PV}.tar.xz \
+            https://gstreamer.freedesktop.org/src/gst-plugins-ugly/gst-plugins-ugly-${PV}.tar.xz \
             "
+SRC_URI[sha256sum] = "34dd6f4a44db30a7b171223e7789d863febe5aa20991cf920b0d25191968393c"
 
 S = "${WORKDIR}/gst-plugins-ugly-${PV}"
 

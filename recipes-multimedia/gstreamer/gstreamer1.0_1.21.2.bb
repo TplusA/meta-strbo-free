@@ -15,12 +15,13 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=69333daa044cb77e486cc36129f7a770 \
 
 S = "${WORKDIR}/gstreamer-${PV}"
 
-SRC_URI = "file:///home/rt/StrBo/build/pc/GStreamer/gstsubs/gstreamer-${PV}.tar.xz \
+SRC_URI = "https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-${PV}.tar.xz \
            file://run-ptest \
            file://0002-tests-add-support-for-install-the-tests.patch \
            file://0003-tests-use-a-dictionaries-for-environment.patch \
            file://0004-tests-add-helper-script-to-run-the-installed_tests.patch \
            "
+SRC_URI[sha256sum] = "27d7139ff517a52a49b91908e6bb150df930f05c3c0ea7de20624cf7be40f640"
 
 PACKAGECONFIG ??= "${@bb.utils.contains('PTEST_ENABLED', '1', 'tests', '', d)} \
                    check \

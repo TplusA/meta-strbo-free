@@ -5,7 +5,7 @@ DESCRIPTION = "'Bad' GStreamer plugins and helper libraries "
 HOMEPAGE = "https://gstreamer.freedesktop.org/"
 BUGTRACKER = "https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad/-/issues"
 
-SRC_URI = "file:///home/rt/StrBo/build/pc/GStreamer/gstsubs/gst-plugins-bad-${PV}.tar.xz \
+SRC_URI = "https://gstreamer.freedesktop.org/src/gst-plugins-bad/gst-plugins-bad-${PV}.tar.xz \
            file://0001-fix-maybe-uninitialized-warnings-when-compiling-with.patch \
            file://0002-avoid-including-sys-poll.h-directly.patch \
            file://0003-ensure-valid-sentinals-for-gst_structure_get-etc.patch \
@@ -13,6 +13,7 @@ SRC_URI = "file:///home/rt/StrBo/build/pc/GStreamer/gstsubs/gst-plugins-bad-${PV
            file://0005-msdk-fix-includedir-path.patch \
            file://0006-tests-Remove-test-for-srtp.patch;pnum=3 \
            "
+SRC_URI[sha256sum] = "92fb4556e867d368f11178f659451a1110be2dcb71f54a1c00bc2173315d7697"
 
 S = "${WORKDIR}/gst-plugins-bad-${PV}"
 
