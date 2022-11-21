@@ -1,0 +1,917 @@
+diff --git a/subprojects/gstreamer/gst/gstallocator.c b/subprojects/gstreamer/gst/gstallocator.c
+index 6b3047636d..f3cd20e86d 100644
+--- a/subprojects/gstreamer/gst/gstallocator.c
++++ b/subprojects/gstreamer/gst/gstallocator.c
+@@ -233,13 +233,14 @@ gst_allocator_register (const gchar * name, GstAllocator * allocator)
+   g_rw_lock_writer_lock (&lock);
+   /* The ref will never be released */
+   GST_OBJECT_FLAG_SET (allocator, GST_OBJECT_FLAG_MAY_BE_LEAKED);
+-  g_hash_table_insert (allocators, (gpointer) name, (gpointer) allocator);
++  g_hash_table_insert (allocators, (gpointer) g_strdup (name),
++      (gpointer) allocator);
+   g_rw_lock_writer_unlock (&lock);
+ }
+ 
+ /**
+  * gst_allocator_find:
+- * @name: (allow-none): the name of the allocator
++ * @name: (nullable): the name of the allocator
+  *
+  * Find a previously registered allocator with @name. When @name is %NULL, the
+  * default allocator will be returned.
+@@ -289,9 +290,9 @@ gst_allocator_set_default (GstAllocator * allocator)
+ 
+ /**
+  * gst_allocator_alloc:
+- * @allocator: (transfer none) (allow-none): a #GstAllocator to use
++ * @allocator: (transfer none) (nullable): a #GstAllocator to use
+  * @size: size of the visible memory area
+- * @params: (transfer none) (allow-none): optional parameters
++ * @params: (transfer none) (nullable): optional parameters
+  *
+  * Use @allocator to allocate a new memory block with memory that is at least
+  * @size big.
+@@ -599,7 +600,7 @@ void
+ _priv_gst_allocator_initialize (void)
+ {
+   g_rw_lock_init (&lock);
+-  allocators = g_hash_table_new_full (g_str_hash, g_str_equal, NULL,
++  allocators = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+       gst_object_unref);
+ 
+ #ifdef HAVE_GETPAGESIZE
+@@ -642,8 +643,8 @@ _priv_gst_allocator_cleanup (void)
+  * @maxsize: allocated size of @data
+  * @offset: offset in @data
+  * @size: size of valid data
+- * @user_data: (allow-none): user_data
+- * @notify: (allow-none) (scope async) (closure user_data): called with @user_data when the memory is freed
++ * @user_data: (nullable): user_data
++ * @notify: (nullable) (scope async) (closure user_data): called with @user_data when the memory is freed
+  *
+  * Allocate a new memory block that wraps the given @data.
+  *
+diff --git a/subprojects/gstreamer/gst/gstchildproxy.c b/subprojects/gstreamer/gst/gstchildproxy.c
+index f229045eb7..fc4f7421ac 100644
+--- a/subprojects/gstreamer/gst/gstchildproxy.c
++++ b/subprojects/gstreamer/gst/gstchildproxy.c
+@@ -57,7 +57,7 @@ static guint signals[LAST_SIGNAL] = { 0 };
+ 
+ /**
+  * gst_child_proxy_get_child_by_name_recurse:
+- * @parent: the parent object to get the child from
++ * @child_proxy: the parent object to get the child from
+  * @name: the full-path child's name
+  *
+  * Looks up a child element by the given full-path name.
+diff --git a/subprojects/gstreamer/gst/gstpad.c b/subprojects/gstreamer/gst/gstpad.c
+index 994f13f5b7..4802518137 100644
+--- a/subprojects/gstreamer/gst/gstpad.c
++++ b/subprojects/gstreamer/gst/gstpad.c
+@@ -4969,11 +4969,11 @@ flushing:
+   }
+ wrong_mode:
+   {
+-    g_critical ("getrange on pad %s:%s but it was not activated in pull mode",
+-        GST_DEBUG_PAD_NAME (pad));
+     pad->ABI.abi.last_flowret = GST_FLOW_ERROR;
+     GST_OBJECT_UNLOCK (pad);
+     GST_PAD_STREAM_UNLOCK (pad);
++    g_critical ("getrange on pad %s:%s but it was not activated in pull mode",
++        GST_DEBUG_PAD_NAME (pad));
+     return GST_FLOW_ERROR;
+   }
+ events_error:
+diff --git a/subprojects/gstreamer/gst/gststreams.c b/subprojects/gstreamer/gst/gststreams.c
+index 1a021870ee..a6bf5d901e 100644
+--- a/subprojects/gstreamer/gst/gststreams.c
++++ b/subprojects/gstreamer/gst/gststreams.c
+@@ -191,6 +191,7 @@ gst_stream_finalize (GObject * object)
+       (GstMiniObject *) NULL);
+   gst_caps_replace (&stream->priv->caps, NULL);
+   g_free ((gchar *) stream->stream_id);
++  stream->stream_id = NULL;
+ 
+   G_OBJECT_CLASS (parent_class)->finalize (object);
+ }
+diff --git a/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.c b/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.c
+index 56003d500a..f385e806e3 100644
+--- a/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.c
++++ b/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.c
+@@ -94,8 +94,8 @@ helper_find_peek (gpointer data, gint64 offset, guint size)
+ 
+   helper = (GstTypeFindHelper *) data;
+ 
+-  GST_LOG_OBJECT (helper->obj, "'%s' called peek (%" G_GINT64_FORMAT
+-      ", %u)", GST_OBJECT_NAME (helper->factory), offset, size);
++  GST_LOG_OBJECT (helper->obj, "Typefind factory called peek (%" G_GINT64_FORMAT
++      ", %u)", offset, size);
+ 
+   if (size == 0)
+     return NULL;
+@@ -229,8 +229,8 @@ helper_find_suggest (gpointer data, guint probability, GstCaps * caps)
+   GstTypeFindHelper *helper = (GstTypeFindHelper *) data;
+ 
+   GST_LOG_OBJECT (helper->obj,
+-      "'%s' called suggest (%u, %" GST_PTR_FORMAT ")",
+-      GST_OBJECT_NAME (helper->factory), probability, caps);
++      "Typefind factory called suggest (%u, %" GST_PTR_FORMAT ")",
++      probability, caps);
+ 
+   if (probability > helper->best_probability) {
+     gst_caps_replace (&helper->caps, caps);
+@@ -243,8 +243,8 @@ helper_find_get_length (gpointer data)
+ {
+   GstTypeFindHelper *helper = (GstTypeFindHelper *) data;
+ 
+-  GST_LOG_OBJECT (helper->obj, "'%s' called get_length, returning %"
+-      G_GUINT64_FORMAT, GST_OBJECT_NAME (helper->factory), helper->size);
++  GST_LOG_OBJECT (helper->obj, "Typefind factory called get_length, returning %"
++      G_GUINT64_FORMAT, helper->size);
+ 
+   return helper->size;
+ }
+@@ -303,12 +303,12 @@ prioritize_extension (GstObject * obj, GList * type_list,
+ /**
+  * gst_type_find_helper_get_range:
+  * @obj: A #GstObject that will be passed as first argument to @func
+- * @parent: (allow-none): the parent of @obj or %NULL
++ * @parent: (nullable): the parent of @obj or %NULL
+  * @func: (scope call): A generic #GstTypeFindHelperGetRangeFunction that will
+  *        be used to access data at random offsets when doing the typefinding
+  * @size: The length in bytes
+- * @extension: (allow-none): extension of the media, or %NULL
+- * @prob: (out) (allow-none): location to store the probability of the found
++ * @extension: (nullable): extension of the media, or %NULL
++ * @prob: (out) (optional): location to store the probability of the found
+  *     caps, or %NULL
+  *
+  * Utility function to do pull-based typefinding. Unlike gst_type_find_helper()
+@@ -345,13 +345,13 @@ gst_type_find_helper_get_range (GstObject * obj, GstObject * parent,
+ /**
+  * gst_type_find_helper_get_range_full:
+  * @obj: A #GstObject that will be passed as first argument to @func
+- * @parent: (allow-none): the parent of @obj or %NULL
++ * @parent: (nullable): the parent of @obj or %NULL
+  * @func: (scope call): A generic #GstTypeFindHelperGetRangeFunction that will
+  *        be used to access data at random offsets when doing the typefinding
+  * @size: The length in bytes
+- * @extension: (allow-none): extension of the media, or %NULL
++ * @extension: (nullable): extension of the media, or %NULL
+  * @caps: (out) (transfer full): returned caps
+- * @prob: (out) (allow-none): location to store the probability of the found
++ * @prob: (out) (optional): location to store the probability of the found
+  *     caps, or %NULL
+  *
+  * Utility function to do pull-based typefinding. Unlike gst_type_find_helper()
+@@ -495,10 +495,23 @@ typedef struct
+   gsize size;
+   GstTypeFindProbability best_probability;
+   GstCaps *caps;
+-  GstTypeFindFactory *factory;  /* for logging */
+   GstObject *obj;               /* for logging */
+ } GstTypeFindBufHelper;
+ 
++/**
++ * GstTypeFindData:
++ *
++ * The opaque #GstTypeFindData structure.
++ *
++ * Since: 1.22
++ *
++ */
++struct _GstTypeFindData
++{
++  GstTypeFind find;
++  GstTypeFindBufHelper helper;
++};
++
+ /*
+  * buf_helper_find_peek:
+  * @data: helper data struct
+@@ -516,15 +529,15 @@ buf_helper_find_peek (gpointer data, gint64 off, guint size)
+   GstTypeFindBufHelper *helper;
+ 
+   helper = (GstTypeFindBufHelper *) data;
+-  GST_LOG_OBJECT (helper->obj, "'%s' called peek (%" G_GINT64_FORMAT ", %u)",
+-      GST_OBJECT_NAME (helper->factory), off, size);
++  GST_LOG_OBJECT (helper->obj,
++      "Typefind factory called peek (%" G_GINT64_FORMAT ", %u)", off, size);
+ 
+   if (size == 0)
+     return NULL;
+ 
+   if (off < 0) {
+-    GST_LOG_OBJECT (helper->obj, "'%s' wanted to peek at end; not supported",
+-        GST_OBJECT_NAME (helper->factory));
++    GST_LOG_OBJECT (helper->obj,
++        "Typefind factory wanted to peek at end; not supported");
+     return NULL;
+   }
+ 
+@@ -556,8 +569,8 @@ buf_helper_find_suggest (gpointer data, guint probability, GstCaps * caps)
+   GstTypeFindBufHelper *helper = (GstTypeFindBufHelper *) data;
+ 
+   GST_LOG_OBJECT (helper->obj,
+-      "'%s' called suggest (%u, %" GST_PTR_FORMAT ")",
+-      GST_OBJECT_NAME (helper->factory), probability, caps);
++      "Typefind factory called suggest (%u, %" GST_PTR_FORMAT ")",
++      probability, caps);
+ 
+   /* Note: not >= as we call typefinders in order of rank, highest first */
+   if (probability > helper->best_probability) {
+@@ -568,10 +581,10 @@ buf_helper_find_suggest (gpointer data, guint probability, GstCaps * caps)
+ 
+ /**
+  * gst_type_find_helper_for_data:
+- * @obj: (allow-none): object doing the typefinding, or %NULL (used for logging)
++ * @obj: (nullable): object doing the typefinding, or %NULL (used for logging)
+  * @data: (transfer none) (array length=size): * a pointer with data to typefind
+  * @size: the size of @data
+- * @prob: (out) (allow-none): location to store the probability of the found
++ * @prob: (out) (optional): location to store the probability of the found
+  *     caps, or %NULL
+  *
+  * Tries to find what type of data is contained in the given @data, the
+@@ -601,11 +614,11 @@ gst_type_find_helper_for_data (GstObject * obj, const guint8 * data, gsize size,
+ 
+ /**
+  * gst_type_find_helper_for_data_with_extension:
+- * @obj: (allow-none): object doing the typefinding, or %NULL (used for logging)
++ * @obj: (nullable): object doing the typefinding, or %NULL (used for logging)
+  * @data: (transfer none) (array length=size): * a pointer with data to typefind
+  * @size: the size of @data
+- * @extension: (allow-none): extension of the media, or %NULL
+- * @prob: (out) (allow-none): location to store the probability of the found
++ * @extension: (nullable): extension of the media, or %NULL
++ * @prob: (out) (optional): location to store the probability of the found
+  *     caps, or %NULL
+  *
+  * Tries to find what type of data is contained in the given @data, the
+@@ -638,6 +651,7 @@ gst_type_find_helper_for_data_with_extension (GstObject * obj,
+     GstTypeFindProbability * prob)
+ {
+   GstTypeFindBufHelper helper;
++  GstTypeFindFactory *factory;
+   GstTypeFind find;
+   GList *l, *type_list;
+   GstCaps *result = NULL;
+@@ -662,8 +676,8 @@ gst_type_find_helper_for_data_with_extension (GstObject * obj,
+   type_list = prioritize_extension (obj, type_list, extension);
+ 
+   for (l = type_list; l; l = l->next) {
+-    helper.factory = GST_TYPE_FIND_FACTORY (l->data);
+-    gst_type_find_factory_call_function (helper.factory, &find);
++    factory = GST_TYPE_FIND_FACTORY (l->data);
++    gst_type_find_factory_call_function (factory, &find);
+     if (helper.best_probability >= GST_TYPE_FIND_MAXIMUM)
+       break;
+   }
+@@ -681,11 +695,98 @@ gst_type_find_helper_for_data_with_extension (GstObject * obj,
+   return result;
+ }
+ 
++/**
++ * gst_type_find_helper_for_data_with_caps:
++ * @obj: (nullable): object doing the typefinding, or %NULL (used for logging)
++ * @data: (transfer none) (array length=size): a pointer with data to typefind
++ * @size: the size of @data
++ * @caps: caps of the media
++ * @prob: (out) (optional): location to store the probability of the found
++ *     caps, or %NULL
++ *
++ * Tries to find if type of media contained in the given @data, matches the
++ * @caps specified, assumption being that the data represents the beginning
++ * of the stream or file.
++ *
++ * Only the typefinder matching the given caps will be called, if found. The
++ * caps with the highest probability will be returned, or %NULL if the content
++ * of the @data could not be identified.
++ *
++ * Free-function: gst_caps_unref
++ *
++ * Returns: (transfer full) (nullable): the #GstCaps corresponding to the data,
++ *     or %NULL if no type could be found. The caller should free the caps
++ *     returned with gst_caps_unref().
++ *
++ * Since: 1.22
++ *
++ */
++GstCaps *
++gst_type_find_helper_for_data_with_caps (GstObject * obj,
++    const guint8 * data, gsize size, GstCaps * caps,
++    GstTypeFindProbability * prob)
++{
++  GstTypeFind *find;
++  GstTypeFindData *find_data;
++  GstTypeFindFactory *factory;
++  GList *l, *factories = NULL;
++  GstCaps *result = NULL;
++  GstTypeFindProbability found_probability, last_found_probability;
++
++  g_return_val_if_fail (data != NULL, NULL);
++  g_return_val_if_fail (caps != NULL, NULL);
++  g_return_val_if_fail (size != 0, NULL);
++
++  find_data = gst_type_find_data_new (obj, data, size);
++  find = gst_type_find_data_get_typefind (find_data);
++
++  factories = gst_type_find_list_factories_for_caps (obj, caps);
++  if (!factories) {
++    GST_ERROR_OBJECT (obj, "Failed to typefind for caps: %" GST_PTR_FORMAT,
++        caps);
++    goto out;
++  }
++
++  found_probability = GST_TYPE_FIND_NONE;
++  last_found_probability = GST_TYPE_FIND_NONE;
++
++  for (l = factories; l; l = l->next) {
++    factory = GST_TYPE_FIND_FACTORY (l->data);
++
++    gst_type_find_factory_call_function (factory, find);
++
++    found_probability = gst_type_find_data_get_probability (find_data);
++
++    if (found_probability > last_found_probability) {
++      last_found_probability = found_probability;
++      result = gst_type_find_data_get_caps (find_data);
++
++      GST_DEBUG_OBJECT (obj, "Found %" GST_PTR_FORMAT " (probability = %u)",
++          result, (guint) last_found_probability);
++      if (last_found_probability >= GST_TYPE_FIND_MAXIMUM)
++        break;
++    }
++  }
++
++  if (prob)
++    *prob = last_found_probability;
++
++  GST_LOG_OBJECT (obj, "Returning %" GST_PTR_FORMAT " (probability = %u)",
++      result, (guint) last_found_probability);
++
++out:
++  g_list_free_full (factories, (GDestroyNotify) gst_object_unref);
++
++  gst_type_find_data_free (find_data);
++
++  return result;
++}
++
+ /**
+  * gst_type_find_helper_for_buffer:
+- * @obj: (allow-none): object doing the typefinding, or %NULL (used for logging)
++ * @obj: (nullable): object doing the typefinding, or %NULL (used for logging)
+  * @buf: (in) (transfer none): a #GstBuffer with data to typefind
+- * @prob: (out) (allow-none): location to store the probability of the found
++ * @prob: (out) (optional): location to store the probability of the found
+  *     caps, or %NULL
+  *
+  * Tries to find what type of data is contained in the given #GstBuffer, the
+@@ -714,10 +815,10 @@ gst_type_find_helper_for_buffer (GstObject * obj, GstBuffer * buf,
+ 
+ /**
+  * gst_type_find_helper_for_buffer_with_extension:
+- * @obj: (allow-none): object doing the typefinding, or %NULL (used for logging)
++ * @obj: (nullable): object doing the typefinding, or %NULL (used for logging)
+  * @buf: (in) (transfer none): a #GstBuffer with data to typefind
+- * @extension: (allow-none): extension of the media, or %NULL
+- * @prob: (out) (allow-none): location to store the probability of the found
++ * @extension: (nullable): extension of the media, or %NULL
++ * @prob: (out) (optional): location to store the probability of the found
+  *     caps, or %NULL
+  *
+  * Tries to find what type of data is contained in the given #GstBuffer, the
+@@ -766,9 +867,63 @@ gst_type_find_helper_for_buffer_with_extension (GstObject * obj,
+   return result;
+ }
+ 
++/**
++ * gst_type_find_helper_for_buffer_with_caps:
++ * @obj: (nullable): object doing the typefinding, or %NULL (used for logging)
++ * @buf: (transfer none): a #GstBuffer with data to typefind
++ * @caps: caps of the media
++ * @prob: (out) (optional): location to store the probability of the found
++ *     caps, or %NULL
++ *
++ * Tries to find if type of media contained in the given #GstBuffer, matches
++ * @caps specified, assumption being that the buffer represents the beginning
++ * of the stream or file.
++ *
++ * Tries to find what type of data is contained in the given @data, the
++ * assumption being that the data represents the beginning of the stream or
++ * file.
++ *
++ * Only the typefinder matching the given caps will be called, if found. The
++ * caps with the highest probability will be returned, or %NULL if the content
++ * of the @data could not be identified.
++ *
++ * Free-function: gst_caps_unref
++ *
++ * Returns: (transfer full) (nullable): the #GstCaps corresponding to the data,
++ *     or %NULL if no type could be found. The caller should free the caps
++ *     returned with gst_caps_unref().
++ *
++ * Since: 1.22
++ *
++ */
++GstCaps *
++gst_type_find_helper_for_buffer_with_caps (GstObject * obj,
++    GstBuffer * buf, GstCaps * caps, GstTypeFindProbability * prob)
++{
++  GstCaps *result;
++  GstMapInfo info;
++
++  g_return_val_if_fail (caps != NULL, NULL);
++  g_return_val_if_fail (buf != NULL, NULL);
++  g_return_val_if_fail (GST_IS_BUFFER (buf), NULL);
++  g_return_val_if_fail (GST_BUFFER_OFFSET (buf) == 0 ||
++      GST_BUFFER_OFFSET (buf) == GST_BUFFER_OFFSET_NONE, NULL);
++
++  if (!gst_buffer_map (buf, &info, GST_MAP_READ))
++    return NULL;
++
++  result =
++      gst_type_find_helper_for_data_with_caps (obj, info.data, info.size,
++      caps, prob);
++
++  gst_buffer_unmap (buf, &info);
++
++  return result;
++}
++
+ /**
+  * gst_type_find_helper_for_extension:
+- * @obj: (allow-none): object doing the typefinding, or %NULL (used for logging)
++ * @obj: (nullable): object doing the typefinding, or %NULL (used for logging)
+  * @extension: an extension
+  *
+  * Tries to find the best #GstCaps associated with @extension.
+@@ -830,3 +985,170 @@ done:
+ 
+   return result;
+ }
++
++/**
++ * gst_type_find_list_factories_for_caps:
++ * @obj: (nullable): object doing the typefinding, or %NULL (used for logging)
++ * @caps: caps of the media
++ *
++ * Tries to find the best #GstTypeFindFactory associated with @caps.
++ *
++ * The typefinder that can handle @caps will be returned.
++ *
++ * Free-function: g_list_free
++ *
++ * Returns: (transfer full) (nullable) (element-type Gst.TypeFindFactory): the list of #GstTypeFindFactory
++ *          corresponding to @caps, or %NULL if no typefinder could be
++ *          found. Caller should free the returned list with g_list_free()
++ *          and list elements with gst_object_unref().
++ *
++ * Since: 1.22
++ *
++ */
++GList *
++gst_type_find_list_factories_for_caps (GstObject * obj, GstCaps * caps)
++{
++  GList *l, *type_list, *factories = NULL;
++
++  g_return_val_if_fail (caps != NULL, NULL);
++
++  GST_LOG_OBJECT (obj, "finding factory for caps %" GST_PTR_FORMAT, caps);
++
++  type_list = gst_type_find_factory_get_list ();
++
++  for (l = type_list; l; l = g_list_next (l)) {
++    GstTypeFindFactory *factory;
++    GstCaps *factory_caps;
++
++    factory = GST_TYPE_FIND_FACTORY (l->data);
++
++    /* We only want to check those factories without a function */
++    if (gst_type_find_factory_has_function (factory))
++      continue;
++
++    /* Get the caps that this typefind factory can handle */
++    factory_caps = gst_type_find_factory_get_caps (factory);
++    if (!factory_caps)
++      continue;
++
++    if (gst_caps_can_intersect (factory_caps, caps)) {
++      factory = gst_object_ref (factory);
++      factories = g_list_prepend (factories, factory);
++    }
++  }
++
++  gst_plugin_feature_list_free (type_list);
++
++  return g_list_reverse (factories);
++}
++
++/**
++ * gst_type_find_data_new: (skip)
++ * @obj: (nullable): object doing the typefinding, or %NULL (used for logging)
++ * @data: (transfer none) (array length=size): a pointer with data to typefind
++ * @size: the size of @data
++ *
++ * Free-function: gst_type_find_data_free
++ *
++ * Returns: (transfer full): the #GstTypeFindData. The caller should free
++ *          the returned #GstTypeFindData with gst_type_find_data_free().
++ *
++ * Since: 1.22
++ *
++ */
++GstTypeFindData *
++gst_type_find_data_new (GstObject * obj, const guint8 * data, gsize size)
++{
++  GstTypeFindData *find_data;
++
++  g_return_val_if_fail (data != NULL, NULL);
++  g_return_val_if_fail (size != 0, NULL);
++
++  find_data = g_new0 (GstTypeFindData, 1);
++
++  find_data->helper.data = data;
++  find_data->helper.size = size;
++  find_data->helper.best_probability = GST_TYPE_FIND_NONE;
++  find_data->helper.caps = NULL;
++  find_data->helper.obj = obj;
++
++  find_data->find.data = (gpointer) (&find_data->helper);
++  find_data->find.peek = buf_helper_find_peek;
++  find_data->find.suggest = buf_helper_find_suggest;
++  find_data->find.get_length = NULL;
++
++  return find_data;
++}
++
++/**
++ * gst_type_find_data_get_caps: (skip)
++ * @data: GstTypeFindData *
++ *
++ * Returns #GstCaps associated with #GstTypeFindData
++ *
++ * Returns: (transfer full) (nullable): #GstCaps.
++ *
++ * Since: 1.22
++ *
++ */
++GstCaps *
++gst_type_find_data_get_caps (GstTypeFindData * data)
++{
++  g_return_val_if_fail (data != NULL, NULL);
++
++  return gst_caps_ref (data->helper.caps);
++}
++
++/**
++ * gst_type_find_data_get_probability: (skip)
++ * @data: GstTypeFindData *
++ *
++ * Returns #GstTypeFindProbability associated with #GstTypeFindData
++ *
++ * Returns: #GstTypeFindProbability.
++ *
++ * Since: 1.22
++ *
++ */
++GstTypeFindProbability
++gst_type_find_data_get_probability (GstTypeFindData * data)
++{
++  g_return_val_if_fail (data != NULL, GST_TYPE_FIND_NONE);
++
++  return data->helper.best_probability;
++}
++
++/**
++ * gst_type_find_data_get_typefind: (skip)
++ * @data: GstTypeFindData *
++ *
++ * Returns #GstTypeFind associated with #GstTypeFindData
++ *
++ * Returns: #GstTypeFind.
++ *
++ * Since: 1.22
++ *
++ */
++GstTypeFind *
++gst_type_find_data_get_typefind (GstTypeFindData * data)
++{
++  g_return_val_if_fail (data != NULL, NULL);
++
++  return &data->find;
++}
++
++/**
++ * gst_type_find_data_free: (skip)
++ * @data: GstTypeFindData * to free
++ *
++ * Since: 1.22
++ *
++ */
++void
++gst_type_find_data_free (GstTypeFindData * data)
++{
++  if (data && data->helper.caps)
++    gst_caps_unref (data->helper.caps);
++
++  g_free (data);
++}
+diff --git a/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.h b/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.h
+index bda346cac1..503dd84856 100644
+--- a/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.h
++++ b/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.h
+@@ -29,6 +29,15 @@
+ 
+ G_BEGIN_DECLS
+ 
++typedef struct _GstTypeFindData GstTypeFindData;
++
++GstTypeFindData * gst_type_find_data_new (GstObject * obj,
++    const guint8 * data, gsize size);
++GstCaps * gst_type_find_data_get_caps (GstTypeFindData * data);
++GstTypeFindProbability gst_type_find_data_get_probability (GstTypeFindData * data);
++GstTypeFind * gst_type_find_data_get_typefind (GstTypeFindData * data);
++void gst_type_find_data_free (GstTypeFindData * data);
++
+ GST_BASE_API
+ GstCaps * gst_type_find_helper (GstPad *src, guint64 size);
+ 
+@@ -45,6 +54,13 @@ GstCaps * gst_type_find_helper_for_data_with_extension (GstObject              *
+                                                         const gchar            *extension,
+                                                         GstTypeFindProbability *prob);
+ 
++GST_BASE_API
++GstCaps * gst_type_find_helper_for_data_with_caps (GstObject              *obj,
++                                                   const guint8           *data,
++                                                   gsize                   size,
++                                                   GstCaps                *caps,
++                                                   GstTypeFindProbability *prob);
++
+ GST_BASE_API
+ GstCaps * gst_type_find_helper_for_buffer (GstObject              *obj,
+                                            GstBuffer              *buf,
+@@ -56,10 +72,20 @@ GstCaps * gst_type_find_helper_for_buffer_with_extension (GstObject
+                                                           const gchar            *extension,
+                                                           GstTypeFindProbability *prob);
+ 
++GST_BASE_API
++GstCaps * gst_type_find_helper_for_buffer_with_caps (GstObject              *obj,
++                                                     GstBuffer              *buf,
++                                                     GstCaps                *caps,
++                                                     GstTypeFindProbability *prob);
++
+ GST_BASE_API
+ GstCaps * gst_type_find_helper_for_extension (GstObject * obj,
+                                               const gchar * extension);
+ 
++GST_BASE_API
++GList * gst_type_find_list_factories_for_caps (GstObject * obj,
++                                               GstCaps * caps);
++
+ /**
+  * GstTypeFindHelperGetRangeFunction:
+  * @obj: a #GstObject that will handle the getrange request
+diff --git a/subprojects/gstreamer/meson.build b/subprojects/gstreamer/meson.build
+index d312f2bd14..33ab344401 100644
+--- a/subprojects/gstreamer/meson.build
++++ b/subprojects/gstreamer/meson.build
+@@ -1,5 +1,5 @@
+ project('gstreamer', 'c',
+-  version : '1.21.2',
++  version : '1.21.2.1',
+   meson_version : '>= 0.62',
+   default_options : [ 'warning_level=1',
+                       'buildtype=debugoptimized' ])
+diff --git a/subprojects/gstreamer/plugins/elements/gstmultiqueue.c b/subprojects/gstreamer/plugins/elements/gstmultiqueue.c
+index 10ad20382c..bbe29e5e7f 100644
+--- a/subprojects/gstreamer/plugins/elements/gstmultiqueue.c
++++ b/subprojects/gstreamer/plugins/elements/gstmultiqueue.c
+@@ -147,6 +147,15 @@ struct _GstSingleQueue
+   /* TRUE if either position needs to be recalculated */
+   gboolean sink_tainted, src_tainted;
+ 
++  /* stream group id */
++  guint32 sink_stream_gid;
++  guint32 src_stream_gid;
++
++  /* TRUE if the stream group-id changed. Resetted to FALSE the next time the
++   * segment is calculated */
++  gboolean sink_stream_gid_changed;
++  gboolean src_stream_gid_changed;
++
+   /* queue of data */
+   GstDataQueue *queue;
+   GstDataQueueSize max_size, extra_size;
+@@ -876,6 +885,7 @@ gst_multi_queue_init (GstMultiQueue * mqueue)
+   mqueue->high_time = GST_CLOCK_STIME_NONE;
+ 
+   g_mutex_init (&mqueue->qlock);
++  g_mutex_init (&mqueue->reconf_lock);
+   g_mutex_init (&mqueue->buffering_post_lock);
+ }
+ 
+@@ -890,6 +900,7 @@ gst_multi_queue_finalize (GObject * object)
+ 
+   /* free/unref instance data */
+   g_mutex_clear (&mqueue->qlock);
++  g_mutex_clear (&mqueue->reconf_lock);
+   g_mutex_clear (&mqueue->buffering_post_lock);
+ 
+   G_OBJECT_CLASS (parent_class)->finalize (object);
+@@ -1190,8 +1201,10 @@ gst_multi_queue_request_new_pad (GstElement * element, GstPadTemplate * temp,
+     GST_LOG_OBJECT (element, "name : %s (id %d)", GST_STR_NULL (name), temp_id);
+   }
+ 
++  g_mutex_lock (&mqueue->reconf_lock);
+   /* Create a new single queue, add the sink and source pad and return the sink pad */
+   squeue = gst_single_queue_new (mqueue, temp_id);
++  g_mutex_unlock (&mqueue->reconf_lock);
+ 
+   new_pad = squeue ? g_weak_ref_get (&squeue->sinkpad) : NULL;
+   /* request pad assumes the element is owning the ref of the pad it returns */
+@@ -1238,6 +1251,11 @@ gst_multi_queue_release_pad (GstElement * element, GstPad * pad)
+   /* FIXME: The removal of the singlequeue should probably not happen until it
+    * finishes draining */
+ 
++  /* Take the reconfiguration lock before removing the singlequeue from
++   * the list, to prevent overlapping release/request from causing
++   * problems */
++  g_mutex_lock (&mqueue->reconf_lock);
++
+   /* remove it from the list */
+   mqueue->queues = g_list_delete_link (mqueue->queues, tmp);
+   mqueue->queues_cookie++;
+@@ -1254,6 +1272,8 @@ gst_multi_queue_release_pad (GstElement * element, GstPad * pad)
+   gst_element_remove_pad (element, sinkpad);
+   gst_object_unref (srcpad);
+   gst_object_unref (sinkpad);
++
++  g_mutex_unlock (&mqueue->reconf_lock);
+ }
+ 
+ static GstStateChangeReturn
+@@ -1343,6 +1363,9 @@ gst_single_queue_pause (GstMultiQueue * mq, GstSingleQueue * sq)
+   }
+ 
+   sq->sink_tainted = sq->src_tainted = TRUE;
++  sq->sink_stream_gid = sq->src_stream_gid = GST_GROUP_ID_INVALID;
++  sq->sink_stream_gid_changed = FALSE;
++  sq->src_stream_gid_changed = FALSE;
+   return result;
+ }
+ 
+@@ -1358,6 +1381,9 @@ gst_single_queue_stop (GstMultiQueue * mq, GstSingleQueue * sq)
+     gst_object_unref (srcpad);
+   }
+   sq->sink_tainted = sq->src_tainted = TRUE;
++  sq->sink_stream_gid = sq->src_stream_gid = GST_GROUP_ID_INVALID;
++  sq->sink_stream_gid_changed = FALSE;
++  sq->src_stream_gid_changed = FALSE;
+   return result;
+ }
+ 
+@@ -1762,6 +1788,23 @@ static void
+ apply_segment (GstMultiQueue * mq, GstSingleQueue * sq, GstEvent * event,
+     GstSegment * segment)
+ {
++  GstClockTimeDiff ppos = 0;
++
++  /* If we switched groups, grab the previous position */
++  if (segment->rate > 0.0) {
++    if (segment == &sq->sink_segment && sq->sink_stream_gid_changed) {
++      ppos =
++          gst_segment_to_running_time (segment, GST_FORMAT_TIME,
++          segment->position);
++      sq->sink_stream_gid_changed = FALSE;
++    } else if (segment == &sq->src_segment && sq->src_stream_gid_changed) {
++      ppos =
++          gst_segment_to_running_time (segment, GST_FORMAT_TIME,
++          segment->position);
++      sq->src_stream_gid_changed = FALSE;
++    }
++  }
++
+   gst_event_copy_segment (event, segment);
+ 
+   /* now configure the values, we use these to track timestamps on the
+@@ -1776,12 +1819,19 @@ apply_segment (GstMultiQueue * mq, GstSingleQueue * sq, GstEvent * event,
+   }
+   GST_MULTI_QUEUE_MUTEX_LOCK (mq);
+ 
++  if (ppos) {
++    GST_DEBUG_OBJECT (mq, "queue %d, Applying base of %" GST_TIME_FORMAT,
++        sq->id, GST_TIME_ARGS (ppos));
++    segment->base = ppos;
++  }
++
+   /* Make sure we have a valid initial segment position (and not garbage
+    * from upstream) */
+   if (segment->rate > 0.0)
+     segment->position = segment->start;
+   else
+     segment->position = segment->stop;
++
+   if (segment == &sq->sink_segment)
+     sq->sink_tainted = TRUE;
+   else {
+@@ -1982,10 +2032,21 @@ gst_single_queue_push_one (GstMultiQueue * mq, GstSingleQueue * sq,
+           *allow_drop = FALSE;
+         break;
+       case GST_EVENT_STREAM_START:
++      {
++        guint32 group_id;
++        if (gst_event_parse_group_id (event, &group_id)) {
++          if (sq->src_stream_gid == GST_GROUP_ID_INVALID) {
++            sq->src_stream_gid = group_id;
++          } else if (group_id != sq->src_stream_gid) {
++            sq->src_stream_gid = group_id;
++            sq->src_stream_gid_changed = TRUE;
++          }
++        }
+         result = GST_FLOW_OK;
+         if (G_UNLIKELY (*allow_drop))
+           *allow_drop = FALSE;
+         break;
++      }
+       case GST_EVENT_SEGMENT:
+         apply_segment (mq, sq, event, &sq->src_segment);
+         /* Applying the segment may have made the queue non-full again, unblock it if needed */
+@@ -2607,6 +2668,15 @@ gst_multi_queue_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
+   switch (type) {
+     case GST_EVENT_STREAM_START:
+     {
++      guint32 group_id;
++      if (gst_event_parse_group_id (event, &group_id)) {
++        if (sq->sink_stream_gid == GST_GROUP_ID_INVALID) {
++          sq->sink_stream_gid = group_id;
++        } else if (group_id != sq->sink_stream_gid) {
++          sq->sink_stream_gid = group_id;
++          sq->sink_stream_gid_changed = TRUE;
++        }
++      }
+       if (mq->sync_by_running_time) {
+         GstStreamFlags stream_flags;
+         gst_event_parse_stream_flags (event, &stream_flags);
+@@ -3473,6 +3543,10 @@ gst_single_queue_new (GstMultiQueue * mqueue, guint id)
+   sq->sink_tainted = TRUE;
+   sq->src_tainted = TRUE;
+ 
++  sq->sink_stream_gid = sq->src_stream_gid = GST_GROUP_ID_INVALID;
++  sq->sink_stream_gid_changed = FALSE;
++  sq->src_stream_gid_changed = FALSE;
++
+   name = g_strdup_printf ("sink_%u", sq->id);
+   templ = gst_static_pad_template_get (&sinktemplate);
+   sinkpad = g_object_new (GST_TYPE_MULTIQUEUE_PAD, "name", name,
+diff --git a/subprojects/gstreamer/plugins/elements/gstmultiqueue.h b/subprojects/gstreamer/plugins/elements/gstmultiqueue.h
+index 8c89a17a64..53ceacbd0c 100644
+--- a/subprojects/gstreamer/plugins/elements/gstmultiqueue.h
++++ b/subprojects/gstreamer/plugins/elements/gstmultiqueue.h
+@@ -78,6 +78,8 @@ struct _GstMultiQueue {
+ 			/* queues lock). Protects nbqueues, queues, global */
+ 			/* GstMultiQueueSize, counter and highid */
+ 
++  GMutex   reconf_lock;	/* Reconfiguration lock, held during request/release pads */
++
+   gint numwaiting;	/* number of not-linked pads waiting */
+ 
+   gboolean buffering_percent_changed;
+diff --git a/subprojects/gstreamer/plugins/tracers/gstlatency.c b/subprojects/gstreamer/plugins/tracers/gstlatency.c
+index 5cfb551e7e..9b0e8a72d4 100644
+--- a/subprojects/gstreamer/plugins/tracers/gstlatency.c
++++ b/subprojects/gstreamer/plugins/tracers/gstlatency.c
+@@ -26,10 +26,10 @@
+  * events at sources and process them at sinks. This elements supports tracing
+  * the entire pipeline latency and per element latency. By default, only
+  * pipeline latency is traced. The 'flags' parameter can be used to enabled
+- * element tracing.
++ * element tracing and/or the latency reported by each element.
+  *
+  * ```
+- * GST_TRACERS="latency(flags=pipeline+element)" GST_DEBUG=GST_TRACER:7 ./...
++ * GST_TRACERS="latency(flags=pipeline+element+reported)" GST_DEBUG=GST_TRACER:7 ./...
+  * ```
+  */
+ /* TODO(ensonic): if there are two sources feeding into a mixer/muxer and later
+diff --git a/subprojects/gstreamer/tools/gst-inspect.c b/subprojects/gstreamer/tools/gst-inspect.c
+index d50bf65c9a..6d50d7b8f4 100644
+--- a/subprojects/gstreamer/tools/gst-inspect.c
++++ b/subprojects/gstreamer/tools/gst-inspect.c
+@@ -744,6 +744,15 @@ print_object_properties_info (GObject * obj, GObjectClass * obj_class,
+         } else if (param->value_type == GST_TYPE_ARRAY) {
+           GstParamSpecArray *parray = GST_PARAM_SPEC_ARRAY_LIST (param);
+ 
++          if (GST_VALUE_HOLDS_ARRAY (&value)) {
++            gchar *def = gst_value_serialize (&value);
++
++            n_print ("%sDefault%s: \"%s\"\n", PROP_ATTR_VALUE_COLOR,
++                RESET_COLOR, def);
++
++            g_free (def);
++          }
++
+           if (parray->element_spec) {
+             n_print ("%sGstValueArray of GValues of type%s %s\"%s\"%s",
+                 PROP_VALUE_COLOR, RESET_COLOR, DATATYPE_COLOR,

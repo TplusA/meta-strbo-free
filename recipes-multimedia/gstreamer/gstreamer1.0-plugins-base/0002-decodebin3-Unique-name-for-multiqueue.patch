@@ -1,0 +1,25 @@
+From 02fa69751711f4429c5972e23249c4768aa05810 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <rtie@gmx.de>
+Date: Thu, 17 Nov 2022 08:45:02 +0100
+Subject: [PATCH 2/2] decodebin3: Unique name for multiqueue.
+
+---
+ subprojects/gst-plugins-base/gst/playback/gstdecodebin3.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/subprojects/gst-plugins-base/gst/playback/gstdecodebin3.c b/subprojects/gst-plugins-base/gst/playback/gstdecodebin3.c
+index c5543b8724..f4c4db8ec4 100644
+--- a/subprojects/gst-plugins-base/gst/playback/gstdecodebin3.c
++++ b/subprojects/gst-plugins-base/gst/playback/gstdecodebin3.c
+@@ -617,7 +617,7 @@ gst_decodebin3_init (GstDecodebin3 * dbin)
+   /* Create main input */
+   dbin->main_input = create_new_input (dbin, TRUE);
+ 
+-  dbin->multiqueue = gst_element_factory_make ("multiqueue", NULL);
++  dbin->multiqueue = gst_element_factory_make ("multiqueue", "dmultiqueue");
+   g_object_get (dbin->multiqueue, "min-interleave-time",
+       &dbin->default_mq_min_interleave, NULL);
+   dbin->current_mq_min_interleave = dbin->default_mq_min_interleave;
+-- 
+2.25.1
+

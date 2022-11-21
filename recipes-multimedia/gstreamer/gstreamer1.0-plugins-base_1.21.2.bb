@@ -10,7 +10,11 @@ SRC_URI = "https://gstreamer.freedesktop.org/src/gst-plugins-base/gst-plugins-ba
            file://0001-ENGR00312515-get-caps-from-src-pad-when-query-caps.patch \
            file://0003-viv-fb-Make-sure-config.h-is-included.patch \
            file://0002-ssaparse-enhance-SSA-text-lines-parsing.patch \
+           file://gst-plugins-base-1.21.2-185-gb2bfb066ec.patch;pnum=3 \
+           file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
+           file://0002-decodebin3-Unique-name-for-multiqueue.patch;pnum=3 \
            "
+PR = "r1"
 SRC_URI[sha256sum] = "1497013105d2fe783818dd6fe7a54f29c211f02c7080d98cbe62ffa847562068"
 
 S = "${WORKDIR}/gst-plugins-base-${PV}"

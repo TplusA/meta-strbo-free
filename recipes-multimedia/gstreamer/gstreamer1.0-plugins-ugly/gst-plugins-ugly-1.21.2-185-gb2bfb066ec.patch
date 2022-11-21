@@ -1,0 +1,11 @@
+diff --git a/subprojects/gst-plugins-ugly/meson.build b/subprojects/gst-plugins-ugly/meson.build
+index 0b788c720a..b97465d643 100644
+--- a/subprojects/gst-plugins-ugly/meson.build
++++ b/subprojects/gst-plugins-ugly/meson.build
+@@ -1,5 +1,5 @@
+ project('gst-plugins-ugly', 'c',
+-  version : '1.21.2',
++  version : '1.21.2.1',
+   meson_version : '>= 0.62',
+   default_options : [ 'warning_level=1',
+                       'buildtype=debugoptimized' ])

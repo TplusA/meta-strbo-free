@@ -1,0 +1,181 @@
+diff --git a/subprojects/gst-devtools/meson.build b/subprojects/gst-devtools/meson.build
+index 54a92b551a..d7752da59c 100644
+--- a/subprojects/gst-devtools/meson.build
++++ b/subprojects/gst-devtools/meson.build
+@@ -1,5 +1,5 @@
+ project('gst-devtools', 'c',
+-  version : '1.21.2',
++  version : '1.21.2.1',
+   meson_version : '>= 0.62',
+   default_options : [ 'warning_level=1',
+                       'c_std=gnu99',
+diff --git a/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.c b/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.c
+index 1d7a250dc9..0ab9e25257 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.c
++++ b/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.c
+@@ -534,6 +534,8 @@ gst_validate_report_load_issues (void)
+       GST_VALIDATE_ISSUE_FLAGS_FULL_DETAILS);
+   REGISTER_VALIDATE_ISSUE (ISSUE, SCENARIO_ACTION_EXECUTION_ISSUE,
+       "An issue happened during the execution of a scenario", NULL);
++  REGISTER_VALIDATE_ISSUE (WARNING, SCENARIO_ACTION_ENDED_EARLY,
++      "Got EOS before an action playback time", NULL);
+   REGISTER_VALIDATE_ISSUE (CRITICAL, CONFIG_LATENCY_TOO_HIGH,
+       "The pipeline latency is higher than the maximum allowed by the scenario",
+       NULL);
+diff --git a/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.h b/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.h
+index 8a24a877c1..1f8acd24e0 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.h
++++ b/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.h
+@@ -138,6 +138,12 @@ typedef enum {
+ #define SCENARIO_ACTION_CHECK_ERROR              _QUARK("scenario::check-error")
+ #define SCENARIO_ACTION_TIMEOUT                  _QUARK("scenario::action-timeout")
+ #define SCENARIO_ACTION_EXECUTION_ISSUE          _QUARK("scenario::execution-issue")
++/**
++ * SCENARIO_ACTION_ENDED_EARLY:
++ *
++ * Since: 1.22
++ */
++#define SCENARIO_ACTION_ENDED_EARLY              _QUARK("scenario::action-ended-early")
+ 
+ #define CONFIG_LATENCY_TOO_HIGH                  _QUARK("config::latency-too-high")
+ #define CONFIG_TOO_MANY_BUFFERS_DROPPED          _QUARK("config::too-many-buffers-dropped")
+diff --git a/subprojects/gst-devtools/validate/gst/validate/gst-validate-scenario.c b/subprojects/gst-devtools/validate/gst/validate/gst-validate-scenario.c
+index 5965c58204..47fec1ee80 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/gst-validate-scenario.c
++++ b/subprojects/gst-devtools/validate/gst/validate/gst-validate-scenario.c
+@@ -2688,6 +2688,15 @@ execute_next_action_full (GstValidateScenario * scenario, GstMessage * message)
+     return G_SOURCE_CONTINUE;
+   }
+ 
++  if (message && GST_MESSAGE_TYPE (message) == GST_MESSAGE_EOS
++      && act->playback_time != GST_CLOCK_TIME_NONE) {
++    GST_VALIDATE_REPORT_ACTION (scenario, act,
++        SCENARIO_ACTION_ENDED_EARLY,
++        "Got EOS before action playback time %" GST_TIME_FORMAT,
++        GST_TIME_ARGS (act->playback_time));
++    goto execute_action;
++  }
++
+   switch (act->priv->state) {
+     case GST_VALIDATE_EXECUTE_ACTION_NONE:
+     case GST_VALIDATE_EXECUTE_ACTION_NON_BLOCKING:
+@@ -2734,6 +2743,7 @@ execute_next_action_full (GstValidateScenario * scenario, GstMessage * message)
+     return G_SOURCE_CONTINUE;
+   }
+ 
++execute_action:
+   type = _find_action_type (act->type);
+ 
+   GST_DEBUG_OBJECT (scenario, "Executing %" GST_PTR_FORMAT
+@@ -5534,9 +5544,9 @@ gst_validate_list_scenarios (gchar ** scenarios, gint num_scenarios,
+       if (!_parse_scenario (file, kf)) {
+         GST_ERROR ("Could not parse scenario: %s", scenarios[i]);
+ 
+-        gst_object_unref (file);
+         res = 1;
+       }
++      g_clear_object (&file);
+     }
+ 
+     goto done;
+@@ -5547,29 +5557,30 @@ gst_validate_list_scenarios (gchar ** scenarios, gint num_scenarios,
+     env_scenariodir = g_strsplit (envvar, ":", 0);
+ 
+   _list_scenarios_in_dir (dir, kf);
+-  g_object_unref (dir);
++  g_clear_object (&dir);
+ 
+   tldir = g_build_filename (GST_DATADIR, "gstreamer-" GST_API_VERSION,
+       "validate", GST_VALIDATE_SCENARIO_DIRECTORY, NULL);
+   dir = g_file_new_for_path (tldir);
+   _list_scenarios_in_dir (dir, kf);
+-  g_object_unref (dir);
++  g_clear_object (&dir);
+   g_free (tldir);
+ 
+   if (env_scenariodir) {
+     guint i;
++    GFile *subfile;
+ 
+     for (i = 0; env_scenariodir[i]; i++) {
+-      dir = g_file_new_for_path (env_scenariodir[i]);
+-      _list_scenarios_in_dir (dir, kf);
+-      g_object_unref (dir);
++      subfile = g_file_new_for_path (env_scenariodir[i]);
++      _list_scenarios_in_dir (subfile, kf);
++      g_clear_object (&subfile);
+     }
+   }
+ 
+   /* Hack to make it work within the development environment */
+   dir = g_file_new_for_path ("data/scenarios");
+   _list_scenarios_in_dir (dir, kf);
+-  g_object_unref (dir);
++  g_clear_object (&dir);
+ 
+ done:
+   result = g_key_file_to_data (kf, &datalength, &err);
+@@ -5592,6 +5603,7 @@ done:
+ 
+     res = FALSE;
+   }
++  g_clear_object (&dir);
+ 
+   g_key_file_free (kf);
+ 
+diff --git a/subprojects/gst-devtools/validate/gst/validate/media-descriptor-writer.c b/subprojects/gst-devtools/validate/gst/validate/media-descriptor-writer.c
+index 95b3512743..66fcb03ddb 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/media-descriptor-writer.c
++++ b/subprojects/gst-devtools/validate/gst/validate/media-descriptor-writer.c
+@@ -735,17 +735,25 @@ gst_validate_media_descriptor_writer_new_discover (GstValidateRunner * runner,
+         gst_validate_media_descriptor_writer_add_stream (writer, streaminfo);
+       }
+     } else {
++      GstDiscovererStreamInfo *nextinfo;
+       if (!GST_IS_DISCOVERER_AUDIO_INFO (info)
+-          && !GST_IS_DISCOVERER_AUDIO_INFO (info)
+-          && gst_discoverer_stream_info_get_next (streaminfo)) {
+-        gst_validate_media_descriptor_get_file_node ((GstValidateMediaDescriptor
+-                *) writer)->caps =
+-            gst_discoverer_stream_info_get_caps (streaminfo);
+-        streaminfo = gst_discoverer_stream_info_get_next (streaminfo);
++          && !GST_IS_DISCOVERER_VIDEO_INFO (info)) {
++        nextinfo = gst_discoverer_stream_info_get_next (streaminfo);
++        if (nextinfo) {
++          GstValidateMediaFileNode *fn =
++              gst_validate_media_descriptor_get_file_node (
++              (GstValidateMediaDescriptor *) writer);
++          fn->caps = gst_discoverer_stream_info_get_caps (streaminfo);
++          gst_discoverer_stream_info_unref (streaminfo);
++          streaminfo = nextinfo;
++        }
+       }
+       do {
+         gst_validate_media_descriptor_writer_add_stream (writer, streaminfo);
+-      } while ((streaminfo = gst_discoverer_stream_info_get_next (streaminfo)));
++        nextinfo = gst_discoverer_stream_info_get_next (streaminfo);
++        gst_discoverer_stream_info_unref (streaminfo);
++        streaminfo = nextinfo;
++      } while (streaminfo);
+     }
+   } else {
+     GST_VALIDATE_REPORT (writer, FILE_NO_STREAM_INFO,
+diff --git a/subprojects/gst-devtools/validate/tools/gst-validate-media-check.c b/subprojects/gst-devtools/validate/tools/gst-validate-media-check.c
+index f357ac4eb1..0a54e29265 100644
+--- a/subprojects/gst-devtools/validate/tools/gst-validate-media-check.c
++++ b/subprojects/gst-devtools/validate/tools/gst-validate-media-check.c
+@@ -177,11 +177,12 @@ out:
+   }
+   if (runner)
+     gst_object_unref (runner);
+-  gst_validate_deinit ();
+-  gst_deinit ();
+ 
+   gst_validate_printf (NULL, "\n=======> Test %s (Return value: %i)\n\n",
+       ret == 0 ? "PASSED" : "FAILED", ret);
+ 
++  gst_validate_deinit ();
++  gst_deinit ();
++
+   return ret;
+ }
