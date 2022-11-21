@@ -1,5 +1,5 @@
 diff --git a/subprojects/gst-plugins-bad/docs/plugins/gst_plugins_cache.json b/subprojects/gst-plugins-bad/docs/plugins/gst_plugins_cache.json
-index bd07b689b9..243de9f44d 100644
+index bd07b689b9..778557af47 100644
 --- a/subprojects/gst-plugins-bad/docs/plugins/gst_plugins_cache.json
 +++ b/subprojects/gst-plugins-bad/docs/plugins/gst_plugins_cache.json
 @@ -675,7 +675,7 @@
@@ -164,7 +164,7 @@ index bd07b689b9..243de9f44d 100644
                      "GstCudaBaseTransform",
                      "GstBaseTransform",
                      "GstElement",
-@@ -216844,19 +216844,60 @@
+@@ -216844,21 +216844,62 @@
                      "GObject"
                  ],
                  "klass": "Filter/Converter/Video/Hardware",
@@ -173,17 +173,18 @@ index bd07b689b9..243de9f44d 100644
                      "sink": {
 -                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
 +                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE, RGBP, BGRP, GBR, GBRA }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
-+                        "direction": "sink",
-+                        "presence": "always"
-+                    },
-+                    "src": {
+                         "direction": "sink",
+                         "presence": "always"
+                     },
+                     "src": {
+-                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
 +                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE, RGBP, BGRP, GBR, GBRA }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
-+                        "direction": "src",
-+                        "presence": "always"
-+                    }
-+                },
-+                "rank": "none"
-+            },
+                         "direction": "src",
+                         "presence": "always"
+                     }
+                 },
+                 "rank": "none"
+             },
 +            "cudaconvertscale": {
 +                "author": "Seungha Yang <seungha@centricular.com>",
 +                "description": "Resizes video and allow color conversion using CUDA",
@@ -201,16 +202,15 @@ index bd07b689b9..243de9f44d 100644
 +                "pad-templates": {
 +                    "sink": {
 +                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE, RGBP, BGRP, GBR, GBRA }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
-                         "direction": "sink",
-                         "presence": "always"
-                     },
-                     "src": {
--                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
++                        "direction": "sink",
++                        "presence": "always"
++                    },
++                    "src": {
 +                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE, RGBP, BGRP, GBR, GBRA }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
-                         "direction": "src",
-                         "presence": "always"
-                     }
-                 },
++                        "direction": "src",
++                        "presence": "always"
++                    }
++                },
 +                "properties": {
 +                    "add-borders": {
 +                        "blurb": "Add black borders if necessary to keep the display aspect ratio",
@@ -225,9 +225,11 @@ index bd07b689b9..243de9f44d 100644
 +                        "writable": true
 +                    }
 +                },
-                 "rank": "none"
-             },
++                "rank": "none"
++            },
              "cudadownload": {
+                 "author": "Seungha Yang <seungha.yang@navercorp.com>",
+                 "description": "Downloads data from NVIDA GPU via CUDA APIs",
 @@ -216873,15 +216914,14 @@
                      "GObject"
                  ],
@@ -437,6 +439,51 @@ index bd07b689b9..243de9f44d 100644
                      "GstCudaBaseTransform",
                      "GstBaseTransform",
                      "GstElement",
+@@ -225326,7 +225364,7 @@
+                         "writable": true
+                     }
+                 },
+-                "rank": "none"
++                "rank": "primary"
+             },
+             "qsvh264dec": {
+                 "author": "Seungha Yang <seungha@centricular.com>",
+@@ -225725,7 +225763,7 @@
+                         "writable": true
+                     }
+                 },
+-                "rank": "none"
++                "rank": "primary"
+             },
+             "qsvh265dec": {
+                 "author": "Seungha Yang <seungha@centricular.com>",
+@@ -226058,7 +226096,7 @@
+                         "writable": true
+                     }
+                 },
+-                "rank": "none"
++                "rank": "primary"
+             },
+             "qsvjpegdec": {
+                 "author": "Seungha Yang <seungha@centricular.com>",
+@@ -226131,7 +226169,7 @@
+                         "writable": true
+                     }
+                 },
+-                "rank": "none"
++                "rank": "primary"
+             },
+             "qsvvp9dec": {
+                 "author": "Seungha Yang <seungha@centricular.com>",
+@@ -226300,7 +226338,7 @@
+                         "writable": true
+                     }
+                 },
+-                "rank": "none"
++                "rank": "primary"
+             }
+         },
+         "filename": "gstqsv",
 @@ -233273,10 +233311,966 @@
      },
      "va": {
@@ -1406,6 +1453,25 @@ index bd07b689b9..243de9f44d 100644
          "package": "GStreamer Bad Plug-ins",
          "source": "gst-plugins-bad",
          "tracers": {},
+@@ -235714,6 +236708,18 @@
+                         "type": "GstWebRTCSessionDescription",
+                         "writable": false
+                     },
++                    "http-proxy": {
++                        "blurb": "A HTTP proxy for use with TURN/TCP of the form http://[username:password@]hostname[:port]",
++                        "conditionally-available": false,
++                        "construct": false,
++                        "construct-only": false,
++                        "controllable": false,
++                        "default": "NULL",
++                        "mutable": "null",
++                        "readable": true,
++                        "type": "gchararray",
++                        "writable": true
++                    },
+                     "ice-agent": {
+                         "blurb": "The WebRTC ICE agent",
+                         "conditionally-available": false,
 diff --git a/subprojects/gst-plugins-bad/ext/aes/gstaesdec.c b/subprojects/gst-plugins-bad/ext/aes/gstaesdec.c
 index 9383f047af..66bd327c0b 100644
 --- a/subprojects/gst-plugins-bad/ext/aes/gstaesdec.c
@@ -5522,6 +5588,190 @@ index 4c3d740b10..0aa71db0cb 100644
  
    return TRUE;
  }
+diff --git a/subprojects/gst-plugins-bad/ext/hls/gsthlsdemux.c b/subprojects/gst-plugins-bad/ext/hls/gsthlsdemux.c
+index 8cf6c2acc6..305406e476 100644
+--- a/subprojects/gst-plugins-bad/ext/hls/gsthlsdemux.c
++++ b/subprojects/gst-plugins-bad/ext/hls/gsthlsdemux.c
+@@ -1166,6 +1166,13 @@ gst_hls_demux_data_received (GstAdaptiveDemux * demux,
+     buffer = tmp_buffer;
+   }
+ 
++  if (hlsdemux->prog_dt) {
++    gst_adaptive_demux_stream_set_tags (stream,
++        gst_tag_list_new (GST_TAG_DATE_TIME, hlsdemux->prog_dt, NULL));
++    gst_date_time_unref (hlsdemux->prog_dt);
++    hlsdemux->prog_dt = NULL;
++  }
++
+   return gst_hls_demux_handle_buffer (demux, stream, buffer, FALSE);
+ }
+ 
+@@ -1247,7 +1254,9 @@ gst_hls_demux_update_fragment_info (GstAdaptiveDemuxStream * stream)
+   m3u8 = gst_hls_demux_stream_get_m3u8 (hlsdemux_stream);
+ 
+   forward = (stream->demux->segment.rate > 0);
+-  file = gst_m3u8_get_next_fragment (m3u8, forward, &sequence_pos, &discont);
++  file =
++      gst_m3u8_get_next_fragment (m3u8, forward, &sequence_pos,
++      &hlsdemux->prog_dt, &discont);
+ 
+   if (file == NULL) {
+     GST_INFO_OBJECT (hlsdemux, "This playlist doesn't contain more fragments");
+@@ -1359,6 +1368,12 @@ gst_hls_demux_reset (GstAdaptiveDemux * ademux)
+   GST_DEBUG_OBJECT (demux, "Streams aware : %d", demux->streams_aware);
+ 
+   gst_hls_demux_clear_all_pending_data (demux);
++
++  if (demux->prog_dt) {
++    gst_date_time_unref (demux->prog_dt);
++    demux->prog_dt = NULL;
++  }
++
+   GST_M3U8_CLIENT_UNLOCK (hlsdemux->client);
+ }
+ 
+diff --git a/subprojects/gst-plugins-bad/ext/hls/gsthlsdemux.h b/subprojects/gst-plugins-bad/ext/hls/gsthlsdemux.h
+index 98d6099cbf..846026eac3 100644
+--- a/subprojects/gst-plugins-bad/ext/hls/gsthlsdemux.h
++++ b/subprojects/gst-plugins-bad/ext/hls/gsthlsdemux.h
+@@ -141,6 +141,8 @@ struct _GstHLSDemux
+   GHashTable *keys;
+   GMutex      keys_lock;
+ 
++  GstDateTime *prog_dt;
++
+   /* FIXME: check locking, protected automatically by manifest_lock already? */
+   /* The master playlist with the available variant streams */
+   GstHLSMasterPlaylist *master;
+diff --git a/subprojects/gst-plugins-bad/ext/hls/m3u8.c b/subprojects/gst-plugins-bad/ext/hls/m3u8.c
+index d20e352c3f..4f3595e5eb 100644
+--- a/subprojects/gst-plugins-bad/ext/hls/m3u8.c
++++ b/subprojects/gst-plugins-bad/ext/hls/m3u8.c
+@@ -32,7 +32,8 @@
+ #define GST_CAT_DEFAULT hls_debug
+ 
+ static GstM3U8MediaFile *gst_m3u8_media_file_new (gchar * uri,
+-    gchar * title, GstClockTime duration, guint sequence);
++    gchar * title, GstClockTime duration, guint sequence,
++    GstDateTime * program_dt);
+ static void gst_m3u8_init_file_unref (GstM3U8InitFile * self);
+ static gchar *uri_join (const gchar * uri, const gchar * path);
+ 
+@@ -116,7 +117,7 @@ gst_m3u8_unref (GstM3U8 * self)
+ 
+ static GstM3U8MediaFile *
+ gst_m3u8_media_file_new (gchar * uri, gchar * title, GstClockTime duration,
+-    guint sequence)
++    guint sequence, GstDateTime * program_dt)
+ {
+   GstM3U8MediaFile *file;
+ 
+@@ -126,6 +127,7 @@ gst_m3u8_media_file_new (gchar * uri, gchar * title, GstClockTime duration,
+   file->duration = duration;
+   file->sequence = sequence;
+   file->ref_count = 1;
++  file->program_dt = program_dt;
+ 
+   return file;
+ }
+@@ -150,6 +152,8 @@ gst_m3u8_media_file_unref (GstM3U8MediaFile * self)
+     g_free (self->title);
+     g_free (self->uri);
+     g_free (self->key);
++    if (self->program_dt)
++      gst_date_time_unref (self->program_dt);
+     g_free (self);
+   }
+ }
+@@ -483,6 +487,7 @@ gboolean
+ gst_m3u8_update (GstM3U8 * self, gchar * data)
+ {
+   gint val;
++  GstDateTime *program_dt = NULL;
+   GstClockTime duration;
+   gchar *title, *end;
+   gboolean discontinuity = FALSE;
+@@ -558,7 +563,10 @@ gst_m3u8_update (GstM3U8 * self, gchar * data)
+       data = uri_join (self->base_uri ? self->base_uri : self->uri, data);
+       if (data != NULL) {
+         GstM3U8MediaFile *file;
+-        file = gst_m3u8_media_file_new (data, title, duration, mediasequence++);
++        file =
++            gst_m3u8_media_file_new (data, title, duration,
++            mediasequence++, program_dt);
++        program_dt = NULL;
+ 
+         /* set encryption params */
+         file->key = current_key ? g_strdup (current_key) : NULL;
+@@ -647,8 +655,12 @@ gst_m3u8_update (GstM3U8 * self, gchar * data)
+         self->discont_sequence++;
+         discontinuity = TRUE;
+       } else if (g_str_has_prefix (data_ext_x, "PROGRAM-DATE-TIME:")) {
+-        /* <YYYY-MM-DDThh:mm:ssZ> */
+-        GST_DEBUG ("FIXME parse date");
++        if (program_dt)
++          gst_date_time_unref (program_dt);
++        program_dt = gst_date_time_new_from_iso8601_string (data + 25);
++        if (!program_dt) {
++          GST_WARNING ("Could not parse program date/time");
++        }
+       } else if (g_str_has_prefix (data_ext_x, "ALLOW-CACHE:")) {
+         self->allowcache = g_ascii_strcasecmp (data + 19, "YES") == 0;
+       } else if (g_str_has_prefix (data_ext_x, "KEY:")) {
+@@ -767,6 +779,11 @@ gst_m3u8_update (GstM3U8 * self, gchar * data)
+   g_free (current_key);
+   current_key = NULL;
+ 
++  if (program_dt) {
++    gst_date_time_unref (program_dt);
++    program_dt = NULL;
++  }
++
+   self->files = g_list_reverse (self->files);
+ 
+   if (last_init_file)
+@@ -919,7 +936,8 @@ m3u8_find_next_fragment (GstM3U8 * m3u8, gboolean forward)
+ 
+ GstM3U8MediaFile *
+ gst_m3u8_get_next_fragment (GstM3U8 * m3u8, gboolean forward,
+-    GstClockTime * sequence_position, gboolean * discont)
++    GstClockTime * sequence_position, GstDateTime ** program_dt,
++    gboolean * discont)
+ {
+   GstM3U8MediaFile *file = NULL;
+ 
+@@ -945,6 +963,11 @@ gst_m3u8_get_next_fragment (GstM3U8 * m3u8, gboolean forward,
+ 
+   if (sequence_position)
+     *sequence_position = m3u8->sequence_position;
++
++  if (program_dt)
++    *program_dt =
++        file->program_dt ? gst_date_time_ref (file->program_dt) : NULL;
++
+   if (discont)
+     *discont = file->discont || (m3u8->sequence != file->sequence);
+ 
+diff --git a/subprojects/gst-plugins-bad/ext/hls/m3u8.h b/subprojects/gst-plugins-bad/ext/hls/m3u8.h
+index aa511360d1..4a8d926673 100644
+--- a/subprojects/gst-plugins-bad/ext/hls/m3u8.h
++++ b/subprojects/gst-plugins-bad/ext/hls/m3u8.h
+@@ -99,6 +99,7 @@ struct _GstM3U8MediaFile
+   gchar *key;
+   guint8 iv[16];
+   gint64 offset, size;
++  GstDateTime *program_dt;      /* program date time */
+   gint ref_count;               /* ATOMIC */
+   GstM3U8InitFile *init_file;   /* Media Initialization (hold ref) */
+ };
+@@ -127,6 +128,7 @@ void               gst_m3u8_set_uri              (GstM3U8      * m3u8,
+ GstM3U8MediaFile * gst_m3u8_get_next_fragment    (GstM3U8      * m3u8,
+                                                   gboolean       forward,
+                                                   GstClockTime * sequence_position,
++                                                  GstDateTime ** program_dt,
+                                                   gboolean     * discont);
+ 
+ gboolean           gst_m3u8_has_next_fragment    (GstM3U8 * m3u8,
 diff --git a/subprojects/gst-plugins-bad/ext/sctp/gstsctpdec.c b/subprojects/gst-plugins-bad/ext/sctp/gstsctpdec.c
 index 097b629b9e..a90f89428f 100644
 --- a/subprojects/gst-plugins-bad/ext/sctp/gstsctpdec.c
@@ -5544,10 +5794,18 @@ index 097b629b9e..a90f89428f 100644
    remove_pad (self, srcpad);
    gst_object_unref (srcpad);
 diff --git a/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c b/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c
-index dd16885238..5d59ee6959 100644
+index dd16885238..2401fd4762 100644
 --- a/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c
 +++ b/subprojects/gst-plugins-bad/ext/webrtc/gstwebrtcbin.c
-@@ -2407,11 +2407,11 @@ _on_sctpdec_pad_added (GstElement * sctpdec, GstPad * pad,
+@@ -533,6 +533,7 @@ enum
+   PROP_ICE_AGENT,
+   PROP_LATENCY,
+   PROP_SCTP_TRANSPORT,
++  PROP_HTTP_PROXY
+ };
+ 
+ static guint gst_webrtc_bin_signals[LAST_SIGNAL] = { 0 };
+@@ -2407,11 +2408,11 @@ _on_sctpdec_pad_added (GstElement * sctpdec, GstPad * pad,
      g_signal_emit (webrtc, gst_webrtc_bin_signals[PREPARE_DATA_CHANNEL_SIGNAL],
          0, channel, FALSE);
  
@@ -5563,7 +5821,7 @@ index dd16885238..5d59ee6959 100644
  
      webrtc_data_channel_link_to_sctp (channel, webrtc->priv->sctp_transport);
  
-@@ -2422,7 +2422,7 @@ _on_sctpdec_pad_added (GstElement * sctpdec, GstPad * pad,
+@@ -2422,7 +2423,7 @@ _on_sctpdec_pad_added (GstElement * sctpdec, GstPad * pad,
    g_signal_connect (channel, "notify::ready-state",
        G_CALLBACK (_on_data_channel_ready_state), webrtc);
  
@@ -5572,7 +5830,52 @@ index dd16885238..5d59ee6959 100644
    if (gst_pad_link (pad, sink_pad) != GST_PAD_LINK_OK)
      GST_WARNING_OBJECT (channel, "Failed to link sctp pad %s with channel %"
          GST_PTR_FORMAT, GST_PAD_NAME (pad), channel);
-@@ -6968,11 +6968,11 @@ gst_webrtc_bin_create_data_channel (GstWebRTCBin * webrtc, const gchar * label,
+@@ -4923,7 +4924,7 @@ _set_internal_rtpbin_element_props_from_stream (GstWebRTCBin * webrtc,
+         g_value_unset (&ptval);
+       }
+ 
+-      GST_DEBUG_OBJECT (webrtc, "stream %" GST_PTR_FORMAT " transceiever %"
++      GST_DEBUG_OBJECT (webrtc, "stream %" GST_PTR_FORMAT " transceiver %"
+           GST_PTR_FORMAT " has FEC payload %d and RED payload %d", stream,
+           trans, ulpfec_pt, red_pt);
+ 
+@@ -5781,10 +5782,9 @@ static void
+ _connect_rtpfunnel (GstWebRTCBin * webrtc, guint session_id)
+ {
+   gchar *pad_name;
+-  GstPad *queue_srcpad;
++  GstPad *srcpad;
+   GstPad *rtp_sink;
+   TransportStream *stream = _find_transport_for_session (webrtc, session_id);
+-  GstElement *queue;
+ 
+   g_assert (stream);
+ 
+@@ -5795,19 +5795,14 @@ _connect_rtpfunnel (GstWebRTCBin * webrtc, guint session_id)
+   gst_bin_add (GST_BIN (webrtc), webrtc->rtpfunnel);
+   gst_element_sync_state_with_parent (webrtc->rtpfunnel);
+ 
+-  queue = gst_element_factory_make ("queue", NULL);
+-  gst_bin_add (GST_BIN (webrtc), queue);
+-  gst_element_sync_state_with_parent (queue);
+-
+-  gst_element_link (webrtc->rtpfunnel, queue);
+-
+-  queue_srcpad = gst_element_get_static_pad (queue, "src");
++  srcpad = gst_element_get_static_pad (webrtc->rtpfunnel, "src");
+ 
+   pad_name = g_strdup_printf ("send_rtp_sink_%d", session_id);
+   rtp_sink = gst_element_request_pad_simple (webrtc->rtpbin, pad_name);
+   g_free (pad_name);
+-  gst_pad_link (queue_srcpad, rtp_sink);
+-  gst_object_unref (queue_srcpad);
++
++  gst_pad_link (srcpad, rtp_sink);
++  gst_object_unref (srcpad);
+   gst_object_unref (rtp_sink);
+ 
+   pad_name = g_strdup_printf ("send_rtp_src_%d", session_id);
+@@ -6968,11 +6963,11 @@ gst_webrtc_bin_create_data_channel (GstWebRTCBin * webrtc, const gchar * label,
    g_signal_emit (webrtc, gst_webrtc_bin_signals[PREPARE_DATA_CHANNEL_SIGNAL], 0,
        ret, TRUE);
  
@@ -5588,6 +5891,50 @@ index dd16885238..5d59ee6959 100644
  
    ret = gst_object_ref (ret);
    ret->webrtcbin = webrtc;
+@@ -8058,6 +8053,10 @@ gst_webrtc_bin_set_property (GObject * object, guint prop_id,
+     case PROP_ICE_AGENT:
+       webrtc->priv->ice = g_value_get_object (value);
+       break;
++    case PROP_HTTP_PROXY:
++      gst_webrtc_ice_set_http_proxy (webrtc->priv->ice,
++          g_value_get_string (value));
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -8135,6 +8134,10 @@ gst_webrtc_bin_get_property (GObject * object, guint prop_id,
+     case PROP_SCTP_TRANSPORT:
+       g_value_set_object (value, webrtc->priv->sctp_transport);
+       break;
++    case PROP_HTTP_PROXY:
++      g_value_take_string (value,
++          gst_webrtc_ice_get_http_proxy (webrtc->priv->ice));
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -8419,6 +8422,21 @@ gst_webrtc_bin_class_init (GstWebRTCBinClass * klass)
+           0, G_MAXUINT, DEFAULT_JB_LATENCY,
+           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+ 
++  /**
++   * GstWebRTCBin:http-proxy:
++   *
++   * A HTTP proxy for use with TURN/TCP of the form
++   * http://[username:password@]hostname[:port]
++   *
++   * Since: 1.22
++   */
++  g_object_class_install_property (gobject_class,
++      PROP_HTTP_PROXY,
++      g_param_spec_string ("http-proxy", "HTTP Proxy",
++          "A HTTP proxy for use with TURN/TCP of the form "
++          "http://[username:password@]hostname[:port]",
++          NULL, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++
+   /**
+    * GstWebRTCBin:sctp-transport:
+    *
 diff --git a/subprojects/gst-plugins-bad/ext/webrtc/webrtcdatachannel.c b/subprojects/gst-plugins-bad/ext/webrtc/webrtcdatachannel.c
 index bb2b023618..0260c61721 100644
 --- a/subprojects/gst-plugins-bad/ext/webrtc/webrtcdatachannel.c
@@ -5907,8 +6254,43 @@ index a0b38a7ad2..dd65a66ae3 100644
  G_END_DECLS
  
  #endif /* __WEBRTC_DATA_CHANNEL_H__ */
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstav1parser.c b/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstav1parser.c
+index e2876db01f..3e80380976 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstav1parser.c
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/codecparsers/gstav1parser.c
+@@ -799,8 +799,7 @@ gst_av1_parser_identify_one_obu (GstAV1Parser * parser, const guint8 * data,
+ 
+     if (obu_length == 0) {
+       /* An empty obu? let continue to the next */
+-      ret = GST_AV1_PARSER_DROP;
+-      goto error;
++      return GST_AV1_PARSER_DROP;
+     }
+   }
+ 
+@@ -881,8 +880,7 @@ gst_av1_parser_identify_one_obu (GstAV1Parser * parser, const guint8 * data,
+         (parser->state.operating_point_idc >> (obu->header.obu_spatial_id +
+             8)) & 1;
+     if (!inTemporalLayer || !inSpatialLayer) {
+-      ret = GST_AV1_PARSER_DROP;
+-      goto error;
++      return GST_AV1_PARSER_DROP;
+     }
+   }
+ 
+@@ -1449,9 +1447,7 @@ gst_av1_parser_parse_sequence_header_obu (GstAV1Parser * parser,
+   gst_av1_parse_reset_state (parser, FALSE);
+ 
+   /* choose_operating_point() set the operating_point */
+-  if (parser->state.operating_point < 0 ||
+-      parser->state.operating_point >
+-      seq_header->operating_points_cnt_minus_1) {
++  if (parser->state.operating_point > seq_header->operating_points_cnt_minus_1) {
+     GST_WARNING ("Invalid operating_point %d set by user, just use 0",
+         parser->state.operating_point);
+     parser->state.operating_point_idc = seq_header->operating_points[0].idc;
 diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/codecs/gstav1decoder.c b/subprojects/gst-plugins-bad/gst-libs/gst/codecs/gstav1decoder.c
-index 7208821dfd..9808af8292 100644
+index 7208821dfd..019437e7d8 100644
 --- a/subprojects/gst-plugins-bad/gst-libs/gst/codecs/gstav1decoder.c
 +++ b/subprojects/gst-plugins-bad/gst-libs/gst/codecs/gstav1decoder.c
 @@ -48,6 +48,8 @@ struct _GstAV1DecoderPrivate
@@ -5963,7 +6345,43 @@ index 7208821dfd..9808af8292 100644
  static void
  gst_av1_decoder_drain_output_queue (GstAV1Decoder * self,
      guint num, GstFlowReturn * ret)
-@@ -731,6 +748,14 @@ out:
+@@ -386,6 +403,8 @@ gst_av1_decoder_process_sequence (GstAV1Decoder * self, GstAV1OBU * obu)
+         _floor_log2 (priv->parser->state.operating_point_idc >> 8);
+     GST_INFO_OBJECT (self, "set highest spatial layer to %d",
+         self->highest_spatial_layer);
++  } else {
++    self->highest_spatial_layer = 0;
+   }
+ 
+   ret = klass->new_sequence (self, &seq_header,
+@@ -676,6 +695,11 @@ gst_av1_decoder_handle_frame (GstVideoDecoder * decoder,
+   while (total_consumed < map.size) {
+     res = gst_av1_parser_identify_one_obu (priv->parser,
+         map.data + total_consumed, map.size, &obu, &consumed);
++    if (res == GST_AV1_PARSER_DROP) {
++      total_consumed += consumed;
++      continue;
++    }
++
+     if (res != GST_AV1_PARSER_OK) {
+       ret = GST_FLOW_ERROR;
+       goto out;
+@@ -695,11 +719,11 @@ gst_av1_decoder_handle_frame (GstVideoDecoder * decoder,
+     goto out;
+   }
+ 
+-  if (priv->current_picture->temporal_id > self->highest_spatial_layer) {
++  if (priv->current_picture->spatial_id > self->highest_spatial_layer) {
+     ret = GST_FLOW_ERROR;
+     GST_VIDEO_DECODER_ERROR (self, 1, STREAM, DECODE,
+-        ("current picture temporal_id %d should not be higher than "
+-            "highest spatial layer %d", priv->current_picture->temporal_id,
++        ("current picture spatial_id %d should not be higher than "
++            "highest spatial layer %d", priv->current_picture->spatial_id,
+             self->highest_spatial_layer), (NULL), ret);
+     goto out;
+   }
+@@ -731,6 +755,14 @@ out:
        } else {
          GstAV1DecoderOutputFrame output_frame;
  
@@ -7835,6 +8253,324 @@ index b311ad4fbc..75e27c2e7f 100644
      data->loop = NULL;
    }
  }
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/ice.c b/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/ice.c
+index f9ae663825..2328d0b82d 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/ice.c
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/ice.c
+@@ -452,6 +452,45 @@ gst_webrtc_ice_get_turn_server (GstWebRTCICE * ice)
+   return GST_WEBRTC_ICE_GET_CLASS (ice)->get_turn_server (ice);
+ }
+ 
++/**
++ * gst_webrtc_ice_set_http_proxy:
++ * @ice: The #GstWebRTCICE
++ * @uri: (transfer none): URI of the HTTP proxy of the form
++ *   http://[username:password@]hostname[:port]
++ *
++ * Set HTTP Proxy to be used when connecting to TURN server.
++ *
++ * Since: 1.22
++ */
++void
++gst_webrtc_ice_set_http_proxy (GstWebRTCICE * ice, const gchar * uri_s)
++{
++  g_return_if_fail (GST_IS_WEBRTC_ICE (ice));
++  g_assert (GST_WEBRTC_ICE_GET_CLASS (ice)->set_http_proxy);
++
++  GST_WEBRTC_ICE_GET_CLASS (ice)->set_http_proxy (ice, uri_s);
++}
++
++/**
++ * gst_webrtc_ice_get_http_proxy:
++ * @ice: The #GstWebRTCICE
++ *
++ * Returns: (transfer full): URI of the HTTP proxy of the form
++ *   http://[username:password@]hostname[:port]
++ *
++ * Get HTTP Proxy to be used when connecting to TURN server.
++ *
++ * Since: 1.22
++ */
++gchar *
++gst_webrtc_ice_get_http_proxy (GstWebRTCICE * ice)
++{
++  g_return_val_if_fail (GST_IS_WEBRTC_ICE (ice), NULL);
++  g_assert (GST_WEBRTC_ICE_GET_CLASS (ice)->get_http_proxy);
++
++  return GST_WEBRTC_ICE_GET_CLASS (ice)->get_http_proxy (ice);
++}
++
+ 
+ static void
+ gst_webrtc_ice_set_property (GObject * object, guint prop_id,
+@@ -516,6 +555,8 @@ gst_webrtc_ice_class_init (GstWebRTCICEClass * klass)
+   klass->get_stun_server = NULL;
+   klass->set_turn_server = NULL;
+   klass->get_turn_server = NULL;
++  klass->get_http_proxy = NULL;
++  klass->set_http_proxy = NULL;
+   klass->set_tos = NULL;
+   klass->set_on_ice_candidate = NULL;
+   klass->get_local_candidates = NULL;
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/ice.h b/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/ice.h
+index 38e8bf6ab6..f67889b1f4 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/ice.h
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/ice.h
+@@ -106,6 +106,33 @@ struct _GstWebRTCICEClass {
+   void (*set_turn_server)                              (GstWebRTCICE * ice,
+                                                         const gchar * uri);
+   gchar * (*get_turn_server)                           (GstWebRTCICE * ice);
++
++  /**
++   * GstWebRTCICEClass::set_http_proxy:
++   * @ice: a #GstWebRTCICE
++   * @uri: (transfer none): URI of the HTTP proxy of the form
++   *   http://[username:password@]hostname[:port]
++   *
++   * Set HTTP Proxy to be used when connecting to TURN server.
++   *
++   * Since: 1.22
++   */
++  void (*set_http_proxy)                               (GstWebRTCICE * ice,
++                                                        const gchar * uri);
++
++  /**
++   * GstWebRTCICEClass::get_http_proxy:
++   * @ice: a #GstWebRTCICE
++   *
++   * Get HTTP Proxy to be used when connecting to TURN server.
++   *
++   * Returns: (transfer full): URI of the HTTP proxy of the form
++   *   http://[username:password@]hostname[:port]
++   *
++   * Since: 1.22
++   */
++  gchar * (*get_http_proxy)                            (GstWebRTCICE * ice);
++
+   void (*set_tos)                                      (GstWebRTCICE * ice,
+                                                         GstWebRTCICEStream * stream,
+                                                         guint tos);
+@@ -186,6 +213,13 @@ void                        gst_webrtc_ice_set_turn_server          (GstWebRTCIC
+ GST_WEBRTC_API
+ gchar *                     gst_webrtc_ice_get_turn_server          (GstWebRTCICE * ice);
+ 
++GST_WEBRTC_API
++void                        gst_webrtc_ice_set_http_proxy           (GstWebRTCICE * ice,
++                                                                     const gchar * uri);
++
++GST_WEBRTC_API
++gchar *                     gst_webrtc_ice_get_http_proxy           (GstWebRTCICE * ice);
++
+ GST_WEBRTC_API
+ void                        gst_webrtc_ice_set_on_ice_candidate     (GstWebRTCICE * ice,
+                                                                      GstWebRTCICEOnCandidateFunc func,
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/nice/nice.c b/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/nice/nice.c
+index ce1e430536..defc97cf82 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/nice/nice.c
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/nice/nice.c
+@@ -34,6 +34,8 @@
+     NICE_VERSION_MICRO >= (micro)))
+ #endif
+ 
++#define HTTP_PROXY_PORT_DEFAULT 3128
++
+ /* XXX:
+  *
+  * - are locally generated remote candidates meant to be readded to libnice?
+@@ -74,6 +76,8 @@ struct _GstWebRTCNicePrivate
+   GstUri *turn_server;
+ 
+   GHashTable *turn_servers;
++
++  GstUri *http_proxy;
+ };
+ 
+ #define gst_webrtc_nice_parent_class parent_class
+@@ -1390,6 +1394,106 @@ out:
+   return NULL;
+ }
+ 
++static void
++on_http_proxy_resolved (GstWebRTCICE * ice, GAsyncResult * res,
++    gpointer user_data)
++{
++  GstWebRTCNice *nice = GST_WEBRTC_NICE (ice);
++  GstUri *uri = user_data;
++  GList *addresses;
++  GError *error = NULL;
++  const gchar *userinfo;
++  gchar *user = NULL;
++  gchar *pass = NULL;
++  gchar *ip = NULL;
++  guint port = GST_URI_NO_PORT;
++
++  if (!(addresses = resolve_host_finish (nice, res, &error))) {
++    GST_WARNING_OBJECT (ice, "Failed to resolve http proxy: %s",
++        error->message);
++    g_clear_error (&error);
++    return;
++  }
++
++  /* XXX: only the first IP is used */
++  ip = g_inet_address_to_string (addresses->data);
++
++  if (!ip) {
++    GST_ERROR_OBJECT (ice, "failed to resolve host for proxy");
++    gst_uri_unref (uri);
++    return;
++  }
++
++  port = gst_uri_get_port (uri);
++  if (port == GST_URI_NO_PORT) {
++    port = HTTP_PROXY_PORT_DEFAULT;
++    GST_DEBUG_OBJECT (ice, "Proxy server has no port, assuming %u",
++        HTTP_PROXY_PORT_DEFAULT);
++  }
++
++  userinfo = gst_uri_get_userinfo (uri);
++  _parse_userinfo (userinfo, &user, &pass);
++
++  g_object_set (nice->priv->nice_agent,
++      "proxy-ip", ip, "proxy-port", port, "proxy-type", NICE_PROXY_TYPE_HTTP,
++      "proxy-username", user, "proxy-password", pass, NULL);
++
++  g_free (ip);
++  g_free (user);
++  g_free (pass);
++}
++
++static GstUri *
++_set_http_proxy (GstWebRTCICE * ice, const gchar * s)
++{
++  GstWebRTCNice *nice = GST_WEBRTC_NICE (ice);
++  GstUri *uri = gst_uri_from_string_escaped (s);
++  const gchar *msg =
++      "must be of the form http://[username:password@]<host>[:<port>]";
++  const gchar *host = NULL;
++  const gchar *userinfo;
++  gchar *user = NULL, *pass = NULL;
++
++  GST_DEBUG_OBJECT (ice, "setting http proxy %s", s);
++
++  if (!uri) {
++    GST_ERROR_OBJECT (ice, "Couldn't parse http proxy uri '%s', %s", s, msg);
++    return NULL;
++  }
++
++  if (g_strcmp0 (gst_uri_get_scheme (uri), "http") != 0) {
++    GST_ERROR_OBJECT (ice,
++        "Couldn't parse uri scheme for http proxy server '%s', %s", s, msg);
++    gst_uri_unref (uri);
++    return NULL;
++  }
++
++  host = gst_uri_get_host (uri);
++  if (!host) {
++    GST_ERROR_OBJECT (ice, "http proxy server '%s' has no host, %s", s, msg);
++    gst_uri_unref (uri);
++    return NULL;
++  }
++
++  userinfo = gst_uri_get_userinfo (uri);
++  _parse_userinfo (userinfo, &user, &pass);
++  if ((pass && pass[0] != '\0') && (!user || user[0] == '\0')) {
++    GST_ERROR_OBJECT (ice,
++        "Password specified without user for http proxy '%s', %s", s, msg);
++    uri = NULL;
++    goto out;
++  }
++
++  resolve_host_async (nice, host, (GAsyncReadyCallback) on_http_proxy_resolved,
++      gst_uri_ref (uri), (GDestroyNotify) gst_uri_unref);
++
++out:
++  g_free (user);
++  g_free (pass);
++
++  return uri;
++}
++
+ static void
+ gst_webrtc_nice_set_stun_server (GstWebRTCICE * ice, const gchar * uri_s)
+ {
+@@ -1443,6 +1547,30 @@ gst_webrtc_nice_get_turn_server (GstWebRTCICE * ice)
+     return NULL;
+ }
+ 
++static void
++gst_webrtc_nice_set_http_proxy (GstWebRTCICE * ice, const gchar * http_proxy)
++{
++  GstWebRTCNice *nice = GST_WEBRTC_NICE (ice);
++  GstUri *uri = _set_http_proxy (ice, http_proxy);
++
++  if (uri) {
++    if (nice->priv->http_proxy)
++      gst_uri_unref (nice->priv->http_proxy);
++    nice->priv->http_proxy = uri;
++  }
++}
++
++static gchar *
++gst_webrtc_nice_get_http_proxy (GstWebRTCICE * ice)
++{
++  GstWebRTCNice *nice = GST_WEBRTC_NICE (ice);
++
++  if (nice->priv->http_proxy)
++    return gst_uri_to_string (nice->priv->http_proxy);
++  else
++    return NULL;
++}
++
+ static void
+ gst_webrtc_nice_set_property (GObject * object, guint prop_id,
+     const GValue * value, GParamSpec * pspec)
+@@ -1526,6 +1654,8 @@ gst_webrtc_nice_finalize (GObject * object)
+     gst_uri_unref (ice->priv->turn_server);
+   if (ice->priv->stun_server)
+     gst_uri_unref (ice->priv->stun_server);
++  if (ice->priv->http_proxy)
++    gst_uri_unref (ice->priv->http_proxy);
+ 
+   g_mutex_clear (&ice->priv->lock);
+   g_cond_clear (&ice->priv->cond);
+@@ -1573,6 +1703,7 @@ gst_webrtc_nice_class_init (GstWebRTCNiceClass * klass)
+   gst_webrtc_ice_class->get_is_controller = gst_webrtc_nice_get_is_controller;
+   gst_webrtc_ice_class->get_stun_server = gst_webrtc_nice_get_stun_server;
+   gst_webrtc_ice_class->get_turn_server = gst_webrtc_nice_get_turn_server;
++  gst_webrtc_ice_class->get_http_proxy = gst_webrtc_nice_get_http_proxy;
+   gst_webrtc_ice_class->set_force_relay = gst_webrtc_nice_set_force_relay;
+   gst_webrtc_ice_class->set_is_controller = gst_webrtc_nice_set_is_controller;
+   gst_webrtc_ice_class->set_local_credentials =
+@@ -1582,6 +1713,7 @@ gst_webrtc_nice_class_init (GstWebRTCNiceClass * klass)
+   gst_webrtc_ice_class->set_stun_server = gst_webrtc_nice_set_stun_server;
+   gst_webrtc_ice_class->set_tos = gst_webrtc_nice_set_tos;
+   gst_webrtc_ice_class->set_turn_server = gst_webrtc_nice_set_turn_server;
++  gst_webrtc_ice_class->set_http_proxy = gst_webrtc_nice_set_http_proxy;
+   gst_webrtc_ice_class->set_on_ice_candidate =
+       gst_webrtc_nice_set_on_ice_candidate;
+   gst_webrtc_ice_class->get_local_candidates =
+diff --git a/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/webrtc_fwd.h b/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/webrtc_fwd.h
+index e55684e183..d3556400ab 100644
+--- a/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/webrtc_fwd.h
++++ b/subprojects/gst-plugins-bad/gst-libs/gst/webrtc/webrtc_fwd.h
+@@ -308,7 +308,7 @@ typedef enum /*< underscore_name=gst_webrtc_dtls_setup >*/
+  * @GST_WEBRTC_STATS_REMOTE_INBOUND_RTP: remote-inbound-rtp
+  * @GST_WEBRTC_STATS_REMOTE_OUTBOUND_RTP: remote-outbound-rtp
+  * @GST_WEBRTC_STATS_CSRC: csrc
+- * @GST_WEBRTC_STATS_PEER_CONNECTION: peer-connectiion
++ * @GST_WEBRTC_STATS_PEER_CONNECTION: peer-connection
+  * @GST_WEBRTC_STATS_DATA_CHANNEL: data-channel
+  * @GST_WEBRTC_STATS_STREAM: stream
+  * @GST_WEBRTC_STATS_TRANSPORT: transport
+@@ -316,6 +316,8 @@ typedef enum /*< underscore_name=gst_webrtc_dtls_setup >*/
+  * @GST_WEBRTC_STATS_LOCAL_CANDIDATE: local-candidate
+  * @GST_WEBRTC_STATS_REMOTE_CANDIDATE: remote-candidate
+  * @GST_WEBRTC_STATS_CERTIFICATE: certificate
++ *
++ * See <https://w3c.github.io/webrtc-stats/#dom-rtcstatstype>
+  */
+ typedef enum /*< underscore_name=gst_webrtc_stats_type >*/
+ {
 diff --git a/subprojects/gst-plugins-bad/gst/codectimestamper/gstcodectimestamper.c b/subprojects/gst-plugins-bad/gst/codectimestamper/gstcodectimestamper.c
 index 6b5741f027..99e3edf3b3 100644
 --- a/subprojects/gst-plugins-bad/gst/codectimestamper/gstcodectimestamper.c
@@ -8035,7 +8771,7 @@ index 869f1345ee..7514b29729 100644
          ("PID 0x%04x Already processed table_id:0x%02x subtable_extension:0x%04x, version_number:%d, section_number:%d",
          packet->pid, table_id, subtable_extension, version_number,
 diff --git a/subprojects/gst-plugins-bad/gst/mpegtsdemux/tsdemux.c b/subprojects/gst-plugins-bad/gst/mpegtsdemux/tsdemux.c
-index 6408c9becc..dc59a40c06 100644
+index 6408c9becc..8adefeba67 100644
 --- a/subprojects/gst-plugins-bad/gst/mpegtsdemux/tsdemux.c
 +++ b/subprojects/gst-plugins-bad/gst/mpegtsdemux/tsdemux.c
 @@ -2231,6 +2231,9 @@ gst_ts_demux_update_program (MpegTSBase * base, MpegTSBaseProgram * program)
@@ -8058,6 +8794,24 @@ index 6408c9becc..dc59a40c06 100644
      }
  
      gst_element_no_more_pads ((GstElement *) demux);
+@@ -2732,13 +2738,16 @@ gst_ts_demux_queue_data (GstTSDemux * demux, TSDemuxStream * stream,
+         }
+         stream->state = PENDING_PACKET_HEADER;
+       } else {
++        gchar *pad_name = gst_pad_get_name (stream->pad);
+         GST_ELEMENT_WARNING_WITH_DETAILS (demux, STREAM, DEMUX,
+             ("CONTINUITY: Mismatch packet %d, stream %d (pid 0x%04x)", cc,
+                 stream->continuity_counter, stream->stream.pid), (NULL),
+             ("warning-type", G_TYPE_STRING, "continuity-mismatch",
+                 "packet", G_TYPE_INT, cc,
+                 "stream", G_TYPE_INT, stream->continuity_counter,
+-                "pid", G_TYPE_UINT, stream->stream.pid, NULL));
++                "pid", G_TYPE_UINT, stream->stream.pid,
++                "pad-name", G_TYPE_STRING, pad_name, NULL));
++        g_free (pad_name);
+         stream->state = PENDING_PACKET_DISCONT;
+       }
+     }
 diff --git a/subprojects/gst-plugins-bad/gst/transcode/gst-cpu-throttling-clock.c b/subprojects/gst-plugins-bad/gst/transcode/gst-cpu-throttling-clock.c
 index 45bb51a12f..31dfa8295b 100644
 --- a/subprojects/gst-plugins-bad/gst/transcode/gst-cpu-throttling-clock.c
@@ -18611,6 +19365,43 @@ index eaa4702de0..9010b7c7a1 100644
  ]
  
  nvmm_sources = [
+diff --git a/subprojects/gst-plugins-bad/sys/qsv/plugin.cpp b/subprojects/gst-plugins-bad/sys/qsv/plugin.cpp
+index b71a01a0ff..15887f888f 100644
+--- a/subprojects/gst-plugins-bad/sys/qsv/plugin.cpp
++++ b/subprojects/gst-plugins-bad/sys/qsv/plugin.cpp
+@@ -209,12 +209,15 @@ plugin_init (GstPlugin * plugin)
+   mfxLoader loader;
+   guint i = 0;
+   GList *platform_devices = nullptr;
++  GstRank enc_rank = GST_RANK_NONE;
+ 
+ #ifdef G_OS_WIN32
+   /* D3D11 Video API is supported since Windows 8.
+    * Do we want to support old OS (Windows 7 for example) with D3D9 ?? */
+   if (!IsWindows8OrGreater ())
+     return TRUE;
++
++  enc_rank = GST_RANK_PRIMARY;
+ #endif
+ 
+   GST_DEBUG_CATEGORY_INIT (gst_qsv_debug, "qsv", 0, "Intel Quick Sync Video");
+@@ -261,11 +264,11 @@ plugin_init (GstPlugin * plugin)
+     gst_qsv_jpeg_dec_register (plugin, GST_RANK_SECONDARY, i, device, session);
+     gst_qsv_vp9_dec_register (plugin, GST_RANK_MARGINAL, i, device, session);
+ 
+-    gst_qsv_h264_enc_register (plugin, GST_RANK_NONE, i, device, session);
+-    gst_qsv_h265_enc_register (plugin, GST_RANK_NONE, i, device, session);
+-    gst_qsv_jpeg_enc_register (plugin, GST_RANK_NONE, i, device, session);
+-    gst_qsv_vp9_enc_register (plugin, GST_RANK_NONE, i, device, session);
+-    gst_qsv_av1_enc_register (plugin, GST_RANK_NONE, i, device, session);
++    gst_qsv_h264_enc_register (plugin, enc_rank, i, device, session);
++    gst_qsv_h265_enc_register (plugin, enc_rank, i, device, session);
++    gst_qsv_jpeg_enc_register (plugin, enc_rank, i, device, session);
++    gst_qsv_vp9_enc_register (plugin, enc_rank, i, device, session);
++    gst_qsv_av1_enc_register (plugin, enc_rank, i, device, session);
+ 
+   next:
+     MFXDispReleaseImplDescription (loader, desc);
 diff --git a/subprojects/gst-plugins-bad/sys/v4l2codecs/gstv4l2codech264dec.c b/subprojects/gst-plugins-bad/sys/v4l2codecs/gstv4l2codech264dec.c
 index f2657c0837..4ae62e9dc2 100644
 --- a/subprojects/gst-plugins-bad/sys/v4l2codecs/gstv4l2codech264dec.c
@@ -19203,6 +19994,32 @@ index 5902c1bd89..164015519c 100644
    GST_DEBUG_OBJECT (self, "Output picture %u", picture->system_frame_number);
  
    if (!GST_MINI_OBJECT_FLAG_IS_SET (picture, FLAG_PICTURE_HOLDS_BUFFER))
+diff --git a/subprojects/gst-plugins-bad/sys/v4l2codecs/gstv4l2format.c b/subprojects/gst-plugins-bad/sys/v4l2codecs/gstv4l2format.c
+index 8b79287053..64c47e1be7 100644
+--- a/subprojects/gst-plugins-bad/sys/v4l2codecs/gstv4l2format.c
++++ b/subprojects/gst-plugins-bad/sys/v4l2codecs/gstv4l2format.c
+@@ -80,16 +80,16 @@ set_stride (GstVideoInfo * info, gint plane, gint stride)
+   const GstVideoFormatInfo *finfo = info->finfo;
+ 
+   if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
+-    guint x_tiles, y_tiles, ws, hs, padded_height;
++    guint x_tiles, y_tiles, tile_height, padded_height;
+ 
+-    gst_video_format_info_get_tile_sizes (finfo, plane, &ws, &hs);
++    tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (finfo, plane);
+ 
+     padded_height = GST_VIDEO_FORMAT_INFO_SCALE_HEIGHT (finfo, plane,
+         info->height);
+-    padded_height = GST_ROUND_UP_N (padded_height, 1 << hs);
++    padded_height = (padded_height + tile_height - 1) / tile_height;
+ 
+-    x_tiles = stride >> ws;
+-    y_tiles = padded_height >> hs;
++    x_tiles = stride / GST_VIDEO_FORMAT_INFO_TILE_STRIDE (finfo, plane);
++    y_tiles = padded_height / tile_height;
+     info->stride[plane] = GST_VIDEO_TILE_MAKE_STRIDE (x_tiles, y_tiles);
+   } else {
+     info->stride[plane] = stride;
 diff --git a/subprojects/gst-plugins-bad/sys/va/gstvaav1dec.c b/subprojects/gst-plugins-bad/sys/va/gstvaav1dec.c
 index 4ca8f4b5c5..3530654f1f 100644
 --- a/subprojects/gst-plugins-bad/sys/va/gstvaav1dec.c
@@ -21501,6 +22318,46 @@ index 0000000000..b7206bae6b
 +}
 +
 +GST_CHECK_MAIN (h264timestamper);
+diff --git a/subprojects/gst-plugins-bad/tests/check/elements/hlsdemux_m3u8.c b/subprojects/gst-plugins-bad/tests/check/elements/hlsdemux_m3u8.c
+index a418fe9f12..beb492b9ac 100644
+--- a/subprojects/gst-plugins-bad/tests/check/elements/hlsdemux_m3u8.c
++++ b/subprojects/gst-plugins-bad/tests/check/elements/hlsdemux_m3u8.c
+@@ -572,7 +572,7 @@ GST_START_TEST (test_live_playlist_rotated)
+ 
+   ret = gst_m3u8_update (pl, g_strdup (LIVE_ROTATED_PLAYLIST));
+   assert_equals_int (ret, TRUE);
+-  file = gst_m3u8_get_next_fragment (pl, TRUE, NULL, NULL);
++  file = gst_m3u8_get_next_fragment (pl, TRUE, NULL, NULL, NULL);
+   fail_unless (file != NULL);
+   gst_m3u8_media_file_unref (file);
+ 
+@@ -805,7 +805,7 @@ GST_START_TEST (test_get_next_fragment)
+   pl = master->default_variant->m3u8;
+ 
+   /* Check the next fragment */
+-  mf = gst_m3u8_get_next_fragment (pl, TRUE, &timestamp, &discontinuous);
++  mf = gst_m3u8_get_next_fragment (pl, TRUE, &timestamp, NULL, &discontinuous);
+   fail_unless (mf != NULL);
+   assert_equals_int (discontinuous, FALSE);
+   assert_equals_string (mf->uri, "http://media.example.com/all.ts");
+@@ -818,7 +818,7 @@ GST_START_TEST (test_get_next_fragment)
+   gst_m3u8_advance_fragment (pl, TRUE);
+ 
+   /* Check next media segments */
+-  mf = gst_m3u8_get_next_fragment (pl, TRUE, &timestamp, &discontinuous);
++  mf = gst_m3u8_get_next_fragment (pl, TRUE, &timestamp, NULL, &discontinuous);
+   fail_unless (mf != NULL);
+   assert_equals_int (discontinuous, FALSE);
+   assert_equals_string (mf->uri, "http://media.example.com/all.ts");
+@@ -831,7 +831,7 @@ GST_START_TEST (test_get_next_fragment)
+   gst_m3u8_advance_fragment (pl, TRUE);
+ 
+   /* Check next media segments */
+-  mf = gst_m3u8_get_next_fragment (pl, TRUE, &timestamp, &discontinuous);
++  mf = gst_m3u8_get_next_fragment (pl, TRUE, &timestamp, NULL, &discontinuous);
+   assert_equals_int (discontinuous, FALSE);
+   assert_equals_string (mf->uri, "http://media.example.com/all.ts");
+   assert_equals_uint64 (timestamp, 20 * GST_SECOND);
 diff --git a/subprojects/gst-plugins-bad/tests/check/libs/h264bitwriter.c b/subprojects/gst-plugins-bad/tests/check/libs/h264bitwriter.c
 index 0d1483ac81..402d783842 100644
 --- a/subprojects/gst-plugins-bad/tests/check/libs/h264bitwriter.c

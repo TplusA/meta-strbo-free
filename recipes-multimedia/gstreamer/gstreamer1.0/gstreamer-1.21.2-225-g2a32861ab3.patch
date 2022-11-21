@@ -64,11 +64,174 @@ index f229045eb7..fc4f7421ac 100644
   * @name: the full-path child's name
   *
   * Looks up a child element by the given full-path name.
+diff --git a/subprojects/gstreamer/gst/gstevent.c b/subprojects/gstreamer/gst/gstevent.c
+index 29d15a0abf..6ab77b3d85 100644
+--- a/subprojects/gstreamer/gst/gstevent.c
++++ b/subprojects/gstreamer/gst/gstevent.c
+@@ -213,6 +213,33 @@ gst_event_type_get_flags (GstEventType type)
+   return ret;
+ }
+ 
++/**
++ * gst_event_type_to_sticky_ordering
++ * @type: a #GstEventType
++ *
++ * Converts the #GstEventType to an unsigned integer that
++ * represents the ordering of sticky events when re-sending them.
++ * A lower value represents a higher-priority event.
++ *
++ * Returns: an unsigned integer
++ * Since: 1.22
++ */
++/* FIXME 2.0: Remove the sticky event order overrides once
++ * the event type numbers are fixed */
++guint
++gst_event_type_to_sticky_ordering (GstEventType type)
++{
++  guint sticky_order = type;
++
++  /* Fix up the sticky event ordering for events where the
++   * type was chosen poorly */
++  if (type == GST_EVENT_INSTANT_RATE_CHANGE) {
++    sticky_order = GST_EVENT_SEGMENT + 1;
++  }
++
++  return sticky_order;
++}
++
+ static void
+ _gst_event_free (GstEvent * event)
+ {
+@@ -1920,7 +1947,7 @@ gst_event_parse_group_id (GstEvent * event, guint * group_id)
+ 
+ /**
+  * gst_event_new_stream_collection:
+- * @collection: Active collection for this data flow
++ * @collection: (transfer none): Active collection for this data flow
+  *
+  * Create a new STREAM_COLLECTION event. The stream collection event can only
+  * travel downstream synchronized with the buffer flow.
+diff --git a/subprojects/gstreamer/gst/gstevent.h b/subprojects/gstreamer/gst/gstevent.h
+index e036a34ad4..a58eb40aa8 100644
+--- a/subprojects/gstreamer/gst/gstevent.h
++++ b/subprojects/gstreamer/gst/gstevent.h
+@@ -169,6 +169,7 @@ typedef enum {
+   GST_EVENT_GAP                   = GST_EVENT_MAKE_TYPE (160, _FLAG(DOWNSTREAM) | _FLAG(SERIALIZED)),
+ 
+   /* sticky downstream non-serialized */
++  /* FIXME 2.0: change to value 72 and move after the GST_EVENT_SEGMENT event */
+   GST_EVENT_INSTANT_RATE_CHANGE   = GST_EVENT_MAKE_TYPE (180, _FLAG(DOWNSTREAM) | _FLAG(STICKY)),
+ 
+   /* upstream events */
+@@ -417,6 +418,10 @@ GST_API
+ GstEventTypeFlags
+                 gst_event_type_get_flags        (GstEventType type);
+ 
++
++GST_API
++guint gst_event_type_to_sticky_ordering (GstEventType type) G_GNUC_CONST;
++
+ #ifndef GST_DISABLE_MINIOBJECT_INLINE_FUNCTIONS
+ /* refcounting */
+ static inline GstEvent *
 diff --git a/subprojects/gstreamer/gst/gstpad.c b/subprojects/gstreamer/gst/gstpad.c
-index 994f13f5b7..4802518137 100644
+index 994f13f5b7..db9893352a 100644
 --- a/subprojects/gstreamer/gst/gstpad.c
 +++ b/subprojects/gstreamer/gst/gstpad.c
-@@ -4969,11 +4969,11 @@ flushing:
+@@ -128,6 +128,7 @@ enum
+ typedef struct
+ {
+   gboolean received;
++  guint sticky_order;
+   GstEvent *event;
+ } PadEvent;
+ 
+@@ -459,6 +460,8 @@ remove_events (GstPad * pad)
+   }
+ }
+ 
++#define _to_sticky_order(t) gst_event_type_to_sticky_ordering(t)
++
+ /* should be called with object lock */
+ static PadEvent *
+ find_event_by_type (GstPad * pad, GstEventType type, guint idx)
+@@ -466,6 +469,7 @@ find_event_by_type (GstPad * pad, GstEventType type, guint idx)
+   guint i, len;
+   GArray *events;
+   PadEvent *ev;
++  guint last_sticky_order = _to_sticky_order (type);
+ 
+   events = pad->priv->events;
+   len = events->len;
+@@ -479,7 +483,7 @@ find_event_by_type (GstPad * pad, GstEventType type, guint idx)
+       if (idx == 0)
+         goto found;
+       idx--;
+-    } else if (GST_EVENT_TYPE (ev->event) > type) {
++    } else if (ev->sticky_order > last_sticky_order) {
+       break;
+     }
+   }
+@@ -499,11 +503,12 @@ find_event (GstPad * pad, GstEvent * event)
+   events = pad->priv->events;
+   len = events->len;
+ 
++  guint sticky_order = _to_sticky_order (GST_EVENT_TYPE (event));
+   for (i = 0; i < len; i++) {
+     ev = &g_array_index (events, PadEvent, i);
+     if (event == ev->event)
+       goto found;
+-    else if (GST_EVENT_TYPE (ev->event) > GST_EVENT_TYPE (event))
++    else if (ev->sticky_order > sticky_order)
+       break;
+   }
+   ev = NULL;
+@@ -522,13 +527,15 @@ remove_event_by_type (GstPad * pad, GstEventType type)
+   events = pad->priv->events;
+   len = events->len;
+ 
++  guint last_sticky_order = _to_sticky_order (type);
++
+   i = 0;
+   while (i < len) {
+     ev = &g_array_index (events, PadEvent, i);
+     if (ev->event == NULL)
+       goto next;
+ 
+-    if (GST_EVENT_TYPE (ev->event) > type)
++    if (ev->sticky_order > last_sticky_order)
+       break;
+     else if (GST_EVENT_TYPE (ev->event) != type)
+       goto next;
+@@ -599,6 +606,7 @@ restart:
+       goto next;
+ 
+     /* take additional ref, func might release the lock */
++    ev_ret.sticky_order = ev->sticky_order;
+     ev_ret.event = gst_event_ref (ev->event);
+     ev_ret.received = ev->received;
+ 
+@@ -4033,12 +4041,17 @@ push_sticky (GstPad * pad, PadEvent * ev, gpointer user_data)
+     return TRUE;
+   }
+ 
++  guint data_sticky_order = 0;
++  if (data->event) {
++    data_sticky_order = _to_sticky_order (GST_EVENT_TYPE (data->event));
++  }
++
+   /* If we're called because of an sticky event, only forward
+    * events that would come before this new event and the
+    * event itself */
+   if (data->event && GST_EVENT_IS_STICKY (data->event) &&
+-      GST_EVENT_TYPE (data->event) <= GST_EVENT_SEGMENT &&
+-      GST_EVENT_TYPE (data->event) < GST_EVENT_TYPE (event)) {
++      data_sticky_order <= _to_sticky_order (GST_EVENT_SEGMENT) &&
++      data_sticky_order < ev->sticky_order) {
+     data->ret = GST_FLOW_CUSTOM_SUCCESS_1;
+   } else {
+     data->ret = gst_pad_push_event_unchecked (pad, gst_event_ref (event),
+@@ -4969,11 +4982,11 @@ flushing:
    }
  wrong_mode:
    {
@@ -82,6 +245,45 @@ index 994f13f5b7..4802518137 100644
      return GST_FLOW_ERROR;
    }
  events_error:
+@@ -5295,6 +5308,7 @@ store_sticky_event (GstPad * pad, GstEvent * event)
+   gboolean insert = TRUE;
+ 
+   type = GST_EVENT_TYPE (event);
++  guint sticky_order = _to_sticky_order (type);
+ 
+   /* Store all sticky events except SEGMENT/EOS when we're flushing,
+    * otherwise they can be dropped and nothing would ever resend them.
+@@ -5343,11 +5357,11 @@ store_sticky_event (GstPad * pad, GstEvent * event)
+       break;
+     }
+ 
+-    if (type < GST_EVENT_TYPE (ev->event) || (type != GST_EVENT_TYPE (ev->event)
++    if (sticky_order < ev->sticky_order || (type != GST_EVENT_TYPE (ev->event)
+             && GST_EVENT_TYPE (ev->event) == GST_EVENT_EOS)) {
+       /* STREAM_START, CAPS and SEGMENT must be delivered in this order. By
+        * storing the sticky ordered we can check that this is respected. */
+-      if (G_UNLIKELY (GST_EVENT_TYPE (ev->event) <= GST_EVENT_SEGMENT
++      if (G_UNLIKELY (ev->sticky_order <= _to_sticky_order (GST_EVENT_SEGMENT)
+               || GST_EVENT_TYPE (ev->event) == GST_EVENT_EOS))
+         g_warning (G_STRLOC
+             ":%s:<%s:%s> Sticky event misordering, got '%s' before '%s'",
+@@ -5359,6 +5373,7 @@ store_sticky_event (GstPad * pad, GstEvent * event)
+   }
+   if (insert) {
+     PadEvent ev;
++    ev.sticky_order = sticky_order;
+     ev.event = gst_event_ref (event);
+     ev.received = FALSE;
+     g_array_insert_val (events, i, ev);
+@@ -5438,7 +5453,7 @@ sticky_changed (GstPad * pad, PadEvent * ev, gpointer user_data)
+ 
+   /* Forward all sticky events before our current one that are pending */
+   if (ev->event != data->event
+-      && GST_EVENT_TYPE (ev->event) < GST_EVENT_TYPE (data->event))
++      && ev->sticky_order < _to_sticky_order (GST_EVENT_TYPE (data->event)))
+     return push_sticky (pad, ev, data);
+ 
+   return TRUE;
 diff --git a/subprojects/gstreamer/gst/gststreams.c b/subprojects/gstreamer/gst/gststreams.c
 index 1a021870ee..a6bf5d901e 100644
 --- a/subprojects/gstreamer/gst/gststreams.c
@@ -94,6 +296,355 @@ index 1a021870ee..a6bf5d901e 100644
  
    G_OBJECT_CLASS (parent_class)->finalize (object);
  }
+diff --git a/subprojects/gstreamer/gst/gstvalue.c b/subprojects/gstreamer/gst/gstvalue.c
+index 11554ffef1..cf256fcfbc 100644
+--- a/subprojects/gstreamer/gst/gstvalue.c
++++ b/subprojects/gstreamer/gst/gstvalue.c
+@@ -2332,6 +2332,8 @@ _priv_gst_value_get_abbrs (gint * n_abbrs)
+       ,
+       {"datetime", GST_TYPE_DATE_TIME}
+       ,
++      {"gdatetime", G_TYPE_DATE_TIME}
++      ,
+       {"bitmask", GST_TYPE_BITMASK}
+       ,
+       {"flagset", GST_TYPE_FLAG_SET}
+@@ -7283,9 +7285,9 @@ gst_value_deserialize_date (GValue * dest, const gchar * s)
+   return TRUE;
+ }
+ 
+-/*************
++/***************
+  * GstDateTime *
+- *************/
++ ***************/
+ 
+ static gint
+ gst_value_compare_date_time (const GValue * value1, const GValue * value2)
+@@ -7348,6 +7350,60 @@ gst_value_transform_string_date (const GValue * src_value, GValue * dest_value)
+   gst_value_deserialize_date (dest_value, src_value->data[0].v_pointer);
+ }
+ 
++/*************
++ * GDateTime *
++ *************/
++
++static gint
++gst_value_compare_g_date_time (const GValue * value1, const GValue * value2)
++{
++  const GDateTime *date1 = (const GDateTime *) g_value_get_boxed (value1);
++  const GDateTime *date2 = (const GDateTime *) g_value_get_boxed (value2);
++
++  if (date1 == date2)
++    return GST_VALUE_EQUAL;
++
++  if ((date1 == NULL) && (date2 != NULL)) {
++    return GST_VALUE_LESS_THAN;
++  }
++  if ((date2 == NULL) && (date1 != NULL)) {
++    return GST_VALUE_LESS_THAN;
++  }
++
++  return g_date_time_compare (date1, date2);
++}
++
++static gchar *
++gst_value_serialize_g_date_time (const GValue * val)
++{
++  GDateTime *date = (GDateTime *) g_value_get_boxed (val);
++
++  if (date == NULL)
++    return g_strdup ("null");
++
++  return g_date_time_format_iso8601 (date);
++}
++
++static gboolean
++gst_value_deserialize_g_date_time (GValue * dest, const gchar * s)
++{
++  GDateTime *datetime;
++
++  if (!s || strcmp (s, "null") == 0) {
++    return FALSE;
++  }
++
++  /* The Gstreamer iso8601 parser is a bit more forgiving */
++  datetime =
++      gst_date_time_to_g_date_time (gst_date_time_new_from_iso8601_string (s));
++  if (datetime != NULL) {
++    g_value_take_boxed (dest, datetime);
++    return TRUE;
++  }
++  GST_WARNING ("Failed to deserialize date time string '%s' to GLibDateTime",
++      s);
++  return FALSE;
++}
+ 
+ /*********
+  * bytes *
+@@ -8142,6 +8198,7 @@ _priv_gst_value_initialize (void)
+   REGISTER_SERIALIZATION (G_TYPE_DATE, date);
+   REGISTER_SERIALIZATION (G_TYPE_BYTES, bytes);
+   REGISTER_SERIALIZATION (gst_date_time_get_type (), date_time);
++  REGISTER_SERIALIZATION (G_TYPE_DATE_TIME, g_date_time);
+   REGISTER_SERIALIZATION (gst_bitmask_get_type (), bitmask);
+   REGISTER_SERIALIZATION (gst_structure_get_type (), structure);
+   REGISTER_SERIALIZATION (gst_flagset_get_type (), flagset);
+diff --git a/subprojects/gstreamer/libs/gst/base/gstaggregator.c b/subprojects/gstreamer/libs/gst/base/gstaggregator.c
+index d51ac5647d..abd711052d 100644
+--- a/subprojects/gstreamer/libs/gst/base/gstaggregator.c
++++ b/subprojects/gstreamer/libs/gst/base/gstaggregator.c
+@@ -371,6 +371,7 @@ struct _GstAggregatorPrivate
+   gboolean send_segment;
+   gboolean flushing;
+   gboolean send_eos;            /* protected by srcpad stream lock */
++  gboolean got_eos_event;       /* protected by srcpad stream lock */
+ 
+   GstCaps *srccaps;             /* protected by the srcpad stream lock */
+ 
+@@ -409,8 +410,16 @@ struct _GstAggregatorPrivate
+   gint64 latency;               /* protected by both src_lock and all pad locks */
+   gboolean emit_signals;
+   gboolean ignore_inactive_pads;
++  gboolean force_live;          /* Construct only, doesn't need any locking */
+ };
+ 
++/* With SRC_LOCK */
++static gboolean
++is_live_unlocked (GstAggregator * self)
++{
++  return self->priv->peer_latency_live || self->priv->force_live;
++}
++
+ /* Seek event forwarding helper */
+ typedef struct
+ {
+@@ -429,6 +438,7 @@ typedef struct
+ #define DEFAULT_START_TIME_SELECTION GST_AGGREGATOR_START_TIME_SELECTION_ZERO
+ #define DEFAULT_START_TIME           (-1)
+ #define DEFAULT_EMIT_SIGNALS         FALSE
++#define DEFAULT_FORCE_LIVE           FALSE
+ 
+ enum
+ {
+@@ -501,7 +511,7 @@ gst_aggregator_check_pads_ready (GstAggregator * self,
+       break;
+     }
+ 
+-    if (self->priv->ignore_inactive_pads && self->priv->peer_latency_live &&
++    if (self->priv->ignore_inactive_pads && is_live_unlocked (self) &&
+         pad->priv->waited_once && pad->priv->first_buffer && !pad->priv->eos) {
+       PAD_UNLOCK (pad);
+       GST_LOG_OBJECT (pad, "Ignoring inactive pad");
+@@ -528,7 +538,7 @@ gst_aggregator_check_pads_ready (GstAggregator * self,
+     } else {
+       GST_TRACE_OBJECT (pad, "Have %" GST_TIME_FORMAT " queued in %u buffers",
+           GST_TIME_ARGS (pad->priv->time_level), pad->priv->num_buffers);
+-      if (self->priv->peer_latency_live) {
++      if (is_live_unlocked (self)) {
+         /* In live mode, having a single pad with buffers is enough to
+          * generate a start time from it. In non-live mode all pads need
+          * to have a buffer
+@@ -541,7 +551,7 @@ gst_aggregator_check_pads_ready (GstAggregator * self,
+     PAD_UNLOCK (pad);
+   }
+ 
+-  if (self->priv->ignore_inactive_pads && self->priv->peer_latency_live
++  if (self->priv->ignore_inactive_pads && is_live_unlocked (self)
+       && n_ready == 0)
+     goto no_sinkpads;
+ 
+@@ -1388,10 +1398,15 @@ gst_aggregator_aggregate_func (GstAggregator * self)
+     if ((flow_return = events_query_data.flow_ret) != GST_FLOW_OK)
+       goto handle_error;
+ 
+-    if (self->priv->peer_latency_live)
++    if (is_live_unlocked (self))
+       gst_element_foreach_sink_pad (GST_ELEMENT_CAST (self),
+           gst_aggregator_pad_skip_buffers, NULL);
+ 
++    if (self->priv->got_eos_event) {
++      gst_aggregator_push_eos (self);
++      continue;
++    }
++
+     /* Ensure we have buffers ready (either in clipped_buffer or at the head of
+      * the queue */
+     if (!gst_aggregator_wait_and_check (self, &timeout)) {
+@@ -1478,6 +1493,7 @@ gst_aggregator_start (GstAggregator * self)
+   self->priv->send_stream_start = TRUE;
+   self->priv->send_segment = TRUE;
+   self->priv->send_eos = TRUE;
++  self->priv->got_eos_event = FALSE;
+   self->priv->srccaps = NULL;
+ 
+   self->priv->has_peer_latency = FALSE;
+@@ -1699,6 +1715,7 @@ gst_aggregator_default_sink_event (GstAggregator * self,
+         event = NULL;
+         SRC_LOCK (self);
+         priv->send_eos = TRUE;
++        priv->got_eos_event = FALSE;
+         SRC_BROADCAST (self);
+         SRC_UNLOCK (self);
+ 
+@@ -1977,6 +1994,14 @@ gst_aggregator_change_state (GstElement * element, GstStateChange transition)
+       SRC_LOCK (self);
+       SRC_BROADCAST (self);
+       SRC_UNLOCK (self);
++      if (self->priv->force_live) {
++        ret = GST_STATE_CHANGE_NO_PREROLL;
++      }
++      break;
++    case GST_STATE_CHANGE_READY_TO_PAUSED:
++      if (self->priv->force_live) {
++        ret = GST_STATE_CHANGE_NO_PREROLL;
++      }
+       break;
+     default:
+       break;
+@@ -2195,12 +2220,18 @@ gst_aggregator_get_latency_unlocked (GstAggregator * self)
+ 
+     ret = gst_aggregator_query_latency_unlocked (self, query);
+     gst_query_unref (query);
+-    if (!ret)
++    /* If we've been set to live, we don't wait for a peer latency, we will
++     * simply query it again next time around */
++    if (!ret && !self->priv->force_live)
+       return GST_CLOCK_TIME_NONE;
+   }
+ 
+-  if (!self->priv->has_peer_latency || !self->priv->peer_latency_live)
+-    return GST_CLOCK_TIME_NONE;
++  /* If we've been set to live, we don't wait for a peer latency, we will
++   * simply query it again next time around */
++  if (!self->priv->force_live) {
++    if (!self->priv->has_peer_latency || !self->priv->peer_latency_live)
++      return GST_CLOCK_TIME_NONE;
++  }
+ 
+   /* latency_min is never GST_CLOCK_TIME_NONE by construction */
+   latency = self->priv->peer_latency_min;
+@@ -2262,8 +2293,17 @@ gst_aggregator_send_event (GstElement * element, GstEvent * event)
+ 
+     GST_DEBUG_OBJECT (element, "Storing segment %" GST_PTR_FORMAT, event);
+   }
++
+   GST_STATE_UNLOCK (element);
+ 
++
++  if (GST_EVENT_TYPE (event) == GST_EVENT_EOS) {
++    SRC_LOCK (self);
++    self->priv->got_eos_event = TRUE;
++    SRC_BROADCAST (self);
++    SRC_UNLOCK (self);
++  }
++
+   return GST_ELEMENT_CLASS (aggregator_parent_class)->send_event (element,
+       event);
+ }
+@@ -2627,6 +2667,16 @@ flushing:
+   return FALSE;
+ }
+ 
++static void
++gst_aggregator_constructed (GObject * object)
++{
++  GstAggregator *agg = GST_AGGREGATOR (object);
++
++  if (agg->priv->force_live) {
++    GST_OBJECT_FLAG_SET (agg, GST_ELEMENT_FLAG_SOURCE);
++  }
++}
++
+ static void
+ gst_aggregator_finalize (GObject * object)
+ {
+@@ -2818,6 +2868,7 @@ gst_aggregator_class_init (GstAggregatorClass * klass)
+ 
+   gobject_class->set_property = gst_aggregator_set_property;
+   gobject_class->get_property = gst_aggregator_get_property;
++  gobject_class->constructed = gst_aggregator_constructed;
+   gobject_class->finalize = gst_aggregator_finalize;
+ 
+   g_object_class_install_property (gobject_class, PROP_LATENCY,
+@@ -2955,6 +3006,7 @@ gst_aggregator_init (GstAggregator * self, GstAggregatorClass * klass)
+   self->priv->latency = DEFAULT_LATENCY;
+   self->priv->start_time_selection = DEFAULT_START_TIME_SELECTION;
+   self->priv->start_time = DEFAULT_START_TIME;
++  self->priv->force_live = DEFAULT_FORCE_LIVE;
+ 
+   g_mutex_init (&self->priv->src_lock);
+   g_cond_init (&self->priv->src_cond);
+@@ -3007,7 +3059,7 @@ gst_aggregator_pad_has_space (GstAggregator * self, GstAggregatorPad * aggpad)
+ 
+   /* We also want at least two buffers, one is being processed and one is ready
+    * for the next iteration when we operate in live mode. */
+-  if (self->priv->peer_latency_live && aggpad->priv->num_buffers < 2)
++  if (is_live_unlocked (self) && aggpad->priv->num_buffers < 2)
+     return TRUE;
+ 
+   /* On top of our latency, we also want to allow buffering up to the
+@@ -3648,7 +3700,7 @@ gst_aggregator_pad_is_inactive (GstAggregatorPad * pad)
+   g_assert_nonnull (self);
+ 
+   PAD_LOCK (pad);
+-  inactive = self->priv->ignore_inactive_pads && self->priv->peer_latency_live
++  inactive = self->priv->ignore_inactive_pads && is_live_unlocked (self)
+       && pad->priv->first_buffer;
+   PAD_UNLOCK (pad);
+ 
+@@ -3933,3 +3985,33 @@ gst_aggregator_get_ignore_inactive_pads (GstAggregator * self)
+ 
+   return ret;
+ }
++
++/**
++ * gst_aggregator_get_force_live:
++ *
++ * Subclasses may use the return value to inform whether they should return
++ * %GST_FLOW_EOS from their aggregate implementation.
++ *
++ * Returns: whether live status was forced on @self.
++ *
++ * Since: 1.22
++ */
++gboolean
++gst_aggregator_get_force_live (GstAggregator * self)
++{
++  return self->priv->force_live;
++}
++
++/**
++ * gst_aggregator_set_force_live:
++ *
++ * Subclasses should call this at construction time in order for @self to
++ * aggregate on a timeout even when no live source is connected.
++ *
++ * Since: 1.22
++ */
++void
++gst_aggregator_set_force_live (GstAggregator * self, gboolean force_live)
++{
++  self->priv->force_live = force_live;
++}
+diff --git a/subprojects/gstreamer/libs/gst/base/gstaggregator.h b/subprojects/gstreamer/libs/gst/base/gstaggregator.h
+index 45ced12d39..bbac9e4c04 100644
+--- a/subprojects/gstreamer/libs/gst/base/gstaggregator.h
++++ b/subprojects/gstreamer/libs/gst/base/gstaggregator.h
+@@ -434,6 +434,13 @@ void            gst_aggregator_set_ignore_inactive_pads (GstAggregator * self,
+ GST_BASE_API
+ gboolean        gst_aggregator_get_ignore_inactive_pads (GstAggregator * self);
+ 
++GST_BASE_API
++gboolean        gst_aggregator_get_force_live       (GstAggregator *self);
++
++GST_BASE_API
++void            gst_aggregator_set_force_live       (GstAggregator *self,
++                                                     gboolean force_live);
++
+ /**
+  * GstAggregatorStartTimeSelection:
+  * @GST_AGGREGATOR_START_TIME_SELECTION_ZERO: Start at running time 0.
 diff --git a/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.c b/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.c
 index 56003d500a..f385e806e3 100644
 --- a/subprojects/gstreamer/libs/gst/base/gsttypefindhelper.c
@@ -684,6 +1235,24 @@ index d312f2bd14..33ab344401 100644
    meson_version : '>= 0.62',
    default_options : [ 'warning_level=1',
                        'buildtype=debugoptimized' ])
+diff --git a/subprojects/gstreamer/plugins/elements/gstfakesrc.c b/subprojects/gstreamer/plugins/elements/gstfakesrc.c
+index 24c2766178..7142e2c43d 100644
+--- a/subprojects/gstreamer/plugins/elements/gstfakesrc.c
++++ b/subprojects/gstreamer/plugins/elements/gstfakesrc.c
+@@ -805,9 +805,11 @@ gst_fake_src_create (GstBaseSrc * basesrc, guint64 offset, guint length,
+   GST_BUFFER_OFFSET (buf) = offset;
+ 
+   if (src->datarate > 0) {
+-    time = (src->bytes_sent * GST_SECOND) / src->datarate;
++    time =
++        gst_util_uint64_scale_int (src->bytes_sent, GST_SECOND, src->datarate);
+ 
+-    GST_BUFFER_DURATION (buf) = size * GST_SECOND / src->datarate;
++    GST_BUFFER_DURATION (buf) =
++        gst_util_uint64_scale_int (size, GST_SECOND, src->datarate);
+   } else if (gst_base_src_is_live (basesrc)) {
+     GstClock *clock;
+ 
 diff --git a/subprojects/gstreamer/plugins/elements/gstmultiqueue.c b/subprojects/gstreamer/plugins/elements/gstmultiqueue.c
 index 10ad20382c..bbe29e5e7f 100644
 --- a/subprojects/gstreamer/plugins/elements/gstmultiqueue.c
@@ -895,6 +1464,143 @@ index 5cfb551e7e..9b0e8a72d4 100644
   * ```
   */
  /* TODO(ensonic): if there are two sources feeding into a mixer/muxer and later
+diff --git a/subprojects/gstreamer/tests/check/gst/gstpad.c b/subprojects/gstreamer/tests/check/gst/gstpad.c
+index 1b1afe6833..0b545eec91 100644
+--- a/subprojects/gstreamer/tests/check/gst/gstpad.c
++++ b/subprojects/gstreamer/tests/check/gst/gstpad.c
+@@ -2591,6 +2591,12 @@ test_sticky_events_handler (GstPad * pad, GstObject * parent, GstEvent * event)
+     case 2:
+       fail_unless (GST_EVENT_TYPE (event) == GST_EVENT_SEGMENT);
+       break;
++    case 3:
++      fail_unless (GST_EVENT_TYPE (event) == GST_EVENT_INSTANT_RATE_CHANGE);
++      break;
++    case 4:
++      fail_unless (GST_EVENT_TYPE (event) == GST_EVENT_STREAM_COLLECTION);
++      break;
+     default:
+       fail_unless (FALSE);
+       break;
+@@ -2642,6 +2648,15 @@ GST_START_TEST (test_sticky_events)
+   gst_segment_init (&seg, GST_FORMAT_TIME);
+   gst_pad_push_event (srcpad, gst_event_new_segment (&seg));
+ 
++  /* Push a stream collection */
++  GstStreamCollection *collection = gst_stream_collection_new (0);
++  gst_pad_push_event (srcpad, gst_event_new_stream_collection (collection));
++  gst_object_unref (collection);
++
++  /* Push an instant rate change, which should be sent earlier than the preceding stream collection */
++  gst_pad_push_event (srcpad, gst_event_new_instant_rate_change (1.0,
++          GST_SEGMENT_FLAG_NONE));
++
+   /* now make a sinkpad */
+   sinkpad = gst_pad_new ("sink", GST_PAD_SINK);
+   fail_unless (sinkpad != NULL);
+@@ -2662,13 +2677,13 @@ GST_START_TEST (test_sticky_events)
+   gst_pad_push_event (srcpad, gst_event_new_caps (caps));
+   gst_caps_unref (caps);
+ 
+-  /* should have triggered 2 events, the segment event is still pending */
++  /* should have triggered 2 events, the segment, stream collection and instant-rate events are still pending */
+   fail_unless_equals_int (sticky_count, 2);
+ 
+   fail_unless (gst_pad_push (srcpad, gst_buffer_new ()) == GST_FLOW_OK);
+ 
+-  /* should have triggered 3 events */
+-  fail_unless_equals_int (sticky_count, 3);
++  /* should have triggered 5 events */
++  fail_unless_equals_int (sticky_count, 5);
+ 
+   gst_object_unref (srcpad);
+   gst_object_unref (sinkpad);
+diff --git a/subprojects/gstreamer/tests/check/libs/aggregator.c b/subprojects/gstreamer/tests/check/libs/aggregator.c
+index 23ca1adb51..215b06186c 100644
+--- a/subprojects/gstreamer/tests/check/libs/aggregator.c
++++ b/subprojects/gstreamer/tests/check/libs/aggregator.c
+@@ -26,6 +26,7 @@
+ 
+ #include <stdlib.h>
+ #include <gst/check/gstcheck.h>
++#include <gst/check/gstharness.h>
+ #include <gst/base/gstaggregator.h>
+ 
+ /* dummy aggregator based element */
+@@ -143,10 +144,12 @@ gst_test_aggregator_aggregate (GstAggregator * aggregator, gboolean timeout)
+   }
+   gst_iterator_free (iter);
+ 
+-  if (all_eos == TRUE) {
+-    GST_INFO_OBJECT (testagg, "no data available, must be EOS");
+-    gst_pad_push_event (aggregator->srcpad, gst_event_new_eos ());
+-    return GST_FLOW_EOS;
++  if (!gst_aggregator_get_force_live (aggregator)) {
++    if (all_eos == TRUE) {
++      GST_INFO_OBJECT (testagg, "no data available, must be EOS");
++      gst_pad_push_event (aggregator->srcpad, gst_event_new_eos ());
++      return GST_FLOW_EOS;
++    }
+   }
+ 
+   buf = gst_buffer_new ();
+@@ -188,6 +191,8 @@ gst_test_aggregator_class_init (GstTestAggregatorClass * klass)
+ 
+   base_aggregator_class->aggregate =
+       GST_DEBUG_FUNCPTR (gst_test_aggregator_aggregate);
++
++  base_aggregator_class->get_next_time = gst_aggregator_simple_get_next_time;
+ }
+ 
+ static void
+@@ -846,8 +851,8 @@ GST_START_TEST (test_flushing_seek)
+   GST_BUFFER_TIMESTAMP (buf) = 0;
+   _chain_data_init (&data2, test.aggregator, buf, NULL);
+ 
+-  gst_segment_init (&GST_AGGREGATOR_PAD (GST_AGGREGATOR (test.
+-              aggregator)->srcpad)->segment, GST_FORMAT_TIME);
++  gst_segment_init (&GST_AGGREGATOR_PAD (GST_AGGREGATOR (test.aggregator)->
++          srcpad)->segment, GST_FORMAT_TIME);
+ 
+   /* now do a successful flushing seek */
+   event = gst_event_new_seek (1, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
+@@ -1353,6 +1358,29 @@ GST_START_TEST (test_remove_pad_on_aggregate)
+ 
+ GST_END_TEST;
+ 
++GST_START_TEST (test_force_live)
++{
++  GstElement *agg;
++  GstHarness *h;
++  GstBuffer *buf;
++
++  agg = gst_check_setup_element ("testaggregator");
++  g_object_set (agg, "latency", GST_USECOND, NULL);
++  gst_aggregator_set_force_live (GST_AGGREGATOR (agg), TRUE);
++  h = gst_harness_new_with_element (agg, NULL, "src");
++
++  gst_harness_play (h);
++
++  gst_harness_crank_single_clock_wait (h);
++  buf = gst_harness_pull (h);
++
++  gst_buffer_unref (buf);
++  gst_harness_teardown (h);
++  gst_object_unref (agg);
++}
++
++GST_END_TEST;
++
+ static Suite *
+ gst_aggregator_suite (void)
+ {
+@@ -1382,6 +1410,7 @@ gst_aggregator_suite (void)
+   tcase_add_test (general, test_change_state_intensive);
+   tcase_add_test (general, test_flush_on_aggregate);
+   tcase_add_test (general, test_remove_pad_on_aggregate);
++  tcase_add_test (general, test_force_live);
+ 
+   return suite;
+ }
 diff --git a/subprojects/gstreamer/tools/gst-inspect.c b/subprojects/gstreamer/tools/gst-inspect.c
 index d50bf65c9a..6d50d7b8f4 100644
 --- a/subprojects/gstreamer/tools/gst-inspect.c

@@ -232,6 +232,130 @@ index 622ebf225f..09385d7675 100644
  
    return ret;
  }
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemuxutils.c b/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemuxutils.c
+index b27e029248..f9598194e2 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemuxutils.c
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemuxutils.c
+@@ -500,6 +500,7 @@ typedef struct
+ {
+   gboolean delivered;
+   GstEvent *event;
++  guint sticky_order;
+ } PadEvent;
+ 
+ void
+@@ -541,12 +542,12 @@ gst_event_store_insert_event (GstEventStore * store, GstEvent * event,
+     gboolean delivered)
+ {
+   guint i, len;
+-  GstEventType type;
+   GArray *events;
+   GQuark name_id = 0;
+   gboolean insert = TRUE;
+ 
+-  type = GST_EVENT_TYPE (event);
++  GstEventType type = GST_EVENT_TYPE (event);
++  guint event_sticky_order = gst_event_type_to_sticky_ordering (type);
+ 
+   if (type & GST_EVENT_TYPE_STICKY_MULTI)
+     name_id = gst_structure_get_name_id (gst_event_get_structure (event));
+@@ -578,23 +579,27 @@ gst_event_store_insert_event (GstEventStore * store, GstEvent * event,
+       break;
+     }
+ 
+-    if (type < GST_EVENT_TYPE (ev->event) || (type != GST_EVENT_TYPE (ev->event)
++    if (event_sticky_order < ev->sticky_order
++        || (type != GST_EVENT_TYPE (ev->event)
+             && GST_EVENT_TYPE (ev->event) == GST_EVENT_EOS)) {
+       /* STREAM_START, CAPS and SEGMENT must be delivered in this order. By
+        * storing the sticky ordered we can check that this is respected. */
+-      if (G_UNLIKELY (GST_EVENT_TYPE (ev->event) <= GST_EVENT_SEGMENT
+-              || GST_EVENT_TYPE (ev->event) == GST_EVENT_EOS))
++      if (G_UNLIKELY (ev->sticky_order <=
++              gst_event_type_to_sticky_ordering (GST_EVENT_SEGMENT)
++              || GST_EVENT_TYPE (ev->event) == GST_EVENT_EOS)) {
+         g_warning (G_STRLOC
+             ":%s:<store %p> Sticky event misordering, got '%s' before '%s'",
+             G_STRFUNC, store,
+             gst_event_type_get_name (GST_EVENT_TYPE (ev->event)),
+             gst_event_type_get_name (type));
++      }
+       break;
+     }
+   }
+   if (insert) {
+     PadEvent ev;
+     ev.event = gst_event_ref (event);
++    ev.sticky_order = event_sticky_order;
+     ev.delivered = delivered;
+     g_array_insert_val (events, i, ev);
+ 
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.c b/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.c
+index 280a420489..0cf7a346bc 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.c
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.c
+@@ -192,6 +192,7 @@ gst_hls_demux_stream_init (GstHLSDemuxStream * stream)
+   stream->do_typefind = TRUE;
+   stream->reset_pts = TRUE;
+   stream->presentation_offset = 60 * GST_SECOND;
++  stream->pdt_tag_sent = FALSE;
+ }
+ 
+ typedef struct _GstHLSDemux2 GstHLSDemux2;
+@@ -1683,8 +1684,9 @@ gst_hls_demux_stream_data_received (GstAdaptiveDemux2Stream * stream,
+ {
+   GstHLSDemuxStream *hls_stream = GST_HLS_DEMUX_STREAM_CAST (stream);
+   GstHLSDemux *hlsdemux = GST_HLS_DEMUX_CAST (stream->demux);
++  GstM3U8MediaSegment *file = hls_stream->current_segment;
+ 
+-  if (hls_stream->current_segment == NULL)
++  if (file == NULL)
+     return GST_ADAPTIVE_DEMUX_FLOW_LOST_SYNC;
+ 
+   if (hls_stream->current_offset == -1)
+@@ -1727,6 +1729,14 @@ gst_hls_demux_stream_data_received (GstAdaptiveDemux2Stream * stream,
+       return GST_FLOW_OK;
+   }
+ 
++  if (!hls_stream->pdt_tag_sent && file != NULL && file->datetime != NULL) {
++    gst_adaptive_demux2_stream_set_tags (stream,
++        gst_tag_list_new (GST_TAG_DATE_TIME,
++            gst_date_time_new_from_g_date_time (g_date_time_ref
++                (file->datetime)), NULL));
++    hls_stream->pdt_tag_sent = TRUE;
++  }
++
+   return gst_hls_demux_stream_handle_buffer (stream, buffer, FALSE);
+ }
+ 
+@@ -2598,6 +2608,14 @@ gst_hls_demux_reset (GstAdaptiveDemux * ademux)
+ 
+   GST_DEBUG_OBJECT (demux, "resetting");
+ 
++  if (ademux->input_period) {
++    GList *walk;
++    for (walk = ademux->input_period->streams; walk != NULL; walk = walk->next) {
++      GstHLSDemuxStream *hls_stream = GST_HLS_DEMUX_STREAM_CAST (walk->data);
++      hls_stream->pdt_tag_sent = FALSE;
++    }
++  }
++
+   if (demux->master) {
+     gst_hls_master_playlist_unref (demux->master);
+     demux->master = NULL;
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.h b/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.h
+index 1d7f7dbbab..d4acf754c3 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.h
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.h
+@@ -168,6 +168,8 @@ struct _GstHLSDemuxStream
+    * "output" stream times. Not enabled (i.e 0) if variant is ISOBMFF
+    */
+   GstClockTime presentation_offset;
++
++  gboolean pdt_tag_sent;
+ };
+ 
+ typedef struct {
 diff --git a/subprojects/gst-plugins-good/ext/gdk_pixbuf/gstgdkpixbufoverlay.c b/subprojects/gst-plugins-good/ext/gdk_pixbuf/gstgdkpixbufoverlay.c
 index a2585f385d..0d6b746a3e 100644
 --- a/subprojects/gst-plugins-good/ext/gdk_pixbuf/gstgdkpixbufoverlay.c
@@ -257,6 +381,94 @@ index a2585f385d..0d6b746a3e 100644
   *
   * ## Example launch line
   * |[
+diff --git a/subprojects/gst-plugins-good/gst/isomp4/atoms.c b/subprojects/gst-plugins-good/gst/isomp4/atoms.c
+index 2e8b4444d6..829d0e5ef7 100644
+--- a/subprojects/gst-plugins-good/gst/isomp4/atoms.c
++++ b/subprojects/gst-plugins-good/gst/isomp4/atoms.c
+@@ -4825,30 +4825,23 @@ atom_trun_set_offset (AtomTRUN * trun, gint32 offset)
+ }
+ 
+ static gboolean
+-atom_trun_can_append_samples_to_entry (AtomTRUN * trun,
+-    TRUNSampleEntry * nentry, guint32 nsamples, guint32 delta, guint32 size,
+-    guint32 flags, gint32 data_offset, gint64 pts_offset)
++atom_trun_can_append (AtomTRUN * trun, gint32 data_offset)
+ {
+-  if (pts_offset != 0)
+-    return FALSE;
+-  if (nentry->sample_flags != flags)
+-    return FALSE;
+-  if (trun->data_offset + nentry->sample_size != data_offset)
+-    return FALSE;
+-  if (nentry->sample_size != size)
+-    return FALSE;
+-  if (nentry->sample_duration != delta)
+-    return FALSE;
++  gsize trun_data_offset_end = trun->data_offset;
++  int i, n;
+ 
+-  /* FIXME: this should be TRUE but currently fails on demuxing */
+-  return FALSE;
+-}
++  if (data_offset == 0)
++    return TRUE;
+ 
+-static void
+-atom_trun_append_samples (AtomTRUN * trun, TRUNSampleEntry * nentry,
+-    guint32 nsamples, guint32 delta, guint32 size)
+-{
+-  trun->sample_count += nsamples;
++  n = atom_array_get_len (&trun->entries);
++  for (i = 0; i < n; i++) {
++    TRUNSampleEntry *entry = &atom_array_index (&trun->entries, i);
++    trun_data_offset_end += entry->sample_size;
++  }
++  if (trun_data_offset_end != data_offset)
++    return FALSE;
++
++  return TRUE;
+ }
+ 
+ static void
+@@ -4919,7 +4912,6 @@ atom_traf_add_samples (AtomTRAF * traf, guint32 nsamples,
+ {
+   GList *l = NULL;
+   AtomTRUN *prev_trun, *trun = NULL;
+-  TRUNSampleEntry *nentry = NULL;
+   guint32 flags;
+ 
+   /* 0x10000 is sample-is-difference-sample flag
+@@ -4928,16 +4920,9 @@ atom_traf_add_samples (AtomTRAF * traf, guint32 nsamples,
+ 
+   if (traf->truns) {
+     trun = g_list_last (traf->truns)->data;
+-    nentry =
+-        &atom_array_index (&trun->entries,
+-        atom_array_get_len (&trun->entries) - 1);
+ 
+-    if (!atom_trun_can_append_samples_to_entry (trun, nentry, nsamples, delta,
+-            size, flags, data_offset, pts_offset)) {
+-      /* if we can't add to the previous trun, write a new one */
++    if (!atom_trun_can_append (trun, data_offset))
+       trun = NULL;
+-      nentry = NULL;
+-    }
+   }
+   prev_trun = trun;
+ 
+@@ -4986,11 +4971,7 @@ atom_traf_add_samples (AtomTRAF * traf, guint32 nsamples,
+     }
+   }
+ 
+-  if (prev_trun == trun) {
+-    atom_trun_append_samples (trun, nentry, nsamples, delta, size);
+-  } else {
+-    atom_trun_add_samples (trun, nsamples, delta, size, flags, pts_offset);
+-  }
++  atom_trun_add_samples (trun, nsamples, delta, size, flags, pts_offset);
+ 
+   if (traf->sdtps)
+     atom_sdtp_add_samples (traf->sdtps->data, 0x10 | ((flags & 0xff) >> 4));
 diff --git a/subprojects/gst-plugins-good/gst/matroska/matroska-demux.c b/subprojects/gst-plugins-good/gst/matroska/matroska-demux.c
 index 773a306343..38e4e4d8ee 100644
 --- a/subprojects/gst-plugins-good/gst/matroska/matroska-demux.c
@@ -283,6 +495,40 @@ index 773a306343..38e4e4d8ee 100644
          GST_OBJECT_LOCK (demux);
          gst_query_set_duration (query, GST_FORMAT_DEFAULT,
              demux->common.segment.duration / context->default_duration);
+diff --git a/subprojects/gst-plugins-good/gst/multifile/gstimagesequencesrc.c b/subprojects/gst-plugins-good/gst/multifile/gstimagesequencesrc.c
+index 90dc9fff05..8581e73e3a 100644
+--- a/subprojects/gst-plugins-good/gst/multifile/gstimagesequencesrc.c
++++ b/subprojects/gst-plugins-good/gst/multifile/gstimagesequencesrc.c
+@@ -531,6 +531,8 @@ gst_image_sequence_src_set_caps (GstImageSequenceSrc * self, GstCaps * caps)
+   gst_pad_set_caps (GST_BASE_SRC_PAD (self), new_caps);
+ 
+   GST_DEBUG_OBJECT (self, "Setting new caps: %" GST_PTR_FORMAT, new_caps);
++
++  gst_caps_unref (new_caps);
+ }
+ 
+ /* Call with LOCK */
+diff --git a/subprojects/gst-plugins-good/gst/multifile/gstsplitmuxsink.c b/subprojects/gst-plugins-good/gst/multifile/gstsplitmuxsink.c
+index 5e4ae02e31..ad6c3d3782 100644
+--- a/subprojects/gst-plugins-good/gst/multifile/gstsplitmuxsink.c
++++ b/subprojects/gst-plugins-good/gst/multifile/gstsplitmuxsink.c
+@@ -3178,11 +3178,13 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
+         }
+         break;
+       case SPLITMUX_INPUT_STATE_WAITING_GOP_COLLECT:{
+-        /* We're collecting a GOP, this is only ever called for non-reference
++        /* We're collecting a GOP, this is normally only called for non-reference
+          * contexts as the reference context would be waiting inside
+          * check_completed_gop() */
+-
+-        g_assert (!ctx->is_reference);
++        if (G_UNLIKELY (ctx->is_reference)) {
++          check_completed_gop (splitmux, ctx);
++          break;
++        }
+ 
+         /* If we overran the target timestamp, it might be time to process
+          * the GOP, otherwise bail out for more data. */
 diff --git a/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpjitterbuffer.c b/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpjitterbuffer.c
 index 600ec62345..063e39b9f7 100644
 --- a/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpjitterbuffer.c
@@ -969,6 +1215,123 @@ index 8950a05f44..942b38eb88 100644
    meson_version : '>= 0.62',
    default_options : [ 'warning_level=1',
                        'buildtype=debugoptimized' ])
+diff --git a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2bufferpool.c b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2bufferpool.c
+index 4c471f184f..c5da1f8a5b 100644
+--- a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2bufferpool.c
++++ b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2bufferpool.c
+@@ -259,16 +259,9 @@ gst_v4l2_buffer_pool_import_userptr (GstV4l2BufferPool * pool,
+     for (i = 0; i < GST_VIDEO_FORMAT_INFO_N_PLANES (finfo); i++) {
+       if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
+         gint tinfo = GST_VIDEO_FRAME_PLANE_STRIDE (&data->frame, i);
+-        gint pstride;
+-        guint pheight;
+-
+-        pstride = GST_VIDEO_TILE_X_TILES (tinfo) <<
+-            GST_VIDEO_FORMAT_INFO_TILE_WS (finfo);
+-
+-        pheight = GST_VIDEO_TILE_Y_TILES (tinfo) <<
+-            GST_VIDEO_FORMAT_INFO_TILE_HS (finfo);
+-
+-        size[i] = pstride * pheight;
++        size[i] = GST_VIDEO_TILE_X_TILES (tinfo) *
++            GST_VIDEO_TILE_Y_TILES (tinfo) *
++            GST_VIDEO_FORMAT_INFO_TILE_SIZE (finfo, i);
+       } else {
+         size[i] = GST_VIDEO_FRAME_PLANE_STRIDE (&data->frame, i) *
+             GST_VIDEO_FRAME_COMP_HEIGHT (&data->frame, i);
+diff --git a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2object.c b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2object.c
+index 4e6aaf9472..8899d1f1a2 100644
+--- a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2object.c
++++ b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2object.c
+@@ -3245,23 +3245,16 @@ gst_v4l2_object_set_stride (GstVideoInfo * info, GstVideoAlignment * align,
+   const GstVideoFormatInfo *finfo = info->finfo;
+ 
+   if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
+-    gint x_tiles, y_tiles, ws, hs, tile_height, padded_height;
++    gint x_tiles, y_tiles, tile_height, padded_height;
+ 
+-    ws = GST_VIDEO_FORMAT_INFO_TILE_WS (finfo);
+-    hs = GST_VIDEO_FORMAT_INFO_TILE_HS (finfo);
+-
+-    /* this only works for what we support, NV12 subsampled tiles */
+-    if (GST_VIDEO_FORMAT_INFO_HAS_SUBTILES (finfo) && plane == 1)
+-      hs -= 1;
+-
+-    tile_height = 1 << hs;
++    tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (finfo, plane);
+ 
+     padded_height = GST_VIDEO_FORMAT_INFO_SCALE_HEIGHT (finfo, plane,
+         info->height + align->padding_top + align->padding_bottom);
+-    padded_height = GST_ROUND_UP_N (padded_height, tile_height);
++    padded_height = (padded_height + tile_height - 1) / tile_height;
+ 
+-    x_tiles = stride >> ws;
+-    y_tiles = padded_height >> hs;
++    x_tiles = stride / GST_VIDEO_FORMAT_INFO_TILE_STRIDE (finfo, plane);
++    y_tiles = padded_height / tile_height;
+     info->stride[plane] = GST_VIDEO_TILE_MAKE_STRIDE (x_tiles, y_tiles);
+   } else {
+     info->stride[plane] = stride;
+@@ -3348,12 +3341,9 @@ gst_v4l2_object_save_format (GstV4l2Object * v4l2object,
+   padded_height = format->fmt.pix.height;
+ 
+   if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
+-    guint hs, tile_height;
+-
+-    hs = GST_VIDEO_FORMAT_INFO_TILE_HS (finfo);
+-    tile_height = 1 << hs;
+-
+-    padded_height = GST_ROUND_UP_N (padded_height, tile_height);
++    guint tile_height;
++    tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (finfo, 0);
++    padded_height = (padded_height + tile_height - 1) / tile_height;
+   }
+ 
+   align->padding_bottom =
+@@ -3764,8 +3754,8 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
+       gint stride = GST_VIDEO_INFO_PLANE_STRIDE (&info, i);
+ 
+       if (GST_VIDEO_FORMAT_INFO_IS_TILED (info.finfo))
+-        stride = GST_VIDEO_TILE_X_TILES (stride) <<
+-            GST_VIDEO_FORMAT_INFO_TILE_WS (info.finfo);
++        stride = GST_VIDEO_TILE_X_TILES (stride) *
++            GST_VIDEO_FORMAT_INFO_TILE_STRIDE (info.finfo, i);
+ 
+       format.fmt.pix_mp.plane_fmt[i].bytesperline = stride;
+     }
+@@ -3783,8 +3773,8 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
+     format.fmt.pix.field = field;
+ 
+     if (GST_VIDEO_FORMAT_INFO_IS_TILED (info.finfo))
+-      stride = GST_VIDEO_TILE_X_TILES (stride) <<
+-          GST_VIDEO_FORMAT_INFO_TILE_WS (info.finfo);
++      stride = GST_VIDEO_TILE_X_TILES (stride) *
++          GST_VIDEO_FORMAT_INFO_TILE_STRIDE (info.finfo, i);
+ 
+     /* try to ask our preferred stride */
+     format.fmt.pix.bytesperline = stride;
+@@ -4804,8 +4794,8 @@ gst_v4l2_object_match_buffer_layout (GstV4l2Object * obj, guint n_planes,
+         gint plane_stride = stride[i];
+ 
+         if (GST_VIDEO_FORMAT_INFO_IS_TILED (obj->info.finfo))
+-          plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) <<
+-              GST_VIDEO_FORMAT_INFO_TILE_WS (obj->info.finfo);
++          plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) *
++              GST_VIDEO_FORMAT_INFO_TILE_STRIDE (obj->info.finfo, i);
+ 
+         format.fmt.pix_mp.plane_fmt[i].bytesperline = plane_stride;
+         format.fmt.pix_mp.height = padded_height;
+@@ -4818,8 +4808,8 @@ gst_v4l2_object_match_buffer_layout (GstV4l2Object * obj, guint n_planes,
+       GST_DEBUG_OBJECT (obj->dbg_obj, "Wanted stride: %i", plane_stride);
+ 
+       if (GST_VIDEO_FORMAT_INFO_IS_TILED (obj->info.finfo))
+-        plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) <<
+-            GST_VIDEO_FORMAT_INFO_TILE_WS (obj->info.finfo);
++        plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) *
++            GST_VIDEO_FORMAT_INFO_TILE_STRIDE (obj->info.finfo, 0);
+ 
+       format.fmt.pix.bytesperline = plane_stride;
+       format.fmt.pix.height = padded_height;
 diff --git a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2videodec.c b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2videodec.c
 index 9f6fa7bbee..2a110e5e4a 100644
 --- a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2videodec.c

@@ -9,6 +9,41 @@ index 54a92b551a..d7752da59c 100644
    meson_version : '>= 0.62',
    default_options : [ 'warning_level=1',
                        'c_std=gnu99',
+diff --git a/subprojects/gst-devtools/validate/gst/validate/gst-validate-enum-types.c.template b/subprojects/gst-devtools/validate/gst/validate/gst-validate-enum-types.c.template
+index ee4787b09b..e0a8625a39 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/gst-validate-enum-types.c.template
++++ b/subprojects/gst-devtools/validate/gst/validate/gst-validate-enum-types.c.template
+@@ -1,4 +1,9 @@
+ /*** BEGIN file-header ***/
++
++#ifdef HAVE_CONFIG_H
++#  include "config.h"
++#endif
++
+ #include "gst-validate-enum-types.h"
+ #include <gst/validate/validate.h>
+ #define C_ENUM(v) ((gint) v)
+diff --git a/subprojects/gst-devtools/validate/gst/validate/gst-validate-extra-checks.c b/subprojects/gst-devtools/validate/gst/validate/gst-validate-extra-checks.c
+index 01b82fe093..270580bf7e 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/gst-validate-extra-checks.c
++++ b/subprojects/gst-devtools/validate/gst/validate/gst-validate-extra-checks.c
+@@ -1,11 +1,13 @@
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
+ #include <gst/gst.h>
+ #include "validate.h"
+ #include "gst-validate-utils.h"
+ #include "gst-validate-internal.h"
+ 
+-#ifdef HAVE_CONFIG_H
+-#include "config.h"
+-#endif
++
+ 
+ #define EXTRA_CHECKS_WRONG_NUMBER_OF_INSTANCES g_quark_from_static_string ("extrachecks::wrong-number-of-instances")
+ 
 diff --git a/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.c b/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.c
 index 1d7a250dc9..0ab9e25257 100644
 --- a/subprojects/gst-devtools/validate/gst/validate/gst-validate-report.c
@@ -39,6 +74,27 @@ index 8a24a877c1..1f8acd24e0 100644
  
  #define CONFIG_LATENCY_TOO_HIGH                  _QUARK("config::latency-too-high")
  #define CONFIG_TOO_MANY_BUFFERS_DROPPED          _QUARK("config::too-many-buffers-dropped")
+diff --git a/subprojects/gst-devtools/validate/gst/validate/gst-validate-runner.c b/subprojects/gst-devtools/validate/gst/validate/gst-validate-runner.c
+index 8cf64f2ccb..bf19cbf7df 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/gst-validate-runner.c
++++ b/subprojects/gst-devtools/validate/gst/validate/gst-validate-runner.c
+@@ -22,13 +22,14 @@
+  * Boston, MA 02111-1307, USA.
+  */
+ 
+-#include <string.h>
+-#include <stdlib.h>
+ 
+ #ifdef HAVE_CONFIG_H
+ #  include "config.h"
+ #endif
+ 
++#include <string.h>
++#include <stdlib.h>
++
+ #include "validate.h"
+ #include "gst-validate-internal.h"
+ #include "gst-validate-report.h"
 diff --git a/subprojects/gst-devtools/validate/gst/validate/gst-validate-scenario.c b/subprojects/gst-devtools/validate/gst/validate/gst-validate-scenario.c
 index 5965c58204..47fec1ee80 100644
 --- a/subprojects/gst-devtools/validate/gst/validate/gst-validate-scenario.c
@@ -123,11 +179,35 @@ index 5965c58204..47fec1ee80 100644
  
    g_key_file_free (kf);
  
+diff --git a/subprojects/gst-devtools/validate/gst/validate/media-descriptor-parser.c b/subprojects/gst-devtools/validate/gst/validate/media-descriptor-parser.c
+index a71ca24a1f..daaeb8277c 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/media-descriptor-parser.c
++++ b/subprojects/gst-devtools/validate/gst/validate/media-descriptor-parser.c
+@@ -18,6 +18,9 @@
+  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+  * Boston, MA 02110-1301, USA.
+  */
++#ifdef HAVE_CONFIG_H
++#  include "config.h"
++#endif
+ 
+ #include "media-descriptor-parser.h"
+ #include <string.h>
 diff --git a/subprojects/gst-devtools/validate/gst/validate/media-descriptor-writer.c b/subprojects/gst-devtools/validate/gst/validate/media-descriptor-writer.c
-index 95b3512743..66fcb03ddb 100644
+index 95b3512743..a96c3a0bee 100644
 --- a/subprojects/gst-devtools/validate/gst/validate/media-descriptor-writer.c
 +++ b/subprojects/gst-devtools/validate/gst/validate/media-descriptor-writer.c
-@@ -735,17 +735,25 @@ gst_validate_media_descriptor_writer_new_discover (GstValidateRunner * runner,
+@@ -18,6 +18,9 @@
+  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+  * Boston, MA 02110-1301, USA.
+  */
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
+ 
+ #include <gst/validate/validate.h>
+ #include "media-descriptor-writer.h"
+@@ -735,17 +738,25 @@ gst_validate_media_descriptor_writer_new_discover (GstValidateRunner * runner,
          gst_validate_media_descriptor_writer_add_stream (writer, streaminfo);
        }
      } else {
@@ -160,6 +240,91 @@ index 95b3512743..66fcb03ddb 100644
      }
    } else {
      GST_VALIDATE_REPORT (writer, FILE_NO_STREAM_INFO,
+diff --git a/subprojects/gst-devtools/validate/gst/validate/media-descriptor.c b/subprojects/gst-devtools/validate/gst/validate/media-descriptor.c
+index 962bb9a30f..d1231061dd 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/media-descriptor.c
++++ b/subprojects/gst-devtools/validate/gst/validate/media-descriptor.c
+@@ -19,6 +19,9 @@
+  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+  * Boston, MA 02110-1301, USA.
+  */
++#ifdef HAVE_CONFIG_H
++#  include "config.h"
++#endif
+ 
+ #include <string.h>
+ #include "media-descriptor.h"
+diff --git a/subprojects/gst-devtools/validate/gst/validate/meson.build b/subprojects/gst-devtools/validate/gst/validate/meson.build
+index ad3be46199..0a574dfa75 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/meson.build
++++ b/subprojects/gst-devtools/validate/gst/validate/meson.build
+@@ -58,14 +58,14 @@ gst_validate_enums = gnome.mkenums('gstvalidateenumtypes',
+ 
+ validate_deps = [gst_check_dep, gst_dep, gst_controller_dep, gstbase_dep,
+                  gio_dep, gmodule_dep, gst_pbutils_dep, mathlib, json_dep]
+-gstvalidate = library('gstvalidate-1.0',
++gstvalidate = library('gstvalidate-@0@'.format(apiversion),
+     sources: gstvalidate_sources + gst_validate_enums + runner_file,
+     version : libversion,
+     soversion : soversion,
+     darwin_versions : osxversion,
+     include_directories : [inc_dirs],
+     install: true,
+-    c_args : [gst_c_args] + ['-D_GNU_SOURCE'],
++    c_args : [gst_c_args] + ['-D_GNU_SOURCE', '-DBUILDING_GST_VALIDATE'],
+     dependencies : validate_deps)
+ 
+ if not static_build
+@@ -73,7 +73,7 @@ if not static_build
+       sources: gst_validate_enums + runner_file,
+       include_directories : [inc_dirs],
+       install: true,
+-      c_args : [gst_c_args] + ['-D__GST_VALIDATE_PLUGIN', '-D_GNU_SOURCE'],
++      c_args : [gst_c_args] + ['-D__GST_VALIDATE_PLUGIN', '-D_GNU_SOURCE', '-DBUILDING_GST_VALIDATE'],
+       install_dir : plugins_install_dir,
+       objects: gstvalidate.extract_objects(gstvalidate_sources),
+       dependencies : validate_deps)
+diff --git a/subprojects/gst-devtools/validate/gst/validate/validate-prelude.h b/subprojects/gst-devtools/validate/gst/validate/validate-prelude.h
+index 5163463765..59a07549a6 100644
+--- a/subprojects/gst-devtools/validate/gst/validate/validate-prelude.h
++++ b/subprojects/gst-devtools/validate/gst/validate/validate-prelude.h
+@@ -25,7 +25,11 @@
+ #include <gst/gst.h>
+ 
+ #ifndef GST_VALIDATE_API
+-#define GST_VALIDATE_API GST_EXPORT
++#ifdef BUILDING_GST_VALIDATE
++#define GST_VALIDATE_API GST_API_EXPORT        /* from config.h */
++#else
++#define GST_VALIDATE_API GST_API_IMPORT
++#endif
+ #endif
+ 
+ #endif /* __GST_VALIDATE_PRELUDE_H__ */
+diff --git a/subprojects/gst-devtools/validate/meson.build b/subprojects/gst-devtools/validate/meson.build
+index 84ad240436..17ca36a578 100644
+--- a/subprojects/gst-devtools/validate/meson.build
++++ b/subprojects/gst-devtools/validate/meson.build
+@@ -16,6 +16,19 @@ if cc.has_header('unistd.h')
+   cdata.set('HAVE_UNISTD_H', 1)
+ endif
+ 
++# Symbol visibility
++if cc.get_id() == 'msvc'
++  export_define = '__declspec(dllexport) extern'
++elif cc.has_argument('-fvisibility=hidden')
++  add_project_arguments('-fvisibility=hidden', language: 'c')
++  export_define = 'extern __attribute__ ((visibility ("default")))'
++else
++  export_define = 'extern'
++endif
++
++# Passing this through the command line would be too messy
++cdata.set('GST_API_EXPORT', export_define)
++
+ configure_file(output : 'config.h', configuration : cdata)
+ 
+ validate_plugins_install_dir = '@0@/gstreamer-1.0/validate'.format(get_option('libdir'))
 diff --git a/subprojects/gst-devtools/validate/tools/gst-validate-media-check.c b/subprojects/gst-devtools/validate/tools/gst-validate-media-check.c
 index f357ac4eb1..0a54e29265 100644
 --- a/subprojects/gst-devtools/validate/tools/gst-validate-media-check.c

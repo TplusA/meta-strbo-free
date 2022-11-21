@@ -107,11 +107,128 @@ index 649f63d593..d088d645ee 100644
        if (ogg->current_chain == NULL) {
          GST_WARNING_OBJECT (ogg,
              "EOS while trying to retrieve chain, seeking disabled");
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/audio/gstaudioaggregator.c b/subprojects/gst-plugins-base/gst-libs/gst/audio/gstaudioaggregator.c
+index a811c4789d..784c047cf3 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/audio/gstaudioaggregator.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/audio/gstaudioaggregator.c
+@@ -537,6 +537,7 @@ static GstSample *gst_audio_aggregator_peek_next_sample (GstAggregator * agg,
+ #define DEFAULT_DISCONT_WAIT (1 * GST_SECOND)
+ #define DEFAULT_OUTPUT_BUFFER_DURATION_N (1)
+ #define DEFAULT_OUTPUT_BUFFER_DURATION_D (100)
++#define DEFAULT_FORCE_LIVE FALSE
+ 
+ enum
+ {
+@@ -546,6 +547,7 @@ enum
+   PROP_DISCONT_WAIT,
+   PROP_OUTPUT_BUFFER_DURATION_FRACTION,
+   PROP_IGNORE_INACTIVE_PADS,
++  PROP_FORCE_LIVE,
+ };
+ 
+ G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (GstAudioAggregator, gst_audio_aggregator,
+@@ -728,6 +730,23 @@ gst_audio_aggregator_class_init (GstAudioAggregatorClass * klass)
+           "Ignore inactive pads",
+           "Avoid timing out waiting for inactive pads", FALSE,
+           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++
++  /**
++   * GstAudioAggregator:force-live:
++   *
++   * Causes the element to aggregate on a timeout even when no live source is
++   * connected to its sinks. See #GstAggregator:min-upstream-latency for a
++   * companion property: in the vast majority of cases where you plan to plug in
++   * live sources with a non-zero latency, you should set it to a non-zero value.
++   *
++   * Since: 1.22
++   */
++  g_object_class_install_property (gobject_class, PROP_FORCE_LIVE,
++      g_param_spec_boolean ("force-live", "Force live",
++          "Always operate in live mode and aggregate on timeout regardless of "
++          "whether any live sources are linked upstream",
++          DEFAULT_FORCE_LIVE,
++          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY));
+ }
+ 
+ static void
+@@ -797,6 +816,10 @@ gst_audio_aggregator_set_property (GObject * object, guint prop_id,
+       gst_aggregator_set_ignore_inactive_pads (GST_AGGREGATOR (object),
+           g_value_get_boolean (value));
+       break;
++    case PROP_FORCE_LIVE:
++      gst_aggregator_set_force_live (GST_AGGREGATOR (object),
++          g_value_get_boolean (value));
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -829,6 +852,10 @@ gst_audio_aggregator_get_property (GObject * object, guint prop_id,
+       g_value_set_boolean (value,
+           gst_aggregator_get_ignore_inactive_pads (GST_AGGREGATOR (object)));
+       break;
++    case PROP_FORCE_LIVE:
++      g_value_set_boolean (value,
++          gst_aggregator_get_force_live (GST_AGGREGATOR (object)));
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -2195,7 +2222,7 @@ gst_audio_aggregator_aggregate (GstAggregator * agg, gboolean timeout)
+   gint64 next_timestamp;
+   gint rate, bpf;
+   gboolean dropped = FALSE;
+-  gboolean is_eos = TRUE;
++  gboolean is_eos = !gst_aggregator_get_force_live (agg);
+   gboolean is_done = TRUE;
+   guint blocksize;
+   GstAudioAggregatorPad *srcpad = GST_AUDIO_AGGREGATOR_PAD (agg->srcpad);
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/gl/egl/gsteglimage.c b/subprojects/gst-plugins-base/gst-libs/gst/gl/egl/gsteglimage.c
+index f97d85b7d6..179abe9762 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/gl/egl/gsteglimage.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/gl/egl/gsteglimage.c
+@@ -615,14 +615,12 @@ get_egl_stride (const GstVideoInfo * info, gint plane)
+ {
+   const GstVideoFormatInfo *finfo = info->finfo;
+   gint stride = info->stride[plane];
+-  guint ws;
+ 
+   if (!GST_VIDEO_FORMAT_INFO_IS_TILED (finfo))
+     return stride;
+ 
+-  gst_video_format_info_get_tile_sizes (finfo, plane, &ws, NULL);
+-
+-  return GST_VIDEO_TILE_X_TILES (stride) << ws;
++  return GST_VIDEO_TILE_X_TILES (stride) *
++      GST_VIDEO_FORMAT_INFO_TILE_STRIDE (finfo, plane);
+ }
+ 
+ /**
 diff --git a/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglcolorconvert.c b/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglcolorconvert.c
-index f3656cf403..65060596da 100644
+index f3656cf403..6ccfb143ad 100644
 --- a/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglcolorconvert.c
 +++ b/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglcolorconvert.c
-@@ -3055,6 +3055,18 @@ _do_convert (GstGLContext * context, GstGLColorConvert * convert)
+@@ -2691,15 +2691,16 @@ _init_convert (GstGLColorConvert * convert)
+   }
+ 
+   if (GST_VIDEO_FORMAT_INFO_IS_TILED (convert->in_info.finfo)) {
+-    guint ws, hs;
++    guint tile_width, tile_height;
+     gsize stride;
+     gfloat width, height;
+ 
+     stride = GST_VIDEO_INFO_PLANE_STRIDE (&convert->in_info, 0);
+-    gst_video_format_info_get_tile_sizes (convert->in_info.finfo, 0, &ws, &hs);
++    tile_width = GST_VIDEO_FORMAT_INFO_TILE_WIDTH (convert->in_info.finfo, 0);
++    tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (convert->in_info.finfo, 0);
+ 
+-    width = GST_VIDEO_TILE_X_TILES (stride) << ws;
+-    height = GST_VIDEO_TILE_Y_TILES (stride) << hs;
++    width = GST_VIDEO_TILE_X_TILES (stride) * tile_width;
++    height = GST_VIDEO_TILE_Y_TILES (stride) * tile_height;
+ 
+     gst_gl_shader_set_uniform_1f (convert->shader, "width", width);
+     gst_gl_shader_set_uniform_1f (convert->shader, "height", height);
+@@ -3055,6 +3056,18 @@ _do_convert (GstGLContext * context, GstGLColorConvert * convert)
        gst_gl_color_convert_reset_shader (convert);
    }
  
@@ -130,6 +247,38 @@ index f3656cf403..65060596da 100644
    if (!_init_convert (convert)) {
      convert->priv->result = FALSE;
      return;
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglmemory.c b/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglmemory.c
+index 118f07eff2..7658ea1f32 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglmemory.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglmemory.c
+@@ -123,13 +123,13 @@ static inline guint
+ _get_plane_height (const GstVideoInfo * info, guint plane)
+ {
+   if (GST_VIDEO_FORMAT_INFO_IS_TILED (info->finfo)) {
+-    guint hs;
++    guint tile_height;
+     gsize stride;
+ 
+-    gst_video_format_info_get_tile_sizes (info->finfo, plane, NULL, &hs);
++    tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (info->finfo, plane);
+     stride = GST_VIDEO_INFO_PLANE_STRIDE (info, plane);
+ 
+-    return GST_VIDEO_TILE_Y_TILES (stride) << hs;
++    return GST_VIDEO_TILE_Y_TILES (stride) * tile_height;
+   }
+ 
+   if (GST_VIDEO_INFO_IS_YUV (info)) {
+@@ -151,8 +151,8 @@ _get_mem_stride (GstGLMemory * gl_mem)
+   if (!GST_VIDEO_FORMAT_INFO_IS_TILED (finfo))
+     return stride;
+ 
+-  return
+-      GST_VIDEO_TILE_X_TILES (stride) << GST_VIDEO_FORMAT_INFO_TILE_WS (finfo);
++  return GST_VIDEO_TILE_X_TILES (stride) *
++      GST_VIDEO_FORMAT_INFO_TILE_STRIDE (finfo, gl_mem->plane);
+ }
+ 
+ static inline void
 diff --git a/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglupload.c b/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglupload.c
 index eaae86e919..5d17ec1dfc 100644
 --- a/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglupload.c
@@ -156,6 +305,23 @@ index eaae86e919..5d17ec1dfc 100644
    }
  
    if (dmabuf->params)
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglutils.c b/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglutils.c
+index 570d0e1076..e1bec0fe13 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglutils.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/gl/gstglutils.c
+@@ -633,11 +633,10 @@ gst_gl_get_plane_data_size (const GstVideoInfo * info,
+     gint x_tiles, y_tiles;
+     gint tile_size;
+ 
+-    tile_size = gst_video_format_info_get_tile_sizes (finfo, plane, NULL, NULL);
+-
+     stride = GST_VIDEO_INFO_PLANE_STRIDE (info, plane);
+     x_tiles = GST_VIDEO_TILE_X_TILES (stride);
+     y_tiles = GST_VIDEO_TILE_Y_TILES (stride);
++    tile_size = GST_VIDEO_FORMAT_INFO_TILE_SIZE (info->finfo, plane);
+ 
+     plane_size = x_tiles * y_tiles * tile_size;
+   } else {
 diff --git a/subprojects/gst-plugins-base/gst-libs/gst/pbutils/codec-utils.c b/subprojects/gst-plugins-base/gst-libs/gst/pbutils/codec-utils.c
 index 0167210f32..a89f3b051e 100644
 --- a/subprojects/gst-plugins-base/gst-libs/gst/pbutils/codec-utils.c
@@ -286,6 +452,157 @@ index 11bbbf3f6d..390f9e171b 100644
  
    return profile;
  }
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/rtp/gstrtpbasedepayload.c b/subprojects/gst-plugins-base/gst-libs/gst/rtp/gstrtpbasedepayload.c
+index 1520581b4e..0fd2d827a5 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/rtp/gstrtpbasedepayload.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/rtp/gstrtpbasedepayload.c
+@@ -36,6 +36,9 @@
+ GST_DEBUG_CATEGORY_STATIC (rtpbasedepayload_debug);
+ #define GST_CAT_DEFAULT (rtpbasedepayload_debug)
+ 
++static GstStaticCaps ntp_reference_timestamp_caps =
++GST_STATIC_CAPS ("timestamp/x-ntp");
++
+ struct _GstRTPBaseDepayloadPrivate
+ {
+   GstClockTime npt_start;
+@@ -50,6 +53,8 @@ struct _GstRTPBaseDepayloadPrivate
+   GstClockTime dts;
+   GstClockTime duration;
+ 
++  GstClockTime ref_ts;
++
+   guint32 last_ssrc;
+   guint32 last_seqnum;
+   guint32 last_rtptime;
+@@ -395,6 +400,7 @@ gst_rtp_base_depayload_init (GstRTPBaseDepayload * filter,
+   priv->dts = -1;
+   priv->pts = -1;
+   priv->duration = -1;
++  priv->ref_ts = -1;
+   priv->source_info = DEFAULT_SOURCE_INFO;
+   priv->max_reorder = DEFAULT_MAX_REORDER;
+   priv->auto_hdr_ext = DEFAULT_AUTO_HEADER_EXTENSION;
+@@ -679,6 +685,8 @@ gst_rtp_base_depayload_handle_buffer (GstRTPBaseDepayload * filter,
+   gboolean discont, buf_discont;
+   gint gap;
+   GstRTPBuffer rtp = { NULL };
++  GstReferenceTimestampMeta *meta;
++  GstCaps *ref_caps;
+ 
+   priv = filter->priv;
+   priv->process_flow_ret = GST_FLOW_OK;
+@@ -690,6 +698,21 @@ gst_rtp_base_depayload_handle_buffer (GstRTPBaseDepayload * filter,
+   if (G_UNLIKELY (!priv->negotiated))
+     goto not_negotiated;
+ 
++  /* Check for duplicate reference timestamp metadata */
++  ref_caps = gst_static_caps_get (&ntp_reference_timestamp_caps);
++  meta = gst_buffer_get_reference_timestamp_meta (in, ref_caps);
++  gst_caps_unref (ref_caps);
++  if (meta) {
++    guint64 ref_ts = meta->timestamp;
++    if (ref_ts == priv->ref_ts) {
++      /* Drop the redundant/duplicate reference timstamp metadata */
++      in = gst_buffer_make_writable (in);
++      gst_buffer_remove_meta (in, GST_META_CAST (meta));
++    } else {
++      priv->ref_ts = ref_ts;
++    }
++  }
++
+   if (G_UNLIKELY (!gst_rtp_buffer_map (in, GST_MAP_READ, &rtp)))
+     goto invalid_buffer;
+ 
+@@ -923,6 +946,7 @@ gst_rtp_base_depayload_handle_event (GstRTPBaseDepayload * filter,
+ 
+       filter->need_newsegment = !filter->priv->onvif_mode;
+       filter->priv->next_seqnum = -1;
++      filter->priv->ref_ts = -1;
+       gst_event_replace (&filter->priv->segment_event, NULL);
+       break;
+     case GST_EVENT_CAPS:
+@@ -1542,6 +1566,7 @@ gst_rtp_base_depayload_change_state (GstElement * element,
+       priv->play_speed = 1.0;
+       priv->play_scale = 1.0;
+       priv->clock_base = -1;
++      priv->ref_ts = -1;
+       priv->onvif_mode = FALSE;
+       priv->next_seqnum = -1;
+       priv->negotiated = FALSE;
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/video/gstvideoaggregator.c b/subprojects/gst-plugins-base/gst-libs/gst/video/gstvideoaggregator.c
+index 31e9d700e6..ffbf69d401 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/video/gstvideoaggregator.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/video/gstvideoaggregator.c
+@@ -955,7 +955,13 @@ static void
+         g_thread_self());                                      \
+   } G_STMT_END
+ 
++enum
++{
++  PROP_0,
++  PROP_FORCE_LIVE,
++};
+ 
++#define DEFAULT_FORCE_LIVE              FALSE
+ 
+ /* Can't use the G_DEFINE_TYPE macros because we need the
+  * videoaggregator class in the _init to be able to set
+@@ -1717,7 +1723,7 @@ gst_video_aggregator_fill_queues (GstVideoAggregator * vagg,
+     GstClockTime output_end_running_time, gboolean timeout)
+ {
+   GList *l;
+-  gboolean eos = TRUE;
++  gboolean eos = !gst_aggregator_get_force_live (GST_AGGREGATOR (vagg));
+   gboolean repeat_pad_eos = FALSE;
+   gboolean has_no_repeat_pads = FALSE;
+   gboolean need_more_data = FALSE;
+@@ -3002,6 +3008,10 @@ gst_video_aggregator_get_property (GObject * object,
+     guint prop_id, GValue * value, GParamSpec * pspec)
+ {
+   switch (prop_id) {
++    case PROP_FORCE_LIVE:
++      g_value_set_boolean (value,
++          gst_aggregator_get_force_live (GST_AGGREGATOR (object)));
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -3013,6 +3023,10 @@ gst_video_aggregator_set_property (GObject * object,
+     guint prop_id, const GValue * value, GParamSpec * pspec)
+ {
+   switch (prop_id) {
++    case PROP_FORCE_LIVE:
++      gst_aggregator_set_force_live (GST_AGGREGATOR (object),
++          g_value_get_boolean (value));
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -3070,6 +3084,23 @@ gst_video_aggregator_class_init (GstVideoAggregatorClass * klass)
+ 
+   /* Register the pad class */
+   g_type_class_ref (GST_TYPE_VIDEO_AGGREGATOR_PAD);
++
++  /**
++   * GstVideoAggregator:force-live:
++   *
++   * Causes the element to aggregate on a timeout even when no live source is
++   * connected to its sinks. See #GstAggregator:min-upstream-latency for a
++   * companion property: in the vast majority of cases where you plan to plug in
++   * live sources with a non-zero latency, you should set it to a non-zero value.
++   *
++   * Since: 1.22
++   */
++  g_object_class_install_property (gobject_class, PROP_FORCE_LIVE,
++      g_param_spec_boolean ("force-live", "Force live",
++          "Always operate in live mode and aggregate on timeout regardless of "
++          "whether any live sources are linked upstream",
++          DEFAULT_FORCE_LIVE,
++          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY));
+ }
+ 
+ static void
 diff --git a/subprojects/gst-plugins-base/gst-libs/gst/video/gstvideodecoder.c b/subprojects/gst-plugins-base/gst-libs/gst/video/gstvideodecoder.c
 index f1ce52fd1f..016aa7dd9f 100644
 --- a/subprojects/gst-plugins-base/gst-libs/gst/video/gstvideodecoder.c
@@ -300,6 +617,733 @@ index f1ce52fd1f..016aa7dd9f 100644
    GST_VIDEO_DECODER_STREAM_UNLOCK (dec);
  
    return GST_FLOW_OK;
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/video/video-format.c b/subprojects/gst-plugins-base/gst-libs/gst/video/video-format.c
+index 4e4ff8796b..d869f9a1ff 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/video/video-format.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/video/video-format.c
+@@ -4747,46 +4747,33 @@ pack_A422_10BE (const GstVideoFormatInfo * info, GstVideoPackFlags flags,
+ }
+ 
+ static void
+-get_tile_NV12 (gint tile_width, gint ts, gint tx, gint ty,
+-    GstVideoTileMode mode,
++get_tile_NV12 (const GstVideoFormatInfo * info, gint tx, gint ty,
+     const gpointer data[GST_VIDEO_MAX_PLANES],
+     const gint stride[GST_VIDEO_MAX_PLANES],
+     gpointer tile_data[GST_VIDEO_MAX_PLANES],
+     gint tile_stride[GST_VIDEO_MAX_PLANES])
+ {
+-  gsize offset;
++  GstVideoTileMode mode = GST_VIDEO_FORMAT_INFO_TILE_MODE (info);
++  gsize index, offset;
+ 
+   /* index of Y tile */
+-  offset = gst_video_tile_get_index (mode,
+-      tx, ty, GST_VIDEO_TILE_X_TILES (stride[0]),
+-      GST_VIDEO_TILE_Y_TILES (stride[0]));
+-  offset <<= ts;
++  index = gst_video_tile_get_index (mode, tx, ty,
++      GST_VIDEO_TILE_X_TILES (stride[0]), GST_VIDEO_TILE_Y_TILES (stride[0]));
++  offset = index * GST_VIDEO_FORMAT_INFO_TILE_SIZE (info, 0);
+   tile_data[0] = ((guint8 *) data[0]) + offset;
+ 
+-  /* index of UV tile */
+-  if (stride[0] != stride[1]) {
+-    offset = gst_video_tile_get_index (mode,
+-        tx, ty >> 1, GST_VIDEO_TILE_X_TILES (stride[1]),
+-        GST_VIDEO_TILE_Y_TILES (stride[1]));
+-
+-    offset <<= ts;
++  index = gst_video_tile_get_index (mode, tx,
++      GST_VIDEO_FORMAT_INFO_HAS_SUBTILES (info) ? ty : ty / 2,
++      GST_VIDEO_TILE_X_TILES (stride[1]), GST_VIDEO_TILE_Y_TILES (stride[1]));
++  offset = index * GST_VIDEO_FORMAT_INFO_TILE_SIZE (info, 1);
+ 
+-    /* On odd rows we return the second part of the UV tile */
+-    offset |= (ty & 1) << (ts - 1);
+-  } else {
+-    /* handle subsampled tiles, with type of tiles will have the same number
+-     * of tiles on both planes, but the height of the tiles are half. */
+-    offset = gst_video_tile_get_index (mode,
+-        tx, ty, GST_VIDEO_TILE_X_TILES (stride[1]),
+-        GST_VIDEO_TILE_Y_TILES (stride[1]));
+-
+-    /* For subsampled tile Subsampled tile size */
+-    offset <<= (ts - 1);
+-  }
++  if (!GST_VIDEO_FORMAT_INFO_HAS_SUBTILES (info) && (ty & 1))
++    offset += GST_VIDEO_FORMAT_INFO_TILE_SIZE (info, 1) / 2;
+ 
+   tile_data[1] = ((guint8 *) data[1]) + offset;
+ 
+-  tile_stride[0] = tile_stride[1] = tile_width;
++  tile_stride[0] = GST_VIDEO_FORMAT_INFO_TILE_STRIDE (info, 0);
++  tile_stride[1] = GST_VIDEO_FORMAT_INFO_TILE_STRIDE (info, 1);
+ }
+ 
+ #define PACK_NV12_TILED GST_VIDEO_FORMAT_AYUV, unpack_NV12_TILED, 1, pack_NV12_TILED
+@@ -4795,49 +4782,46 @@ unpack_NV12_TILED (const GstVideoFormatInfo * info, GstVideoPackFlags flags,
+     gpointer dest, const gpointer data[GST_VIDEO_MAX_PLANES],
+     const gint stride[GST_VIDEO_MAX_PLANES], gint x, gint y, gint width)
+ {
+-  const GstVideoFormatInfo *unpack_info, *finfo;
++  const GstVideoFormatInfo *unpack_info, *tile_finfo;
+   guint8 *line = dest;
+-  gint ws, hs, ts, tile_width;
++  gint tile_width, tile_height;
+   gint ntx, tx, ty;
+   gint unpack_pstride;
+ 
+-  ws = GST_VIDEO_FORMAT_INFO_TILE_WS (info);
+-  hs = GST_VIDEO_FORMAT_INFO_TILE_HS (info);
+-  ts = ws + hs;
+-
+-  tile_width = 1 << ws;
++  tile_width = GST_VIDEO_FORMAT_INFO_TILE_WIDTH (info, 0);
++  tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (info, 0);
+ 
+   /* we reuse these unpack functions */
+-  finfo = gst_video_format_get_info (GST_VIDEO_FORMAT_NV12);
++  tile_finfo = gst_video_format_get_info (GST_VIDEO_FORMAT_NV12);
+ 
+   /* get pstride of unpacked format */
+   unpack_info = gst_video_format_get_info (info->unpack_format);
+   unpack_pstride = GST_VIDEO_FORMAT_INFO_PSTRIDE (unpack_info, 0);
+ 
+   /* first x tile to convert */
+-  tx = x >> ws;
++  tx = x / tile_width;
+   /* Last tile to convert */
+-  ntx = ((x + width - 1) >> ws) + 1;
++  ntx = ((x + width - 1) / tile_width) + 1;
+   /* The row we are going to convert */
+-  ty = y >> hs;
++  ty = y / tile_height;
+ 
+   /* y position in a tile */
+-  y = y & ((1 << hs) - 1);
++  y = y % tile_height;
+   /* x position in a tile */
+-  x = x & (tile_width - 1);
++  x = x % tile_width;
+ 
+   for (; tx < ntx; tx++) {
+     gpointer tdata[GST_VIDEO_MAX_PLANES];
+     gint tstride[GST_VIDEO_MAX_PLANES];
+     gint unpack_width;
+ 
+-    get_tile_NV12 (tile_width, ts, tx, ty, info->tile_mode,
+-        data, stride, tdata, tstride);
++    get_tile_NV12 (info, tx, ty, data, stride, tdata, tstride);
+ 
+     /* the number of bytes left to unpack */
+     unpack_width = MIN (width - x, tile_width - x);
+ 
+-    finfo->unpack_func (finfo, flags, line, tdata, tstride, x, y, unpack_width);
++    tile_finfo->unpack_func (tile_finfo, flags, line, tdata, tstride, x, y,
++        unpack_width);
+ 
+     x = 0;
+     width -= unpack_width;
+@@ -4851,45 +4835,41 @@ pack_NV12_TILED (const GstVideoFormatInfo * info, GstVideoPackFlags flags,
+     const gint stride[GST_VIDEO_MAX_PLANES], GstVideoChromaSite chroma_site,
+     gint y, gint width)
+ {
+-  const GstVideoFormatInfo *pack_info, *finfo;
++  const GstVideoFormatInfo *pack_info, *tile_finfo;
+   guint8 *line = src;
+-  gint ws, hs, ts, tile_width;
++  gint tile_width, tile_height;
+   gint ntx, tx, ty;
+   gint pack_pstride;
+ 
+-  ws = GST_VIDEO_FORMAT_INFO_TILE_WS (info);
+-  hs = GST_VIDEO_FORMAT_INFO_TILE_HS (info);
+-  ts = ws + hs;
+-
+-  tile_width = 1 << ws;
++  tile_width = GST_VIDEO_FORMAT_INFO_TILE_WIDTH (info, 0);
++  tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (info, 0);
+ 
+   /* we reuse these pack functions */
+-  finfo = gst_video_format_get_info (GST_VIDEO_FORMAT_NV12);
++  tile_finfo = gst_video_format_get_info (GST_VIDEO_FORMAT_NV12);
+ 
+   /* get pstride of packed format */
+   pack_info = gst_video_format_get_info (info->unpack_format);
+   pack_pstride = GST_VIDEO_FORMAT_INFO_PSTRIDE (pack_info, 0);
+ 
+   /* Last tile to convert */
+-  ntx = ((width - 1) >> ws) + 1;
++  ntx = ((width - 1) / tile_width) + 1;
+   /* The row we are going to convert */
+-  ty = y >> hs;
++  ty = y / tile_height;
+ 
+   /* y position in a tile */
+-  y = y & ((1 << hs) - 1);
++  y = y % tile_height;
+ 
+   for (tx = 0; tx < ntx; tx++) {
+     gpointer tdata[GST_VIDEO_MAX_PLANES];
+     gint tstride[GST_VIDEO_MAX_PLANES];
+     gint pack_width;
+ 
+-    get_tile_NV12 (tile_width, ts, tx, ty, info->tile_mode,
+-        data, stride, tdata, tstride);
++    get_tile_NV12 (info, tx, ty, data, stride, tdata, tstride);
+ 
+-    /* the number of bytes left to pack */
++    /* the number of pixels left to pack */
+     pack_width = MIN (width, tile_width);
+ 
+-    finfo->pack_func (finfo, flags, line, sstride, tdata, tstride,
++    tile_finfo->pack_func (tile_finfo, flags, line, sstride, tdata, tstride,
+         chroma_site, y, pack_width);
+ 
+     width -= pack_width;
+@@ -6820,8 +6800,8 @@ unpack_NV12_10BE_8L128 (const GstVideoFormatInfo * info,
+   int i;
+   int j;
+ 
+-  ws = GST_VIDEO_FORMAT_INFO_TILE_WS (info);
+-  hs = GST_VIDEO_FORMAT_INFO_TILE_HS (info);
++  ws = 3;
++  hs = 7;
+   ts = ws + hs;
+   ty = y >> hs;
+   y = y & ((1 << hs) - 1);
+@@ -6874,8 +6854,8 @@ pack_NV12_10BE_8L128 (const GstVideoFormatInfo * info, GstVideoPackFlags flags,
+   guint16 mask[2];
+   int i;
+ 
+-  ws = GST_VIDEO_FORMAT_INFO_TILE_WS (info);
+-  hs = GST_VIDEO_FORMAT_INFO_TILE_HS (info);
++  ws = 3;
++  hs = 7;
+   ts = ws + hs;
+   ty = y >> hs;
+   y = y & ((1 << hs) - 1);
+@@ -6999,12 +6979,13 @@ typedef struct
+ #define SUB4204           { 0, 1, 1, 0 }, { 0, 1, 1, 0 }
+ #define SUB4224           { 0, 1, 1, 0 }, { 0, 0, 0, 0 }
+ 
+-/* tile_mode, tile_ws (width shift), tile_hs (height shift) */
+-#define TILE_4x4(mode) GST_VIDEO_TILE_MODE_ ##mode, 2, 2
+-#define TILE_16x32(mode) GST_VIDEO_TILE_MODE_ ##mode, 4, 5
+-#define TILE_32x32(mode) GST_VIDEO_TILE_MODE_ ##mode, 5, 5
+-#define TILE_64x32(mode) GST_VIDEO_TILE_MODE_ ##mode, 6, 5
+-#define TILE_8x128(mode) GST_VIDEO_TILE_MODE_ ##mode, 3, 7
++/* tile_mode, tile_ws (width shift), tile_hs (height shift), tile_info[] */
++#define TILE_4x4(mode) GST_VIDEO_TILE_MODE_ ##mode, 2, 2, { {4, 4, 4, 16}, {4, 4, 4, 16}, }
++#define TILE_16x32s(mode) GST_VIDEO_TILE_MODE_ ##mode, 4, 5, { {16, 32, 16, 512}, {16, 16, 16, 256}, }
++#define TILE_32x32(mode) GST_VIDEO_TILE_MODE_ ##mode, 5, 5, { {32, 32, 32, 1024}, {32, 32, 32, 1024}, }
++#define TILE_64x32(mode) GST_VIDEO_TILE_MODE_ ##mode, 6, 5, { {64, 32, 64, 2048}, {64, 32, 64, 2048}, }
++#define TILE_8x128(mode) GST_VIDEO_TILE_MODE_ ##mode, 3, 7, { {8, 128, 8, 1024}, {8, 128, 8, 1024}, }
++#define TILE_10bit_8x128(mode) GST_VIDEO_TILE_MODE_ ##mode, 3, 7, { {0, 128, 8, 1024}, {0, 128, 8, 1024}, }
+ 
+ #define MAKE_YUV_FORMAT(name, desc, fourcc, depth, pstride, plane, offs, sub, pack ) \
+  { fourcc, {GST_VIDEO_FORMAT_ ##name, G_STRINGIFY(name), desc, GST_VIDEO_FORMAT_FLAG_YUV, depth, pstride, plane, offs, sub, pack } }
+@@ -7049,6 +7030,7 @@ typedef struct
+ #define MAKE_GRAY_C_LE_FORMAT(name, desc, depth, pstride, plane, offs, sub, pack) \
+  { 0x00000000, {GST_VIDEO_FORMAT_ ##name, G_STRINGIFY(name), desc, GST_VIDEO_FORMAT_FLAG_GRAY | GST_VIDEO_FORMAT_FLAG_COMPLEX | GST_VIDEO_FORMAT_FLAG_LE, depth, pstride, plane, offs, sub, pack } }
+ 
++G_GNUC_BEGIN_IGNORE_DEPRECATIONS;
+ static const VideoFormat formats[] = {
+   {0x00000000, {GST_VIDEO_FORMAT_UNKNOWN, "UNKNOWN", "unknown video", 0, DPTH0,
+           PSTR0, PLANE_NA, OFFS0}},
+@@ -7304,15 +7286,17 @@ static const VideoFormat formats[] = {
+       OFFS6420, SUB4444, PACK_ABGR64_BE),
+   MAKE_YUV_ST_FORMAT (NV12_16L32S, "raw video",
+       GST_MAKE_FOURCC ('M', 'M', '2', '1'), DPTH888, PSTR122, PLANE011,
+-      OFFS001, SUB420, PACK_NV12_TILED, TILE_16x32 (LINEAR)),
++      OFFS001, SUB420, PACK_NV12_TILED, TILE_16x32s (LINEAR)),
+   MAKE_YUV_T_FORMAT (NV12_8L128, "raw video",
+       GST_MAKE_FOURCC ('N', 'A', '1', '2'), DPTH888, PSTR122, PLANE011,
+       OFFS001, SUB420, PACK_NV12_TILED, TILE_8x128 (LINEAR)),
+   MAKE_YUV_T_FORMAT (NV12_10BE_8L128, "raw video",
+-      GST_MAKE_FOURCC ('N', 'T', '1', '2'), DPTH10_10_10, PSTR122, PLANE011,
+-      OFFS001, SUB420, PACK_NV12_10BE_8L128, TILE_8x128 (LINEAR)),
++      GST_MAKE_FOURCC ('N', 'T', '1', '2'), DPTH10_10_10, PSTR0, PLANE011,
++      OFFS001, SUB420, PACK_NV12_10BE_8L128, TILE_10bit_8x128 (LINEAR)),
+ };
+ 
++G_GNUC_END_IGNORE_DEPRECATIONS;
++
+ static GstVideoFormat
+ gst_video_format_from_rgb32_masks (int red_mask, int green_mask, int blue_mask)
+ {
+@@ -7898,62 +7882,3 @@ gst_video_make_raw_caps_with_features (const GstVideoFormat formats[],
+ 
+   return caps;
+ }
+-
+-static void
+-scale_tile_shifts (const GstVideoFormatInfo * finfo, gint plane, guint * ws,
+-    guint * hs)
+-{
+-  gint comp[GST_VIDEO_MAX_COMPONENTS];
+-  gint i;
+-
+-  gst_video_format_info_component (finfo, plane, comp);
+-
+-  /* scale the tile size according to the subsampling */
+-  *ws -= finfo->w_sub[comp[0]];
+-  *hs -= finfo->h_sub[comp[0]];
+-
+-  /* for each additional component in the same plane, double the tile width,
+-   * this should provide the appropriate tile size when the tile size varies
+-   * base on the subsampling. */
+-  for (i = 1; i < GST_VIDEO_MAX_COMPONENTS && comp[i] >= 0; i++)
+-    *ws += 1;
+-}
+-
+-/**
+- * gst_video_format_info_get_tile_sizes:
+- * @finfo: #GstVideoFormatInfo
+- * @plane: The plane to read the tile sizes for.
+- * @out_ws: (nullable): Set to the scaled tile width shift
+- * @out_hs: (nullable): Set to the scaled tile height shift
+- *
+- * This function will read the width and height tile dimension shifts from
+- * @info and scale it according to the tiling type and @plane. The results
+- * will written into @out_hs and @out_ws. It also computes the size of a tile
+- * in bytes.
+- *
+- * Returns: The size of a tile in bytes.
+- *
+- * Since: 1.22
+- */
+-guint
+-gst_video_format_info_get_tile_sizes (const GstVideoFormatInfo * finfo,
+-    guint plane, guint * out_ws, guint * out_hs)
+-{
+-  guint ws, hs;
+-
+-  g_return_val_if_fail (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo), 0);
+-
+-  ws = GST_VIDEO_FORMAT_INFO_TILE_WS (finfo);
+-  hs = GST_VIDEO_FORMAT_INFO_TILE_HS (finfo);
+-
+-  if (GST_VIDEO_FORMAT_INFO_HAS_SUBTILES (finfo))
+-    scale_tile_shifts (finfo, plane, &ws, &hs);
+-
+-  if (out_ws)
+-    *out_ws = ws;
+-
+-  if (out_hs)
+-    *out_hs = hs;
+-
+-  return 1 << (ws + hs);
+-}
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/video/video-format.h b/subprojects/gst-plugins-base/gst-libs/gst/video/video-format.h
+index da78552340..11388d0038 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/video/video-format.h
++++ b/subprojects/gst-plugins-base/gst-libs/gst/video/video-format.h
+@@ -596,8 +596,11 @@ typedef void (*GstVideoFormatPack)           (const GstVideoFormatInfo *info,
+  * @pack_lines: the amount of lines that will be packed
+  * @pack_func: an pack function for this format
+  * @tile_mode: The tiling mode
+- * @tile_ws: The width of a tile, in bytes, represented as a shift
+- * @tile_hs: The height of a tile, in bytes, represented as a shift
++ * @tile_ws: The width of a tile, in bytes, represented as a shift. DEPRECATED,
++ * use tile_info[] array instead.
++ * @tile_hs: The height of a tile, in bytes, represented as a shift. DEPREACTED,
++ * use tile_info[] array instead.
++ * @tile_info: Per-plane tile information
+  *
+  * Information for a video format.
+  */
+@@ -623,11 +626,17 @@ struct _GstVideoFormatInfo {
+   GstVideoFormatPack pack_func;
+ 
+   GstVideoTileMode tile_mode;
+-  guint tile_ws;
+-  guint tile_hs;
++  G_DEPRECATED_FOR(tile_info) guint tile_ws;
++  G_DEPRECATED_FOR(tile_info) guint tile_hs;
+ 
+-  /*< private >*/
+-  gpointer _gst_reserved[GST_PADDING];
++  /**
++   * GstVideoFormatInfo.tile_info:
++   *
++   * Information about the tiles for each of the planes.
++   *
++   * Since: 1.22
++   */
++  GstVideoTileInfo tile_info[GST_VIDEO_MAX_PLANES];
+ };
+ 
+ #define GST_VIDEO_FORMAT_INFO_FORMAT(info)       ((info)->format)
+@@ -728,6 +737,60 @@ struct _GstVideoFormatInfo {
+ #define GST_VIDEO_FORMAT_INFO_TILE_WS(info) ((info)->tile_ws)
+ #define GST_VIDEO_FORMAT_INFO_TILE_HS(info) ((info)->tile_hs)
+ 
++/**
++ * GST_VIDEO_FORMAT_INFO_TILE_SIZE:
++ * @info: a #GstVideoFormatInfo
++ * @plane: the plane index
++ *
++ * Provides the size in bytes of a tile in the specified @plane. This replaces
++ * the width and height shift, which was limited to power of two dimensions.
++ *
++ * Since: 1.22
++ */
++#define GST_VIDEO_FORMAT_INFO_TILE_SIZE(info,plane) ((info)->tile_info[plane].size)
++
++/**
++ * GST_VIDEO_FORMAT_INFO_TILE_WIDTH:
++ * @info: a #GstVideoFormatInfo
++ * @plane: the plane index
++ *
++ * See #GstVideoTileInfo.width.
++ *
++ * Return the width of one tile in pixels, zero if its not an integer.
++ *
++ * Since: 1.22
++ */
++#define GST_VIDEO_FORMAT_INFO_TILE_WIDTH(info,plane) ((info)->tile_info[plane].width)
++
++/**
++ * GST_VIDEO_FORMAT_INFO_TILE_HEIGHT:
++ * @info: a #GstVideoFormatInfo
++ * @plane: the plane index
++ *
++ * See #GstVideoTileInfo.height.
++ *
++ * Returns the tile height.
++ *
++ * Since: 1.22
++ */
++#define GST_VIDEO_FORMAT_INFO_TILE_HEIGHT(info,plane) ((info)->tile_info[plane].height)
++
++/**
++ * GST_VIDEO_FORMAT_INFO_TILE_STRIDE:
++ * @info: a #GstVideoFormatInfo
++ * @plane: the plane index
++ *
++ * See #GstVideoTileInfo.stride.
++ *
++ * Returns the stride of one tile, regardless of the internal details of the
++ * tile (could be a complex system with subtile) the tiles size should alway
++ * match the tile width multiplied by the tile stride.
++ *
++ * Since: 1.22
++ */
++#define GST_VIDEO_FORMAT_INFO_TILE_STRIDE(info,plane) ((info)->tile_info[plane].stride)
++
++
+ GST_VIDEO_API
+ void gst_video_format_info_component                  (const GstVideoFormatInfo *info, guint plane, gint components[GST_VIDEO_MAX_COMPONENTS]);
+ 
+@@ -861,12 +924,6 @@ GST_VIDEO_API
+ GstCaps * gst_video_make_raw_caps_with_features (const GstVideoFormat formats[], guint len,
+                                                  GstCapsFeatures * features);
+ 
+-GST_VIDEO_API
+-guint     gst_video_format_info_get_tile_sizes  (const GstVideoFormatInfo * finfo,
+-                                                 guint plane,
+-                                                 guint * out_ws, guint * out_hs);
+-
+-
+ 
+ G_END_DECLS
+ 
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/video/video-frame.c b/subprojects/gst-plugins-base/gst-libs/gst/video/video-frame.c
+index 95adf3643f..bfb57e47e1 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/video/video-frame.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/video/video-frame.c
+@@ -349,11 +349,10 @@ gst_video_frame_copy_plane (GstVideoFrame * dest, const GstVideoFrame * src,
+   if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
+     gint tile_size;
+     gint sx_tiles, sy_tiles, dx_tiles, dy_tiles;
+-    guint i, j, ws, hs, ts;
++    guint i, j;
+     GstVideoTileMode mode;
+ 
+-    tile_size = gst_video_format_info_get_tile_sizes (finfo, plane, &ws, &hs);
+-    ts = ws + hs;
++    tile_size = GST_VIDEO_FORMAT_INFO_TILE_SIZE (finfo, plane);
+ 
+     mode = GST_VIDEO_FORMAT_INFO_TILE_MODE (finfo);
+ 
+@@ -364,8 +363,8 @@ gst_video_frame_copy_plane (GstVideoFrame * dest, const GstVideoFrame * src,
+     dy_tiles = GST_VIDEO_TILE_Y_TILES (ds);
+ 
+     /* this is the amount of tiles to copy */
+-    w = ((w - 1) >> ws) + 1;
+-    h = ((h - 1) >> hs) + 1;
++    w = MIN (sx_tiles, dx_tiles);
++    h = MIN (sy_tiles, dy_tiles);
+ 
+     /* FIXME can possibly do better when no retiling is needed, it depends on
+      * the stride and the tile_size */
+@@ -376,7 +375,7 @@ gst_video_frame_copy_plane (GstVideoFrame * dest, const GstVideoFrame * src,
+         si = gst_video_tile_get_index (mode, i, j, sx_tiles, sy_tiles);
+         di = gst_video_tile_get_index (mode, i, j, dx_tiles, dy_tiles);
+ 
+-        memcpy (dp + (di << ts), sp + (si << ts), tile_size);
++        memcpy (dp + (di * tile_size), sp + (si * tile_size), tile_size);
+       }
+     }
+   } else {
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/video/video-info.c b/subprojects/gst-plugins-base/gst-libs/gst/video/video-info.c
+index e1fb452eba..d543e31267 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/video/video-info.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/video/video-info.c
+@@ -1097,39 +1097,40 @@ fill_planes (GstVideoInfo * info, gsize plane_size[GST_VIDEO_MAX_PLANES])
+     case GST_VIDEO_FORMAT_NV12_4L4:
+     case GST_VIDEO_FORMAT_NV12_32L32:
+     {
+-      gint ws = GST_VIDEO_FORMAT_INFO_TILE_WS (info->finfo);
+-      gint hs = GST_VIDEO_FORMAT_INFO_TILE_HS (info->finfo);
+-      info->stride[0] =
+-          GST_VIDEO_TILE_MAKE_STRIDE (GST_ROUND_UP_N (width, 1 << ws) >> ws,
+-          GST_ROUND_UP_N (height, 1 << hs) >> hs);
+-      info->stride[1] =
+-          GST_VIDEO_TILE_MAKE_STRIDE (GST_ROUND_UP_N (width, 1 << ws) >> ws,
+-          GST_ROUND_UP_N (height, 1 << (hs + 1)) >> (hs + 1));
+-      info->offset[0] = 0;
+-      info->offset[1] =
+-          GST_ROUND_UP_N (width, 1 << ws) * GST_ROUND_UP_N (height, 1 << hs);
++      const gsize tile_size = GST_VIDEO_FORMAT_INFO_TILE_SIZE (info->finfo, 0);
++      gint tile_width = GST_VIDEO_FORMAT_INFO_TILE_WIDTH (info->finfo, 0);
++      gint tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (info->finfo, 0);
++      gint n_tile_x = GST_ROUND_UP_N (info->width, tile_width) / tile_width;
++      gint n_tile_y = GST_ROUND_UP_N (info->height, tile_height) / tile_height;
++
++      info->stride[0] = GST_VIDEO_TILE_MAKE_STRIDE (n_tile_x, n_tile_y);
++      info->stride[1] = GST_VIDEO_TILE_MAKE_STRIDE (n_tile_x,
++          GST_ROUND_UP_2 (n_tile_y) / 2);
++      info->offset[1] = n_tile_x * n_tile_y * tile_size;
+       info->size = info->offset[1] +
+-          GST_ROUND_UP_N (width, 1 << ws) *
+-          (GST_ROUND_UP_N (height, 1 << (hs + 1)) / 2);
++          n_tile_x * GST_ROUND_UP_2 (n_tile_y) / 2 * tile_size;
+       break;
+     }
+     case GST_VIDEO_FORMAT_NV12_16L32S:
+     {
+-      gint ws = GST_VIDEO_FORMAT_INFO_TILE_WS (info->finfo);
+-      gint hs = GST_VIDEO_FORMAT_INFO_TILE_HS (info->finfo);
+-      info->stride[0] =
+-          GST_VIDEO_TILE_MAKE_STRIDE (GST_ROUND_UP_N (width, 1 << ws) >> ws,
+-          GST_ROUND_UP_N (height, 1 << hs) >> hs);
++      const gsize y_tile_size =
++          GST_VIDEO_FORMAT_INFO_TILE_SIZE (info->finfo, 0);
++      const gsize uv_tile_size =
++          GST_VIDEO_FORMAT_INFO_TILE_SIZE (info->finfo, 0);
++      gint tile_width = GST_VIDEO_FORMAT_INFO_TILE_WIDTH (info->finfo, 0);
++      gint tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (info->finfo, 0);
++      gint n_tile_x = GST_ROUND_UP_N (info->width, tile_width) / tile_width;
++      gint n_tile_y = GST_ROUND_UP_N (info->height, tile_height) / tile_height;
++
++      info->stride[0] = GST_VIDEO_TILE_MAKE_STRIDE (n_tile_x, n_tile_y);
+       /*
+        * size of UV plane tiles is subsample, hence have the same number of
+        * tiles in both directions.
+        */
+       info->stride[1] = info->stride[0];
+       info->offset[0] = 0;
+-      info->offset[1] =
+-          GST_ROUND_UP_N (width, 1 << ws) * GST_ROUND_UP_N (height, 1 << hs);
+-      info->size = info->offset[1] + GST_ROUND_UP_N (width, 1 << ws) *
+-          GST_ROUND_UP_N (height, 1 << hs) / 2;
++      info->offset[1] = n_tile_x * n_tile_y * y_tile_size;
++      info->size = info->offset[1] + n_tile_x * n_tile_y * uv_tile_size;
+       break;
+     }
+     case GST_VIDEO_FORMAT_A420_10LE:
+@@ -1220,47 +1221,49 @@ fill_planes (GstVideoInfo * info, gsize plane_size[GST_VIDEO_MAX_PLANES])
+       break;
+     case GST_VIDEO_FORMAT_NV12_8L128:
+     {
+-      gint ws = GST_VIDEO_FORMAT_INFO_TILE_WS (info->finfo);
+-      gint hs = GST_VIDEO_FORMAT_INFO_TILE_HS (info->finfo);
+-      gint ALIGN_W = 1 << ws;
+-      gint ALIGN_H = 1 << hs;
++      gint tile_size = GST_VIDEO_FORMAT_INFO_TILE_SIZE (info->finfo, 0);
++      gint tile_width = GST_VIDEO_FORMAT_INFO_TILE_WIDTH (info->finfo, 0);
++      gint tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (info->finfo, 0);
++      gint ALIGN_W = tile_width;
++      gint ALIGN_H = tile_height;
++      guint n_tile_x, y_n_tile_y, uv_n_tile_y;
+ 
+       if (GST_VIDEO_INFO_IS_INTERLACED (info))
+-        ALIGN_H = (ALIGN_H << 1);
+-      info->stride[0] =
+-          GST_VIDEO_TILE_MAKE_STRIDE (GST_ROUND_UP_N (width, ALIGN_W) >> ws,
+-          GST_ROUND_UP_N (height, ALIGN_H) >> hs);
+-      info->stride[1] =
+-          GST_VIDEO_TILE_MAKE_STRIDE (GST_ROUND_UP_N (width, ALIGN_W) >> ws,
+-          GST_ROUND_UP_N (height, ALIGN_H << 1) >> (hs + 1));
++        ALIGN_H *= 2;
++
++      n_tile_x = GST_ROUND_UP_N (width, ALIGN_W) / tile_width;
++      y_n_tile_y = GST_ROUND_UP_N (height, ALIGN_H) / tile_height;
++      uv_n_tile_y = GST_ROUND_UP_2 (y_n_tile_y) / 2;
++
++      info->stride[0] = GST_VIDEO_TILE_MAKE_STRIDE (n_tile_x, y_n_tile_y);
++      info->stride[1] = GST_VIDEO_TILE_MAKE_STRIDE (n_tile_x, uv_n_tile_y);
+       info->offset[0] = 0;
+-      info->offset[1] =
+-          GST_ROUND_UP_N (width, ALIGN_W) * GST_ROUND_UP_N (height, ALIGN_H);
+-      cr_h = GST_ROUND_UP_N (height, ALIGN_H << 1) / 2;
+-      info->size = info->offset[1] + GST_ROUND_UP_N (width, ALIGN_W) * cr_h;
++      info->offset[1] = n_tile_x * y_n_tile_y * tile_size;
++      info->size = info->offset[1] + n_tile_x * uv_n_tile_y * tile_size;
+       break;
+     }
+     case GST_VIDEO_FORMAT_NV12_10BE_8L128:
+     {
+-      gint ws = GST_VIDEO_FORMAT_INFO_TILE_WS (info->finfo);
+-      gint hs = GST_VIDEO_FORMAT_INFO_TILE_HS (info->finfo);
+-      gint ALIGN_W = 1 << ws;
+-      gint ALIGN_H = 1 << hs;
++      gint tile_size = GST_VIDEO_FORMAT_INFO_TILE_SIZE (info->finfo, 0);
++      gint tile_stride = GST_VIDEO_FORMAT_INFO_TILE_STRIDE (info->finfo, 0);
++      gint tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (info->finfo, 0);
+       gint stride = GST_ROUND_UP_8 (width * 10) >> 3;
++      gint ALIGN_W = tile_stride;
++      gint ALIGN_H = tile_height;
++      guint n_tile_x, y_n_tile_y, uv_n_tile_y;
+ 
+       if (GST_VIDEO_INFO_IS_INTERLACED (info))
+-        ALIGN_H = (ALIGN_H << 1);
+-      info->stride[0] =
+-          GST_VIDEO_TILE_MAKE_STRIDE (GST_ROUND_UP_N (stride, ALIGN_W) >> ws,
+-          GST_ROUND_UP_N (height, ALIGN_H) >> hs);
+-      info->stride[1] =
+-          GST_VIDEO_TILE_MAKE_STRIDE (GST_ROUND_UP_N (stride, ALIGN_W) >> ws,
+-          GST_ROUND_UP_N (height, ALIGN_H << 1) >> (hs + 1));
++        ALIGN_H *= 2;
++
++      n_tile_x = GST_ROUND_UP_N (stride, ALIGN_W) / tile_stride;
++      y_n_tile_y = GST_ROUND_UP_N (height, ALIGN_H) / tile_height;
++      uv_n_tile_y = GST_ROUND_UP_2 (y_n_tile_y) / 2;
++
++      info->stride[0] = GST_VIDEO_TILE_MAKE_STRIDE (n_tile_x, y_n_tile_y);
++      info->stride[1] = GST_VIDEO_TILE_MAKE_STRIDE (n_tile_x, uv_n_tile_y);
+       info->offset[0] = 0;
+-      info->offset[1] =
+-          GST_ROUND_UP_N (stride, ALIGN_W) * GST_ROUND_UP_N (height, ALIGN_H);
+-      cr_h = GST_ROUND_UP_N (height, ALIGN_H << 1) / 2;
+-      info->size = info->offset[1] + GST_ROUND_UP_N (stride, ALIGN_W) * cr_h;
++      info->offset[1] = n_tile_x * y_n_tile_y * tile_size;
++      info->size = info->offset[1] + n_tile_x * uv_n_tile_y * tile_size;
+       break;
+     }
+     case GST_VIDEO_FORMAT_ENCODED:
+@@ -1275,15 +1278,22 @@ fill_planes (GstVideoInfo * info, gsize plane_size[GST_VIDEO_MAX_PLANES])
+   if (plane_size) {
+     for (i = 0; i < GST_VIDEO_MAX_PLANES; i++) {
+       if (i < GST_VIDEO_INFO_N_PLANES (info)) {
+-        gint comp[GST_VIDEO_MAX_COMPONENTS];
+-        guint plane_height;
+-
+-        /* Convert plane index to component index */
+-        gst_video_format_info_component (info->finfo, i, comp);
+-        plane_height =
+-            GST_VIDEO_FORMAT_INFO_SCALE_HEIGHT (info->finfo, comp[0],
+-            GST_VIDEO_INFO_FIELD_HEIGHT (info));
+-        plane_size[i] = plane_height * GST_VIDEO_INFO_PLANE_STRIDE (info, i);
++        if (GST_VIDEO_FORMAT_INFO_IS_TILED (info->finfo)) {
++          guint x_tiles = GST_VIDEO_TILE_X_TILES (info->stride[i]);
++          guint y_tiles = GST_VIDEO_TILE_Y_TILES (info->stride[i]);
++          plane_size[i] = x_tiles * y_tiles *
++              GST_VIDEO_FORMAT_INFO_TILE_SIZE (info->finfo, i);
++        } else {
++          gint comp[GST_VIDEO_MAX_COMPONENTS];
++          guint plane_height;
++
++          /* Convert plane index to component index */
++          gst_video_format_info_component (info->finfo, i, comp);
++          plane_height =
++              GST_VIDEO_FORMAT_INFO_SCALE_HEIGHT (info->finfo, comp[0],
++              GST_VIDEO_INFO_FIELD_HEIGHT (info));
++          plane_size[i] = plane_height * GST_VIDEO_INFO_PLANE_STRIDE (info, i);
++        }
+       } else {
+         plane_size[i] = 0;
+       }
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/video/video-tile.h b/subprojects/gst-plugins-base/gst-libs/gst/video/video-tile.h
+index f1000e8dfa..0cdbaf8a62 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/video/video-tile.h
++++ b/subprojects/gst-plugins-base/gst-libs/gst/video/video-tile.h
+@@ -105,6 +105,8 @@ typedef enum
+  */
+ #define GST_VIDEO_TILE_Y_TILES(stride) ((stride) >> GST_VIDEO_TILE_Y_TILES_SHIFT)
+ 
++typedef struct _GstVideoTileInfo GstVideoTileInfo;
++
+ /**
+  * GstVideoTileMode:
+  * @GST_VIDEO_TILE_MODE_UNKNOWN: Unknown or unset tile mode
+@@ -132,6 +134,63 @@ typedef enum
+   GST_VIDEO_TILE_MODE_LINEAR = GST_VIDEO_TILE_MAKE_MODE (2, INDEXED),
+ } GstVideoTileMode;
+ 
++
++/**
++ * GstVideoTileInfo:
++ *
++ * Description of a tile. This structure allow to describe arbitrary tile
++ * dimensions and sizes.
++ *
++ * Since: 1.22
++ */
++struct _GstVideoTileInfo
++{
++  /**
++   * GstVideoTileInfo.width:
++   *
++   * The width in pixels of a tile. This value can be zero if the number of
++   * pixels per line is not an integer value.
++   *
++   * Since: 1.22
++   */
++  guint width;
++
++  /**
++   * GstVideoTileInfo::height:
++   *
++   * The width in pixels of a tile. This value can be zero if the number of
++   * pixels per line is not an integer value.
++   *
++   * Since: 1.22
++   */
++  guint height;
++
++  /**
++   * GstVideoTileInfo.stride:
++   *
++   * The stride (in bytes) of a tile line. Regardless if the tile have sub-tiles
++   * this stride multiplied by the height should be equal to
++   * #GstVideoTileInfo.size. This value is used to translate into linear stride
++   * when older APIs are being used to expose this format.
++   *
++   * Since: 1.22
++   */
++  guint stride;
++
++  /**
++   * GstVideoTileInfo.size:
++   *
++   * The size in bytes of a tile. This value must be divisible by
++   * #GstVideoTileInfo.stride.
++   *
++   * Since: 1.22
++   */
++  guint size;
++
++  /* <private> */
++  guint32 padding[GST_PADDING];
++};
++
+ GST_VIDEO_API
+ guint           gst_video_tile_get_index                (GstVideoTileMode mode, gint x, gint y,
+                                                          gint x_tiles, gint y_tiles);
 diff --git a/subprojects/gst-plugins-base/gst/encoding/gstencodebasebin.c b/subprojects/gst-plugins-base/gst/encoding/gstencodebasebin.c
 index e8b7af2c1f..85a4913e14 100644
 --- a/subprojects/gst-plugins-base/gst/encoding/gstencodebasebin.c
@@ -312,6 +1356,30 @@ index e8b7af2c1f..85a4913e14 100644
        gst_element_add_pad (GST_ELEMENT (ebin), pad);
      }
  
+diff --git a/subprojects/gst-plugins-base/gst/playback/gstdecodebin2.c b/subprojects/gst-plugins-base/gst/playback/gstdecodebin2.c
+index 532824f4f1..7dcad5411a 100644
+--- a/subprojects/gst-plugins-base/gst/playback/gstdecodebin2.c
++++ b/subprojects/gst-plugins-base/gst/playback/gstdecodebin2.c
+@@ -5015,7 +5015,7 @@ source_pad_event_probe (GstPad * pad, GstPadProbeInfo * info,
+   GstDecodePad *dpad = user_data;
+   gboolean res = TRUE;
+ 
+-  GST_LOG_OBJECT (pad, "%s dpad:%p", GST_EVENT_TYPE_NAME (event), dpad);
++  GST_LOG_OBJECT (pad, "event %s", GST_EVENT_TYPE_NAME (event));
+ 
+   if (GST_EVENT_TYPE (event) == GST_EVENT_EOS) {
+     GST_DEBUG_OBJECT (pad, "we received EOS");
+@@ -5162,8 +5162,8 @@ gst_decode_pad_query (GstPad * pad, GstObject * parent, GstQuery * query)
+ 
+     ret = FALSE;
+     GST_DEBUG_OBJECT (dpad->dbin,
+-        "calling autoplug-query for %s (element %s): %" GST_PTR_FORMAT,
+-        GST_PAD_NAME (dpad), GST_ELEMENT_NAME (delem->element), query);
++        "calling autoplug-query for %" GST_PTR_FORMAT " (element %s): %"
++        GST_PTR_FORMAT, dpad, GST_ELEMENT_NAME (delem->element), query);
+     g_signal_emit (G_OBJECT (dpad->dbin),
+         gst_decode_bin_signals[SIGNAL_AUTOPLUG_QUERY], 0, dpad, delem->element,
+         query, &ret);
 diff --git a/subprojects/gst-plugins-base/gst/playback/gstdecodebin3-parse.c b/subprojects/gst-plugins-base/gst/playback/gstdecodebin3-parse.c
 index 6675aae9d5..95b8e865e0 100644
 --- a/subprojects/gst-plugins-base/gst/playback/gstdecodebin3-parse.c
@@ -9263,20 +10331,22 @@ index 9161a07a95..c2e7f3e6b8 100644
      default:
        break;
 diff --git a/subprojects/gst-plugins-base/gst/rawparse/gstrawvideoparse.c b/subprojects/gst-plugins-base/gst/rawparse/gstrawvideoparse.c
-index ab0fa651d5..043af01b85 100644
+index ab0fa651d5..d630040c65 100644
 --- a/subprojects/gst-plugins-base/gst/rawparse/gstrawvideoparse.c
 +++ b/subprojects/gst-plugins-base/gst/rawparse/gstrawvideoparse.c
-@@ -1163,6 +1163,10 @@ gst_raw_video_parse_update_info (GstRawVideoParseConfig * config)
+@@ -1161,9 +1161,9 @@ gst_raw_video_parse_update_info (GstRawVideoParseConfig * config)
+     gint stride = GST_VIDEO_INFO_PLANE_STRIDE (info, last_plane);
+     gint x_tiles = GST_VIDEO_TILE_X_TILES (stride);
      gint y_tiles = GST_VIDEO_TILE_Y_TILES (stride);
-     gint tile_width = 1 << GST_VIDEO_FORMAT_INFO_TILE_WS (info->finfo);
-     gint tile_height = 1 << GST_VIDEO_FORMAT_INFO_TILE_HS (info->finfo);
+-    gint tile_width = 1 << GST_VIDEO_FORMAT_INFO_TILE_WS (info->finfo);
+-    gint tile_height = 1 << GST_VIDEO_FORMAT_INFO_TILE_HS (info->finfo);
+-    last_plane_size = x_tiles * y_tiles * tile_width * tile_height;
++    guint tile_size = GST_VIDEO_FORMAT_INFO_TILE_SIZE (info->finfo, last_plane);
 +
-+    if (GST_VIDEO_FORMAT_INFO_HAS_SUBTILES (info->finfo))
-+      tile_height /= 2;
-+
-     last_plane_size = x_tiles * y_tiles * tile_width * tile_height;
++    last_plane_size = x_tiles * y_tiles * tile_size;
    } else {
      gint comp[GST_VIDEO_MAX_COMPONENTS];
+     gst_video_format_info_component (info->finfo, last_plane, comp);
 diff --git a/subprojects/gst-plugins-base/gst/videoconvertscale/gstvideoconvert.c b/subprojects/gst-plugins-base/gst/videoconvertscale/gstvideoconvert.c
 index 88f3de0bc1..e87fb15790 100644
 --- a/subprojects/gst-plugins-base/gst/videoconvertscale/gstvideoconvert.c
