@@ -1,5 +1,5 @@
 diff --git a/subprojects/gst-plugins-bad/docs/plugins/gst_plugins_cache.json b/subprojects/gst-plugins-bad/docs/plugins/gst_plugins_cache.json
-index bd07b689b9..778557af47 100644
+index bd07b689b9..8703b4a73c 100644
 --- a/subprojects/gst-plugins-bad/docs/plugins/gst_plugins_cache.json
 +++ b/subprojects/gst-plugins-bad/docs/plugins/gst_plugins_cache.json
 @@ -675,7 +675,7 @@
@@ -20,6 +20,15 @@ index bd07b689b9..778557af47 100644
              }
          },
          "filename": "gstamfcodec",
+@@ -1124,7 +1124,7 @@
+                     }
+                 },
+                 "properties": {},
+-                "rank": "primary"
++                "rank": "secondary"
+             },
+             "av1enc": {
+                 "author": "Sean DuBois <sean@siobud.com>",
 @@ -7323,12 +7323,12 @@
                  "klass": "Filter/Converter/Video/Hardware",
                  "pad-templates": {
@@ -155,7 +164,26 @@ index bd07b689b9..778557af47 100644
                          "direction": "sink",
                          "presence": "always"
                      }
-@@ -216835,7 +216835,7 @@
+@@ -31312,6 +31312,18 @@
+                         "readable": true,
+                         "type": "gboolean",
+                         "writable": true
++                    },
++                    "skip-vsync": {
++                        "blurb": "When enabled will not wait internally for vsync. Should be used for atomic drivers to avoid double vsync.",
++                        "conditionally-available": false,
++                        "construct": true,
++                        "construct-only": false,
++                        "controllable": false,
++                        "default": "false",
++                        "mutable": "null",
++                        "readable": true,
++                        "type": "gboolean",
++                        "writable": true
+                     }
+                 },
+                 "rank": "secondary"
+@@ -216835,7 +216847,7 @@
                  "description": "Converts video from one colorspace to another using CUDA",
                  "hierarchy": [
                      "GstCudaConvert",
@@ -164,7 +192,7 @@ index bd07b689b9..778557af47 100644
                      "GstCudaBaseTransform",
                      "GstBaseTransform",
                      "GstElement",
-@@ -216844,21 +216844,62 @@
+@@ -216844,19 +216856,60 @@
                      "GObject"
                  ],
                  "klass": "Filter/Converter/Video/Hardware",
@@ -173,18 +201,17 @@ index bd07b689b9..778557af47 100644
                      "sink": {
 -                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
 +                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE, RGBP, BGRP, GBR, GBRA }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
-                         "direction": "sink",
-                         "presence": "always"
-                     },
-                     "src": {
--                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
++                        "direction": "sink",
++                        "presence": "always"
++                    },
++                    "src": {
 +                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE, RGBP, BGRP, GBR, GBRA }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
-                         "direction": "src",
-                         "presence": "always"
-                     }
-                 },
-                 "rank": "none"
-             },
++                        "direction": "src",
++                        "presence": "always"
++                    }
++                },
++                "rank": "none"
++            },
 +            "cudaconvertscale": {
 +                "author": "Seungha Yang <seungha@centricular.com>",
 +                "description": "Resizes video and allow color conversion using CUDA",
@@ -202,15 +229,16 @@ index bd07b689b9..778557af47 100644
 +                "pad-templates": {
 +                    "sink": {
 +                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE, RGBP, BGRP, GBR, GBRA }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
-+                        "direction": "sink",
-+                        "presence": "always"
-+                    },
-+                    "src": {
+                         "direction": "sink",
+                         "presence": "always"
+                     },
+                     "src": {
+-                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
 +                        "caps": "video/x-raw(memory:CUDAMemory):\n         format: { I420, YV12, NV12, NV21, P010_10LE, P016_LE, I420_10LE, Y444, Y444_16LE, BGRA, RGBA, RGBx, BGRx, ARGB, ABGR, RGB, BGR, BGR10A2_LE, RGB10A2_LE, Y42B, I422_10LE, I422_12LE, RGBP, BGRP, GBR, GBRA }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
-+                        "direction": "src",
-+                        "presence": "always"
-+                    }
-+                },
+                         "direction": "src",
+                         "presence": "always"
+                     }
+                 },
 +                "properties": {
 +                    "add-borders": {
 +                        "blurb": "Add black borders if necessary to keep the display aspect ratio",
@@ -225,12 +253,10 @@ index bd07b689b9..778557af47 100644
 +                        "writable": true
 +                    }
 +                },
-+                "rank": "none"
-+            },
+                 "rank": "none"
+             },
              "cudadownload": {
-                 "author": "Seungha Yang <seungha.yang@navercorp.com>",
-                 "description": "Downloads data from NVIDA GPU via CUDA APIs",
-@@ -216873,15 +216914,14 @@
+@@ -216873,15 +216926,14 @@
                      "GObject"
                  ],
                  "klass": "Filter/Video",
@@ -248,7 +274,7 @@ index bd07b689b9..778557af47 100644
                          "direction": "src",
                          "presence": "always"
                      }
-@@ -216890,10 +216930,10 @@
+@@ -216890,10 +216942,10 @@
              },
              "cudascale": {
                  "author": "Seungha Yang <seungha.yang@navercorp.com>",
@@ -261,7 +287,7 @@ index bd07b689b9..778557af47 100644
                      "GstCudaBaseTransform",
                      "GstBaseTransform",
                      "GstElement",
-@@ -216902,19 +216942,32 @@
+@@ -216902,19 +216954,32 @@
                      "GObject"
                  ],
                  "klass": "Filter/Converter/Video/Scaler/Hardware",
@@ -297,7 +323,7 @@ index bd07b689b9..778557af47 100644
                  "rank": "none"
              },
              "cudaupload": {
-@@ -216931,15 +216984,14 @@
+@@ -216931,15 +216996,14 @@
                      "GObject"
                  ],
                  "klass": "Filter/Video",
@@ -315,7 +341,7 @@ index bd07b689b9..778557af47 100644
                          "direction": "src",
                          "presence": "always"
                      }
-@@ -219634,7 +219686,6 @@
+@@ -219634,7 +219698,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -323,7 +349,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/x-h264:\n  stream-format: byte-stream\n      alignment: au\n        profile: { (string)constrained-baseline, (string)baseline, (string)main, (string)high, (string)constrained-high, (string)progressive-high }\n          width: [ 48, 4096 ]\n         height: [ 16, 4096 ]\n",
-@@ -219666,7 +219717,6 @@
+@@ -219666,7 +219729,6 @@
                      "GstPreset"
                  ],
                  "klass": "Codec/Encoder/Video/Hardware",
@@ -331,7 +357,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/x-raw:\n         format: { NV12, YV12, I420, BGRA, RGBA, Y444, VUYA }\n          width: [ 145, 4096 ]\n         height: [ 49, 4096 ]\n      framerate: [ 0/1, 2147483647/1 ]\n interlace-mode: { (string)progressive }\n\nvideo/x-raw(memory:GLMemory):\n         format: { NV12, YV12, I420, BGRA, RGBA, Y444, VUYA }\n          width: [ 145, 4096 ]\n         height: [ 49, 4096 ]\n      framerate: [ 0/1, 2147483647/1 ]\n interlace-mode: { (string)progressive }\n\nvideo/x-raw(memory:CUDAMemory):\n         format: { NV12, YV12, I420, BGRA, RGBA, Y444, VUYA }\n          width: [ 145, 4096 ]\n         height: [ 49, 4096 ]\n      framerate: [ 0/1, 2147483647/1 ]\n interlace-mode: { (string)progressive }\n",
-@@ -219786,7 +219836,6 @@
+@@ -219786,7 +219848,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -339,7 +365,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/x-h264:\n  stream-format: { (string)avc, (string)avc3, (string)byte-stream }\n      alignment: au\n        profile: { (string)high, (string)main, (string)constrained-high, (string)constrained-baseline, (string)baseline }\n      framerate: [ 0/1, 2147483647/1 ]\n          width: [ 48, 4096 ]\n         height: [ 16, 4096 ]\n",
-@@ -219830,7 +219879,6 @@
+@@ -219830,7 +219891,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -347,7 +373,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/x-h265:\n  stream-format: byte-stream\n      alignment: au\n        profile: { (string)main, (string)main-10, (string)main-12, (string)main-444, (string)main-444-10, (string)main-444-12 }\n          width: [ 144, 8192 ]\n         height: [ 144, 8192 ]\n",
-@@ -219862,7 +219910,6 @@
+@@ -219862,7 +219922,6 @@
                      "GstPreset"
                  ],
                  "klass": "Codec/Encoder/Video/Hardware",
@@ -355,7 +381,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/x-raw:\n         format: { NV12, P010_10LE, P016_LE, Y444, Y444_16LE, Y444_16LE }\n          width: [ 144, 8192 ]\n         height: [ 144, 8192 ]\n      framerate: [ 0/1, 2147483647/1 ]\n\nvideo/x-raw(memory:GLMemory):\n         format: { NV12, P010_10LE, P016_LE, Y444, Y444_16LE, Y444_16LE }\n          width: [ 144, 8192 ]\n         height: [ 144, 8192 ]\n      framerate: [ 0/1, 2147483647/1 ]\n\nvideo/x-raw(memory:CUDAMemory):\n         format: { NV12, P010_10LE, P016_LE, Y444, Y444_16LE, Y444_16LE }\n          width: [ 144, 8192 ]\n         height: [ 144, 8192 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
-@@ -219982,7 +220029,6 @@
+@@ -219982,7 +220041,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -363,7 +389,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/x-h265:\n  stream-format: { (string)hev1, (string)hvc1, (string)byte-stream }\n      alignment: au\n        profile: { (string)main, (string)main-10, (string)main-12, (string)main-444, (string)main-444-10, (string)main-444-12 }\n          width: [ 144, 8192 ]\n         height: [ 144, 8192 ]\n",
-@@ -220026,7 +220072,6 @@
+@@ -220026,7 +220084,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -371,7 +397,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "image/jpeg:\n          width: [ 64, 32768 ]\n         height: [ 64, 16384 ]\n",
-@@ -220054,7 +220099,6 @@
+@@ -220054,7 +220111,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -379,7 +405,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/mpeg:\n    mpegversion: 2\n   systemstream: false\n          width: [ 48, 4080 ]\n         height: [ 16, 4080 ]\n",
-@@ -220082,7 +220126,6 @@
+@@ -220082,7 +220138,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -387,7 +413,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/mpeg:\n    mpegversion: 4\n   systemstream: false\n          width: [ 48, 2032 ]\n         height: [ 16, 2032 ]\n",
-@@ -220110,7 +220153,6 @@
+@@ -220110,7 +220165,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -395,7 +421,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/mpeg:\n    mpegversion: 1\n   systemstream: false\n          width: [ 48, 4080 ]\n         height: [ 16, 4080 ]\n",
-@@ -220138,7 +220180,6 @@
+@@ -220138,7 +220192,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -403,7 +429,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/x-vp8:\n          width: [ 48, 4096 ]\n         height: [ 16, 4096 ]\n",
-@@ -220166,7 +220207,6 @@
+@@ -220166,7 +220219,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -411,7 +437,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/x-vp8:\n          width: [ 48, 4096 ]\n         height: [ 16, 4096 ]\n",
-@@ -220210,7 +220250,6 @@
+@@ -220210,7 +220262,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -419,7 +445,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/x-vp9:\n          width: [ 128, 8192 ]\n         height: [ 128, 8192 ]\n        profile: { (string)0, (string)2 }\n",
-@@ -220238,7 +220277,6 @@
+@@ -220238,7 +220289,6 @@
                      "GObject"
                  ],
                  "klass": "Codec/Decoder/Video/Hardware",
@@ -427,7 +453,7 @@ index bd07b689b9..778557af47 100644
                  "pad-templates": {
                      "sink": {
                          "caps": "video/x-vp9:\n          width: [ 128, 8192 ]\n         height: [ 128, 8192 ]\n        profile: { (string)0, (string)2 }\n      alignment: frame\n",
-@@ -220273,9 +220311,9 @@
+@@ -220273,9 +220323,9 @@
          "filename": "gstnvcodec",
          "license": "LGPL",
          "other-types": {
@@ -439,7 +465,7 @@ index bd07b689b9..778557af47 100644
                      "GstCudaBaseTransform",
                      "GstBaseTransform",
                      "GstElement",
-@@ -225326,7 +225364,7 @@
+@@ -225326,7 +225376,7 @@
                          "writable": true
                      }
                  },
@@ -448,7 +474,7 @@ index bd07b689b9..778557af47 100644
              },
              "qsvh264dec": {
                  "author": "Seungha Yang <seungha@centricular.com>",
-@@ -225725,7 +225763,7 @@
+@@ -225725,7 +225775,7 @@
                          "writable": true
                      }
                  },
@@ -457,7 +483,7 @@ index bd07b689b9..778557af47 100644
              },
              "qsvh265dec": {
                  "author": "Seungha Yang <seungha@centricular.com>",
-@@ -226058,7 +226096,7 @@
+@@ -226058,7 +226108,7 @@
                          "writable": true
                      }
                  },
@@ -466,7 +492,7 @@ index bd07b689b9..778557af47 100644
              },
              "qsvjpegdec": {
                  "author": "Seungha Yang <seungha@centricular.com>",
-@@ -226131,7 +226169,7 @@
+@@ -226131,7 +226181,7 @@
                          "writable": true
                      }
                  },
@@ -475,7 +501,7 @@ index bd07b689b9..778557af47 100644
              },
              "qsvvp9dec": {
                  "author": "Seungha Yang <seungha@centricular.com>",
-@@ -226300,7 +226338,7 @@
+@@ -226300,7 +226350,7 @@
                          "writable": true
                      }
                  },
@@ -484,7 +510,7 @@ index bd07b689b9..778557af47 100644
              }
          },
          "filename": "gstqsv",
-@@ -233273,10 +233311,966 @@
+@@ -233273,10 +233323,966 @@
      },
      "va": {
          "description": "VA-API codecs plugin",
@@ -1453,7 +1479,7 @@ index bd07b689b9..778557af47 100644
          "package": "GStreamer Bad Plug-ins",
          "source": "gst-plugins-bad",
          "tracers": {},
-@@ -235714,6 +236708,18 @@
+@@ -235714,6 +236720,18 @@
                          "type": "GstWebRTCSessionDescription",
                          "writable": false
                      },
@@ -1492,6 +1518,19 @@ index 9383f047af..66bd327c0b 100644
    }
  
    return TRUE;
+diff --git a/subprojects/gst-plugins-bad/ext/aom/gstav1dec.c b/subprojects/gst-plugins-bad/ext/aom/gstav1dec.c
+index 40d6e4e87c..cf3339fad1 100644
+--- a/subprojects/gst-plugins-bad/ext/aom/gstav1dec.c
++++ b/subprojects/gst-plugins-bad/ext/aom/gstav1dec.c
+@@ -94,7 +94,7 @@ static gboolean gst_av1_dec_get_valid_format (GstAV1Dec * dec,
+ 
+ #define gst_av1_dec_parent_class parent_class
+ G_DEFINE_TYPE (GstAV1Dec, gst_av1_dec, GST_TYPE_VIDEO_DECODER);
+-GST_ELEMENT_REGISTER_DEFINE (av1dec, "av1dec", GST_RANK_PRIMARY,
++GST_ELEMENT_REGISTER_DEFINE (av1dec, "av1dec", GST_RANK_SECONDARY,
+     GST_TYPE_AV1_DEC);
+ 
+ static void
 diff --git a/subprojects/gst-plugins-bad/ext/closedcaption/ccutils.c b/subprojects/gst-plugins-bad/ext/closedcaption/ccutils.c
 new file mode 100644
 index 0000000000..20d8880ed9
@@ -5772,6 +5811,149 @@ index aa511360d1..4a8d926673 100644
                                                    gboolean     * discont);
  
  gboolean           gst_m3u8_has_next_fragment    (GstM3U8 * m3u8,
+diff --git a/subprojects/gst-plugins-bad/ext/onnx/gstonnxclient.cpp b/subprojects/gst-plugins-bad/ext/onnx/gstonnxclient.cpp
+index f47abf1c92..a8600d2052 100644
+--- a/subprojects/gst-plugins-bad/ext/onnx/gstonnxclient.cpp
++++ b/subprojects/gst-plugins-bad/ext/onnx/gstonnxclient.cpp
+@@ -73,6 +73,7 @@ GstOnnxClient::GstOnnxClient ():session (nullptr),
+ 
+ GstOnnxClient::~GstOnnxClient ()
+ {
++    outputNames.clear();
+     delete session;
+     delete[]dest;
+ }
+@@ -115,6 +116,10 @@ std::string GstOnnxClient::getOutputNodeName (GstMlOutputNodeFunction nodeType)
+       case GST_ML_OUTPUT_NODE_FUNCTION_CLASS:
+         return "label";
+         break;
++      case GST_ML_OUTPUT_NODE_NUMBER_OF:
++        g_assert_not_reached();
++        GST_WARNING("Invalid parameter");
++        break;
+     };
+ 
+     return "";
+@@ -130,9 +135,16 @@ GstMlModelInputImageFormat GstOnnxClient::getInputImageFormat (void)
+     return inputImageFormat;
+ }
+ 
+-std::vector < const char *>GstOnnxClient::getOutputNodeNames (void)
++std::vector< const char *> GstOnnxClient::getOutputNodeNames (void)
+ {
+-    return outputNames;
++    if (!outputNames.empty() && outputNamesRaw.size() != outputNames.size()) {
++        outputNamesRaw.resize(outputNames.size());
++        for (size_t i = 0; i < outputNamesRaw.size(); i++) {
++          outputNamesRaw[i] = outputNames[i].get();
++        }
++    }
++
++    return outputNamesRaw;
+ }
+ 
+ void GstOnnxClient::setOutputNodeIndex (GstMlOutputNodeFunction node,
+@@ -227,11 +239,13 @@ bool GstOnnxClient::createSession (std::string modelFile,
+     GST_DEBUG ("Number of Output Nodes: %d", (gint) session->GetOutputCount ());
+ 
+     Ort::AllocatorWithDefaultOptions allocator;
+-    GST_DEBUG ("Input name: %s", session->GetInputName (0, allocator));
++    auto input_name = session->GetInputNameAllocated (0, allocator);
++    GST_DEBUG ("Input name: %s", input_name.get());
+ 
+     for (size_t i = 0; i < session->GetOutputCount (); ++i) {
+-      auto output_name = session->GetOutputName (i, allocator);
+-      outputNames.push_back (output_name);
++      auto output_name = session->GetOutputNameAllocated (i, allocator);
++      GST_DEBUG("Output name %lu:%s", i, output_name.get());
++      outputNames.push_back (std::move(output_name));
+       auto type_info = session->GetOutputTypeInfo (i);
+       auto tensor_info = type_info.GetTensorTypeAndShapeInfo ();
+ 
+@@ -278,7 +292,7 @@ template < typename T > std::vector < GstMlBoundingBox >
+     parseDimensions (vmeta);
+ 
+     Ort::AllocatorWithDefaultOptions allocator;
+-    auto inputName = session->GetInputName (0, allocator);
++    auto inputName = session->GetInputNameAllocated (0, allocator);
+     auto inputTypeInfo = session->GetInputTypeInfo (0);
+     std::vector < int64_t > inputDims =
+         inputTypeInfo.GetTensorTypeAndShapeInfo ().GetShape ();
+@@ -366,11 +380,11 @@ template < typename T > std::vector < GstMlBoundingBox >
+     std::vector < Ort::Value > inputTensors;
+     inputTensors.push_back (Ort::Value::CreateTensor < uint8_t > (memoryInfo,
+             dest, inputTensorSize, inputDims.data (), inputDims.size ()));
+-    std::vector < const char *>inputNames { inputName };
++    std::vector < const char *>inputNames { inputName.get () };
+ 
+     std::vector < Ort::Value > modelOutput = session->Run (Ort::RunOptions { nullptr},
+         inputNames.data (),
+-        inputTensors.data (), 1, outputNames.data (), outputNames.size ());
++        inputTensors.data (), 1, outputNamesRaw.data (), outputNamesRaw.size ());
+ 
+     auto numDetections =
+         modelOutput[getOutputNodeIndex
+diff --git a/subprojects/gst-plugins-bad/ext/onnx/gstonnxclient.h b/subprojects/gst-plugins-bad/ext/onnx/gstonnxclient.h
+index 769cd11550..edbc2f4655 100644
+--- a/subprojects/gst-plugins-bad/ext/onnx/gstonnxclient.h
++++ b/subprojects/gst-plugins-bad/ext/onnx/gstonnxclient.h
+@@ -108,7 +108,8 @@ namespace GstOnnxNamespace {
+     GstMlOutputNodeInfo outputNodeInfo[GST_ML_OUTPUT_NODE_NUMBER_OF];
+     // !! indexed by array index
+ 	size_t outputNodeIndexToFunction[GST_ML_OUTPUT_NODE_NUMBER_OF];
+-    std::vector < const char *>outputNames;
++    std::vector < const char *> outputNamesRaw;
++    std::vector < Ort::AllocatedStringPtr > outputNames;
+     GstMlModelInputImageFormat inputImageFormat;
+     bool fixedInputImageSize;
+   };
+diff --git a/subprojects/gst-plugins-bad/ext/onnx/gstonnxobjectdetector.cpp b/subprojects/gst-plugins-bad/ext/onnx/gstonnxobjectdetector.cpp
+index 28f4cf2fa0..680b02f3f8 100644
+--- a/subprojects/gst-plugins-bad/ext/onnx/gstonnxobjectdetector.cpp
++++ b/subprojects/gst-plugins-bad/ext/onnx/gstonnxobjectdetector.cpp
+@@ -55,16 +55,24 @@
+  *
+  * ## Example launch command:
+  *
+- * (note: an object detection model has 3 or 4 output nodes, but there is no naming convention
+- * to indicate which node outputs the bounding box, which node outputs the label, etc.
+- * So, the `onnxobjectdetector` element has properties to map each node's functionality to its
+- * respective node index in the specified model )
++ * (note: an object detection model has 3 or 4 output nodes, but there is no
++ * naming convention to indicate which node outputs the bounding box, which
++ * node outputs the label, etc. So, the `onnxobjectdetector` element has
++ * properties to map each node's functionality to its respective node index in
++ * the specified model. Image resolution also need to be adapted to the model.
++ * The videoscale in the pipeline below will scale the image, using padding if
++ * required, to 640x383 resolution required by the model.)
++ *
++ * model.onnx can be found here:
++ * https://github.com/zoq/onnx-runtime-examples/raw/main/data/models/model.onnx
+  *
+  * ```
+  * GST_DEBUG=objectdetector:5 gst-launch-1.0 multifilesrc \
+  * location=000000088462.jpg caps=image/jpeg,framerate=\(fraction\)30/1 ! jpegdec ! \
+  * videoconvert ! \
+- * onnxobjectdetector \
++ * videoscale ! \
++ * 'video/x-raw,width=640,height=383' ! \
++ * onnxobjectdetector ! \
+  * box-node-index=0 \
+  * class-node-index=1 \
+  * score-node-index=2 \
+diff --git a/subprojects/gst-plugins-bad/ext/onnx/meson.build b/subprojects/gst-plugins-bad/ext/onnx/meson.build
+index ff91739746..e66d649e03 100644
+--- a/subprojects/gst-plugins-bad/ext/onnx/meson.build
++++ b/subprojects/gst-plugins-bad/ext/onnx/meson.build
+@@ -3,7 +3,7 @@ if get_option('onnx').disabled()
+ endif
+ 
+ 
+-onnxrt_dep = dependency('libonnxruntime',required : get_option('onnx'))
++onnxrt_dep = dependency('libonnxruntime', version : '>= 1.13.1', required : get_option('onnx'))
+ 
+ if onnxrt_dep.found()
+ 	onnxrt_include_root = onnxrt_dep.get_variable('includedir')
 diff --git a/subprojects/gst-plugins-bad/ext/sctp/gstsctpdec.c b/subprojects/gst-plugins-bad/ext/sctp/gstsctpdec.c
 index 097b629b9e..a90f89428f 100644
 --- a/subprojects/gst-plugins-bad/ext/sctp/gstsctpdec.c
@@ -8694,6 +8876,149 @@ index 0416659634..468957edd9 100644
        self->process = gst_video_codec_test_sink_process_i42x;
        break;
      case GST_VIDEO_FORMAT_NV12:
+diff --git a/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc-util.c b/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc-util.c
+index c9a152b19c..e1e8d046ee 100644
+--- a/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc-util.c
++++ b/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc-util.c
+@@ -721,9 +721,35 @@ dvbenc_write_region_segment (GstByteWriter * b, int object_version, int page_id,
+   gst_byte_writer_set_pos (b, pos);
+ }
+ 
++static void
++dvbenc_write_display_definition_segment (GstByteWriter * b, int object_version,
++    int page_id, guint16 width, guint16 height)
++{
++  guint seg_size_pos, pos;
++
++  gst_byte_writer_put_uint8 (b, DVB_SEGMENT_SYNC_BYTE);
++  gst_byte_writer_put_uint8 (b, DVB_SEGMENT_TYPE_DISPLAY_DEFINITION);
++  gst_byte_writer_put_uint16_be (b, page_id);
++
++  /* Size placeholder */
++  seg_size_pos = gst_byte_writer_get_pos (b);
++  gst_byte_writer_put_uint16_be (b, 0);
++
++  /* version number, display window flag, reserved bits */
++  gst_byte_writer_put_uint8 (b, (object_version << 4) | (0 << 3) | 0x07);
++  gst_byte_writer_put_uint16_be (b, width);
++  gst_byte_writer_put_uint16_be (b, height);
++
++  /* Re-write the size field */
++  pos = gst_byte_writer_get_pos (b);
++  gst_byte_writer_set_pos (b, seg_size_pos);
++  gst_byte_writer_put_uint16_be (b, pos - (seg_size_pos + 2));
++  gst_byte_writer_set_pos (b, pos);
++}
++
+ GstBuffer *
+-gst_dvbenc_encode (int object_version, int page_id, SubpictureRect * s,
+-    guint num_subpictures)
++gst_dvbenc_encode (int object_version, int page_id, int display_version,
++    guint16 width, guint16 height, SubpictureRect * s, guint num_subpictures)
+ {
+   GstByteWriter b;
+   guint seg_size_pos, pos;
+@@ -744,6 +770,11 @@ gst_dvbenc_encode (int object_version, int page_id, SubpictureRect * s,
+    * 0x20 0x00 prefixed */
+   gst_byte_writer_put_uint16_be (&b, 0x2000);
+ 
++  /* If non-default width/height are used, write a display definiton segment */
++  if (width != 720 || height != 576)
++    dvbenc_write_display_definition_segment (&b, display_version, page_id,
++        width, height);
++
+   /* Page Composition Segment */
+   gst_byte_writer_put_uint8 (&b, DVB_SEGMENT_SYNC_BYTE);
+   gst_byte_writer_put_uint8 (&b, DVB_SEGMENT_TYPE_PAGE_COMPOSITION);
+diff --git a/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc.c b/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc.c
+index ab25ae24f7..ad316f78bc 100644
+--- a/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc.c
++++ b/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc.c
+@@ -393,7 +393,9 @@ process_largest_subregion (GstDvbSubEnc * enc, GstVideoFrame * vframe)
+     s.x = left;
+     s.y = top;
+ 
+-    packet = gst_dvbenc_encode (enc->object_version & 0xF, 1, &s, 1);
++    packet =
++        gst_dvbenc_encode (enc->object_version & 0xF, 1, enc->display_version,
++        enc->in_info.width, enc->in_info.height, &s, 1);
+     if (packet == NULL) {
+       gst_video_frame_unmap (&ayuv8p_frame);
+       goto fail;
+@@ -440,7 +442,9 @@ gst_dvb_sub_enc_generate_end_packet (GstDvbSubEnc * enc, GstClockTime pts)
+   GST_DEBUG_OBJECT (enc, "Outputting end of page at TS %" GST_TIME_FORMAT,
+       GST_TIME_ARGS (enc->current_end_time));
+ 
+-  packet = gst_dvbenc_encode (enc->object_version & 0xF, 1, NULL, 0);
++  packet =
++      gst_dvbenc_encode (enc->object_version & 0xF, 1, enc->display_version,
++      enc->in_info.width, enc->in_info.height, NULL, 0);
+   if (packet == NULL) {
+     GST_ELEMENT_ERROR (enc, STREAM, FAILED,
+         ("Internal data stream error."),
+@@ -501,27 +505,34 @@ gst_dvb_sub_enc_sink_setcaps (GstPad * pad, GstCaps * caps)
+ {
+   GstDvbSubEnc *enc = GST_DVB_SUB_ENC (gst_pad_get_parent (pad));
+   gboolean ret = FALSE;
++  GstVideoInfo in_info;
+   GstCaps *out_caps = NULL;
+ 
+   GST_DEBUG_OBJECT (enc, "setcaps called with %" GST_PTR_FORMAT, caps);
+-  if (!gst_video_info_from_caps (&enc->in_info, caps)) {
++  if (!gst_video_info_from_caps (&in_info, caps)) {
+     GST_ERROR_OBJECT (enc, "Failed to parse input caps");
+     return FALSE;
+   }
+ 
+-  out_caps = gst_caps_new_simple ("subpicture/x-dvb",
+-      "width", G_TYPE_INT, enc->in_info.width,
+-      "height", G_TYPE_INT, enc->in_info.height,
+-      "framerate", GST_TYPE_FRACTION, enc->in_info.fps_n, enc->in_info.fps_d,
+-      NULL);
++  if (!enc->in_info.finfo || !gst_video_info_is_equal (&in_info, &enc->in_info)) {
++    enc->in_info = in_info;
++    enc->display_version++;
++
++    out_caps = gst_caps_new_simple ("subpicture/x-dvb",
++        "width", G_TYPE_INT, enc->in_info.width,
++        "height", G_TYPE_INT, enc->in_info.height,
++        "framerate", GST_TYPE_FRACTION, enc->in_info.fps_n, enc->in_info.fps_d,
++        NULL);
++
++    if (!gst_pad_set_caps (enc->srcpad, out_caps)) {
++      GST_WARNING_OBJECT (enc, "failed setting downstream caps");
++      gst_caps_unref (out_caps);
++      goto beach;
++    }
+ 
+-  if (!gst_pad_set_caps (enc->srcpad, out_caps)) {
+-    GST_WARNING_OBJECT (enc, "failed setting downstream caps");
+     gst_caps_unref (out_caps);
+-    goto beach;
+   }
+ 
+-  gst_caps_unref (out_caps);
+   ret = TRUE;
+ 
+ beach:
+diff --git a/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc.h b/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc.h
+index 507e9f54d7..c43c6b1a97 100644
+--- a/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc.h
++++ b/subprojects/gst-plugins-bad/gst/dvbsubenc/gstdvbsubenc.h
+@@ -47,6 +47,7 @@ struct _GstDvbSubEnc
+   GstElement element;
+ 
+   GstVideoInfo in_info;
++  int display_version;
+   GstPad *sinkpad;
+   GstPad *srcpad;
+ 
+@@ -68,4 +69,4 @@ GST_ELEMENT_REGISTER_DECLARE (dvbsubenc);
+ 
+ gboolean gst_dvbsubenc_ayuv_to_ayuv8p (GstVideoFrame * src, GstVideoFrame * dest, int max_colours, guint32 *out_num_colours);
+ 
+-GstBuffer *gst_dvbenc_encode (int object_version, int page_id, SubpictureRect *s, guint num_subpictures);
++GstBuffer *gst_dvbenc_encode (int object_version, int page_id, int display_version, guint16 width, guint16 height, SubpictureRect *s, guint num_subpictures);
 diff --git a/subprojects/gst-plugins-bad/gst/mpegtsdemux/mpegtsbase.c b/subprojects/gst-plugins-bad/gst/mpegtsdemux/mpegtsbase.c
 index 981019360f..d18475b3a0 100644
 --- a/subprojects/gst-plugins-bad/gst/mpegtsdemux/mpegtsbase.c
@@ -8982,6 +9307,36 @@ index 9e42856114..eae77a3247 100644
        self->video_filter = g_value_dup_object (value);
        GST_OBJECT_UNLOCK (self);
        break;
+diff --git a/subprojects/gst-plugins-bad/gst/videoparsers/gsth264parse.c b/subprojects/gst-plugins-bad/gst/videoparsers/gsth264parse.c
+index fee08c4902..2ecc7fabc3 100644
+--- a/subprojects/gst-plugins-bad/gst/videoparsers/gsth264parse.c
++++ b/subprojects/gst-plugins-bad/gst/videoparsers/gsth264parse.c
+@@ -1275,6 +1275,10 @@ gst_h264_parse_handle_frame_packetized (GstBaseParse * parse,
+       tmp_frame.overhead = frame->overhead;
+       tmp_frame.buffer = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_ALL,
+           nalu.offset, nalu.size);
++      /* Don't lose timestamp when offset is not 0. */
++      GST_BUFFER_PTS (tmp_frame.buffer) = GST_BUFFER_PTS (buffer);
++      GST_BUFFER_DTS (tmp_frame.buffer) = GST_BUFFER_DTS (buffer);
++      GST_BUFFER_DURATION (tmp_frame.buffer) = GST_BUFFER_DURATION (buffer);
+ 
+       /* Set marker on last packet */
+       if (nl + nalu.size == left) {
+diff --git a/subprojects/gst-plugins-bad/gst/videoparsers/gsth265parse.c b/subprojects/gst-plugins-bad/gst/videoparsers/gsth265parse.c
+index 54aa77e800..356385c37d 100644
+--- a/subprojects/gst-plugins-bad/gst/videoparsers/gsth265parse.c
++++ b/subprojects/gst-plugins-bad/gst/videoparsers/gsth265parse.c
+@@ -1061,6 +1061,10 @@ gst_h265_parse_handle_frame_packetized (GstBaseParse * parse,
+       tmp_frame.overhead = frame->overhead;
+       tmp_frame.buffer = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_ALL,
+           nalu.offset, nalu.size);
++      /* Don't lose timestamp when offset is not 0. */
++      GST_BUFFER_PTS (tmp_frame.buffer) = GST_BUFFER_PTS (buffer);
++      GST_BUFFER_DTS (tmp_frame.buffer) = GST_BUFFER_DTS (buffer);
++      GST_BUFFER_DURATION (tmp_frame.buffer) = GST_BUFFER_DURATION (buffer);
+ 
+       /* Set marker on last packet */
+       if (nl + nalu.size == left) {
 diff --git a/subprojects/gst-plugins-bad/meson.build b/subprojects/gst-plugins-bad/meson.build
 index 5034ea4142..ae4a0ba79d 100644
 --- a/subprojects/gst-plugins-bad/meson.build
@@ -9322,8 +9677,679 @@ index 7db55a8179..b308858aac 100644
  
    return TRUE;
  }
+diff --git a/subprojects/gst-plugins-bad/sys/kms/gstkmsedid.c b/subprojects/gst-plugins-bad/sys/kms/gstkmsedid.c
+new file mode 100644
+index 0000000000..7c5221a585
+--- /dev/null
++++ b/subprojects/gst-plugins-bad/sys/kms/gstkmsedid.c
+@@ -0,0 +1,111 @@
++/*
++* Copyright © 2008-2011 Kristian Høgsberg
++* Copyright © 2011 Intel Corporation
++* Copyright © 2017, 2018 Collabora, Ltd.
++* Copyright © 2017, 2018 General Electric Company
++* Copyright (c) 2018 DisplayLink (UK) Ltd.
++*
++* Permission is hereby granted, free of charge, to any person obtaining
++* a copy of this software and associated documentation files (the
++* "Software"), to deal in the Software without restriction, including
++* without limitation the rights to use, copy, modify, merge, publish,
++* distribute, sublicense, and/or sell copies of the Software, and to
++* permit persons to whom the Software is furnished to do so, subject to
++* the following conditions:
++*
++* The above copyright notice and this permission notice (including the
++* next paragraph) shall be included in all copies or substantial
++* portions of the Software.
++*
++* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
++* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++* NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
++* BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
++* ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++* CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++* SOFTWARE.
++*/
++
++#include <math.h>
++#include "gstkmsedid.h"
++
++/* from  libweston/backend-drm/modes.c unaccepted merge, modified slightly to
++    remove non HDR stuff, return -1 if no HDR in EDID.
++    https://gitlab.freedesktop.org/jcline/weston/-/commit/b3fa65d19ca60a45d0cc0fc1bfa68eea970344ee
++ */
++#define EDID_OFFSET_EXT_COUNT				0x7E
++#define EDID_EXTENSION_SIZE				0x80
++// Indicates the EDID extension is a CTA extension
++#define EDID_CTA_EXTENSION_TAG			0x02
++// Indicates the data block uses the extended tag field
++#define EDID_CTA_EXTENDED_TAG			0x07
++// Value of the extended tag field for HDR static metadata blocks
++#define EDID_CTA_STATIC_HDR_TAG			0x06
++
++/* Extract the HDR static metadata from a CTA EDID extension. */
++static int
++gst_kms_parse_hdr_metadata (const uint8_t * cta_ext_data,
++    struct gst_kms_hdr_static_metadata *metadata)
++{
++  int i, block_len;
++  uint8_t cta_revision = cta_ext_data[1];
++  uint8_t dtd_offset = cta_ext_data[2];
++  const uint8_t *data_blocks = cta_ext_data + 4;
++
++  if (cta_revision != 3) {
++    return -1;
++  }
++  // The data block collection ranges from byte 4 to the dtd_offset; each
++  // block begins with the block size (in bytes) in bits 0-4 of the first byte.
++  for (i = 0; i < dtd_offset; i += (data_blocks[i] & 0x1f) + 1) {
++    if ((data_blocks[i] & 0xe0) >> 5 == EDID_CTA_EXTENDED_TAG) {
++      block_len = data_blocks[i] & 0x1f;
++
++      if (data_blocks[i + 1] == EDID_CTA_STATIC_HDR_TAG) {
++        if (block_len < 2)
++          continue;
++
++        metadata->eotf = data_blocks[i + 2];
++        metadata->metadata_type = data_blocks[i + 3];
++
++        if (block_len > 3 && data_blocks[i + 4])
++          metadata->max_cll = 50.0 * pow (2, data_blocks[i + 4] / 32.0);
++        if (block_len > 4 && data_blocks[i + 5])
++          metadata->max_fall = 50.0 * pow (2, data_blocks[i + 5] / 32.0);
++        if (block_len > 5)
++          metadata->min_cll =
++              metadata->max_cll * pow (data_blocks[i + 6] / 255.0, 2) / 100.0;
++        return 0;
++      }
++    }
++  }
++  return -1;
++}
++
++int
++gst_kms_edid_parse (struct gst_kms_hdr_static_metadata *metadata,
++    const uint8_t * data, size_t length)
++{
++  int i;
++  const uint8_t *edid_extension;
++
++  /* check header */
++  if (length < 128 || length < ((size_t) data[EDID_OFFSET_EXT_COUNT] + 1) * 128)
++    return -1;
++  if (data[0] != 0x00 || data[1] != 0xff)
++    return -1;
++
++  edid_extension = data + 128;
++  for (i = 0; i < data[EDID_OFFSET_EXT_COUNT]; i++) {
++    switch (edid_extension[0]) {
++      case EDID_CTA_EXTENSION_TAG:
++        return gst_kms_parse_hdr_metadata (edid_extension, metadata);
++    }
++    edid_extension += 128;
++  }
++
++  return 0;
++}
++
++/* END from  libweston/backend-drm/modes.c unaccepted merge */
+diff --git a/subprojects/gst-plugins-bad/sys/kms/gstkmsedid.h b/subprojects/gst-plugins-bad/sys/kms/gstkmsedid.h
+new file mode 100644
+index 0000000000..1907ae2549
+--- /dev/null
++++ b/subprojects/gst-plugins-bad/sys/kms/gstkmsedid.h
+@@ -0,0 +1,55 @@
++/*
++  * Copyright © 2008-2011 Kristian Høgsberg
++  * Copyright © 2011 Intel Corporation
++  * Copyright © 2017, 2018 Collabora, Ltd.
++  * Copyright © 2017, 2018 General Electric Company
++  * Copyright (c) 2018 DisplayLink (UK) Ltd.
++  *
++  * Permission is hereby granted, free of charge, to any person obtaining
++  * a copy of this software and associated documentation files (the
++  * "Software"), to deal in the Software without restriction, including
++  * without limitation the rights to use, copy, modify, merge, publish,
++  * distribute, sublicense, and/or sell copies of the Software, and to
++  * permit persons to whom the Software is furnished to do so, subject to
++  * the following conditions:
++  *
++  * The above copyright notice and this permission notice (including the
++  * next paragraph) shall be included in all copies or substantial
++  * portions of the Software.
++  *
++  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
++  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++  * NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
++  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
++  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++  * SOFTWARE.
++  */
++
++#ifndef __GST_KMS_EDID_H__
++#define __GST_KMS_EDID_H__
++
++/* from  libweston/backend-drm/modes.c unaccepted merge, modified slightly to
++    remove non HDR stuff, return -1 if no HDR in EDID.
++    https://gitlab.freedesktop.org/jcline/weston/-/commit/b3fa65d19ca60a45d0cc0fc1bfa68eea970344ee
++ */
++
++#include <stddef.h>
++#include <stdint.h>
++
++/* HDR Metadata as per 861.G spec from linux/hdmi.h, modified for stdint.h */
++struct gst_kms_hdr_static_metadata
++{
++  uint8_t eotf;
++  uint8_t metadata_type;
++  uint16_t max_cll;
++  uint16_t max_fall;
++  uint16_t min_cll;
++};
++
++int
++gst_kms_edid_parse (struct gst_kms_hdr_static_metadata *metadata, const uint8_t * data,
++    size_t length);
++
++#endif /* __GST_KMS_EDID_H__ */
+diff --git a/subprojects/gst-plugins-bad/sys/kms/gstkmssink.c b/subprojects/gst-plugins-bad/sys/kms/gstkmssink.c
+index cba6a36ec8..16d4afb8a0 100644
+--- a/subprojects/gst-plugins-bad/sys/kms/gstkmssink.c
++++ b/subprojects/gst-plugins-bad/sys/kms/gstkmssink.c
+@@ -49,6 +49,7 @@
+ 
+ #include <gst/video/video.h>
+ #include <gst/video/videooverlay.h>
++#include <gst/video/video-color.h>
+ #include <gst/allocators/gstdmabuf.h>
+ 
+ #include <drm.h>
+@@ -62,6 +63,11 @@
+ #include "gstkmsbufferpool.h"
+ #include "gstkmsallocator.h"
+ 
++#ifdef HAVE_DRM_HDR
++#include <math.h>
++#include "gstkmsedid.h"
++#endif
++
+ #define GST_PLUGIN_NAME "kmssink"
+ #define GST_PLUGIN_DESC "Video sink using the Linux kernel mode setting API"
+ 
+@@ -98,11 +104,309 @@ enum
+   PROP_CONNECTOR_PROPS,
+   PROP_PLANE_PROPS,
+   PROP_FD,
++  PROP_SKIP_VSYNC,
+   PROP_N,
+ };
+ 
+ static GParamSpec *g_properties[PROP_N] = { NULL, };
+ 
++#ifdef HAVE_DRM_HDR
++enum hdmi_metadata_type
++{
++  HDMI_STATIC_METADATA_TYPE1 = 0,
++};
++enum hdmi_eotf
++{
++  HDMI_EOTF_TRADITIONAL_GAMMA_SDR = 0,
++  HDMI_EOTF_TRADITIONAL_GAMMA_HDR,
++  HDMI_EOTF_SMPTE_ST2084,
++  HDMI_EOTF_BT_2100_HLG,
++};
++
++static void
++gst_kms_populate_infoframe (struct hdr_output_metadata *pinfo_frame,
++    GstVideoMasteringDisplayInfo * p_hdr_minfo,
++    GstVideoContentLightLevel * p_hdr_cll,
++    gchar colorimetry, gboolean clear_it_out)
++{
++  /* From CTA-861.3:
++   * When a source is transmitting the Dynamic Range and Mastering InfoFrame,
++   * it shall signal the end of Dynamic Range... by sending a ... InfoFrame with
++   * the EOTF field to '0', the Static_Metadata_Descriptor_ID field set to '0',
++   * and the fields of the Static_Metadata_Descriptor set to unknown (0)...
++   *
++   * See also https://dri.freedesktop.org/docs/drm/gpu/drm-uapi.html
++   */
++  if (clear_it_out) {
++    /* Static_Metadata_Descriptor_ID */
++    pinfo_frame->metadata_type = 0;
++    (void) memset ((void *) &pinfo_frame->hdmi_metadata_type1, 0,
++        sizeof (pinfo_frame->hdmi_metadata_type1));
++    return;
++  } else {
++    pinfo_frame->metadata_type = HDMI_STATIC_METADATA_TYPE1;
++    pinfo_frame->hdmi_metadata_type1.eotf = colorimetry;
++    pinfo_frame->hdmi_metadata_type1.metadata_type = HDMI_STATIC_METADATA_TYPE1;
++  }
++
++  /* For HDR Infoframe see CTA-861-G, Section 6.9.1
++   * SEI message is in units of 0.0001 cd/m2, HDMI is units of 1 cd/m2 - see
++   * x265 specs */
++  pinfo_frame->hdmi_metadata_type1.max_display_mastering_luminance =
++      round (p_hdr_minfo->max_display_mastering_luminance / 10000.0);
++  pinfo_frame->hdmi_metadata_type1.min_display_mastering_luminance =
++      p_hdr_minfo->min_display_mastering_luminance;
++
++  pinfo_frame->hdmi_metadata_type1.max_cll = p_hdr_cll->max_content_light_level;
++  pinfo_frame->hdmi_metadata_type1.max_fall =
++      p_hdr_cll->max_frame_average_light_level;
++
++  for (int i = 0; i < 3; i++) {
++    pinfo_frame->hdmi_metadata_type1.display_primaries[i].x =
++        p_hdr_minfo->display_primaries[i].x;
++    pinfo_frame->hdmi_metadata_type1.display_primaries[i].y =
++        p_hdr_minfo->display_primaries[i].y;
++  }
++
++  pinfo_frame->hdmi_metadata_type1.white_point.x = p_hdr_minfo->white_point.x;
++  pinfo_frame->hdmi_metadata_type1.white_point.y = p_hdr_minfo->white_point.y;
++}
++
++static void
++gst_kms_push_hdr_infoframe (GstKMSSink * self, gboolean clear_it_out)
++{
++  struct hdr_output_metadata info_frame;
++  drmModeObjectPropertiesPtr props;
++  uint32_t hdrBlobID;
++  int drm_fd = self->fd;
++  uint32_t conn_id = self->conn_id;
++  int ret = 0;
++
++  if (self->no_infoframe || !self->has_hdr_info || (!clear_it_out
++          && self->has_sent_hdrif)) {
++    return;
++  }
++
++  /* Check to see if the connection has the HDR_OUTPUT_METADATA property if
++   * we haven't already found it */
++  if (self->hdrPropID == 0 || self->edidPropID == 0) {
++    props =
++        drmModeObjectGetProperties (drm_fd, conn_id, DRM_MODE_OBJECT_CONNECTOR);
++
++    if (!props) {
++      GST_ERROR_OBJECT (self, "Error on drmModeObjectGetProperties %d %s",
++          errno, g_strerror (errno));
++      return;
++    }
++
++    struct gst_kms_hdr_static_metadata hdr_edid_info = { 0, 0, 0, 0, 0 };
++    for (uint32_t i = 0;
++        i < props->count_props && (self->hdrPropID == 0
++            || self->edidPropID == 0); i++) {
++      drmModePropertyPtr pprop = drmModeGetProperty (drm_fd, props->props[i]);
++
++      if (pprop) {
++        /* 7 16 DRM_MODE_PROP_BLOB HDR_OUTPUT_METADATA */
++        if (!strncmp ("HDR_OUTPUT_METADATA", pprop->name,
++                strlen ("HDR_OUTPUT_METADATA"))) {
++          self->hdrPropID = pprop->prop_id;
++          GST_DEBUG_OBJECT (self, "HDR prop ID = %d", self->hdrPropID);
++        }
++
++        if (!strncmp ("EDID", pprop->name, strlen ("EDID"))) {
++          self->edidPropID = pprop->prop_id;
++
++          /* Check if EDID indicates device supports HDR */
++          drmModePropertyBlobPtr blob;
++          blob = drmModeGetPropertyBlob (drm_fd, props->prop_values[i]);
++          if (blob) {
++            int res =
++                gst_kms_edid_parse (&hdr_edid_info, blob->data, blob->length);
++            if (res != 0) {
++              hdr_edid_info.eotf = 0;
++              hdr_edid_info.metadata_type = 0;
++            }
++          }
++
++          drmModeFreePropertyBlob (blob);
++
++          GST_DEBUG_OBJECT (self, "EDID prop ID = %d", self->edidPropID);
++          /* only these two values are guaranteed to be populated for HDR */
++          GST_DEBUG_OBJECT (self, "EDID EOTF = %u, metadata type = %u",
++              hdr_edid_info.eotf, hdr_edid_info.metadata_type);
++        }
++
++        drmModeFreeProperty (pprop);
++      } else {
++        GST_ERROR_OBJECT (self, "Error on drmModeGetProperty(%d)", i);
++      }
++    }
++
++    drmModeFreeObjectProperties (props);
++
++    if (self->hdrPropID == 0 || self->edidPropID == 0
++        || hdr_edid_info.eotf == 0) {
++      GST_DEBUG_OBJECT (self, "No HDR support on target display");
++      self->no_infoframe = TRUE;
++      /* FIXME: maybe not the right flag here... */
++      self->has_sent_hdrif = TRUE;
++      return;
++    }
++  }
++
++  if (clear_it_out)
++    GST_INFO ("Clearing HDR Infoframe on connector %d", self->conn_id);
++  else
++    GST_INFO ("Setting HDR Infoframe, if available on connector %d",
++        self->conn_id);
++
++  gst_kms_populate_infoframe (&info_frame, &self->hdr_minfo, &self->hdr_cll,
++      self->colorimetry, clear_it_out);
++
++  /* Use non-atomic property setting */
++  ret = drmModeCreatePropertyBlob (drm_fd, &info_frame,
++      sizeof (struct hdr_output_metadata), &hdrBlobID);
++  if (!ret) {
++    ret =
++        drmModeObjectSetProperty (drm_fd, conn_id, DRM_MODE_OBJECT_CONNECTOR,
++        self->hdrPropID, hdrBlobID);
++    if (ret) {
++      GST_ERROR_OBJECT (self, "drmModeObjectSetProperty result %d %d %s", ret,
++          errno, g_strerror (errno));
++    }
++    drmModeDestroyPropertyBlob (drm_fd, hdrBlobID);
++  } else {
++    GST_ERROR_OBJECT (self, "Failed to drmModeCreatePropertyBlob %d %s", errno,
++        g_strerror (errno));
++  }
++
++  if (!ret) {
++    GST_INFO ("Set HDR Infoframe on connector %d", conn_id);
++    self->has_sent_hdrif = TRUE;        // Hooray!
++  }
++}
++
++
++/* From an HDR10 stream caps:
++ *
++ * colorimetry=(string)bt2100-pq
++ * content-light-level=(string)10000:166
++ * mastering-display-info=(string)35400:14600:8500:39850:6550:2300:15635:16450:10000000:1
++ */
++static void
++gst_kms_sink_set_hdr10_caps (GstKMSSink * self, GstCaps * caps)
++{
++  GstVideoMasteringDisplayInfo hdr_minfo;
++  GstVideoContentLightLevel hdr_cll;
++  GstStructure *structure;
++  const gchar *colorimetry_s;
++  GstVideoColorimetry colorimetry;
++  gboolean has_hdr_eotf = FALSE;
++  gboolean has_cll = FALSE;
++
++  structure = gst_caps_get_structure (caps, 0);
++  if ((colorimetry_s = gst_structure_get_string (structure,
++              "colorimetry")) != NULL &&
++      gst_video_colorimetry_from_string (&colorimetry, colorimetry_s)) {
++    switch (colorimetry.transfer) {
++      case GST_VIDEO_TRANSFER_SMPTE2084:
++        self->colorimetry = HDMI_EOTF_SMPTE_ST2084;
++        has_hdr_eotf = TRUE;
++        GST_DEBUG ("Got HDR transfer value GST_VIDEO_TRANSFER_SMPTE2084: %u",
++            self->colorimetry);
++        break;
++      case GST_VIDEO_TRANSFER_BT2020_10:
++      case GST_VIDEO_TRANSFER_ARIB_STD_B67:
++        self->colorimetry = HDMI_EOTF_BT_2100_HLG;
++        has_hdr_eotf = TRUE;
++        GST_DEBUG ("Got HDR transfer value HDMI_EOTF_BT_2100_HLG: %u",
++            self->colorimetry);
++        break;
++      case GST_VIDEO_TRANSFER_BT709:
++        self->colorimetry = HDMI_EOTF_TRADITIONAL_GAMMA_SDR;
++        GST_DEBUG ("Got HDR transfer value GST_VIDEO_TRANSFER_BT709, "
++            "not HDR: %u", self->colorimetry);
++        break;
++      default:
++        /* not an HDMI and/or HDR colorimetry, we will ignore */
++        GST_DEBUG ("Unsupported transfer function, no HDR: %u",
++            colorimetry.transfer);
++        self->no_infoframe = TRUE;
++        self->has_hdr_info = FALSE;
++        break;
++    }
++  }
++
++  if (gst_video_mastering_display_info_from_caps (&hdr_minfo, caps)) {
++    if (!gst_video_mastering_display_info_is_equal (&hdr_minfo,
++            &self->hdr_minfo)) {
++      self->hdr_minfo = hdr_minfo;
++      self->no_infoframe = FALSE;
++      self->has_hdr_info = TRUE;
++      /* to send again */
++      self->has_sent_hdrif = FALSE;
++    }
++
++    GST_DEBUG ("Got mastering info: "
++        "min %u max %u wp %u %u dp[0] %u %u dp[1] %u %u dp[2] %u %u",
++        self->hdr_minfo.min_display_mastering_luminance,
++        self->hdr_minfo.max_display_mastering_luminance,
++        self->hdr_minfo.white_point.x, self->hdr_minfo.white_point.y,
++        self->hdr_minfo.display_primaries[0].x,
++        self->hdr_minfo.display_primaries[0].y,
++        self->hdr_minfo.display_primaries[1].x,
++        self->hdr_minfo.display_primaries[1].y,
++        self->hdr_minfo.display_primaries[2].x,
++        self->hdr_minfo.display_primaries[2].y);
++
++  } else {
++    if (self->has_hdr_info == TRUE) {
++      GST_WARNING ("Missing mastering display info");
++    } else {
++      self->no_infoframe = TRUE;
++      self->has_hdr_info = FALSE;
++    }
++
++    gst_video_mastering_display_info_init (&self->hdr_minfo);
++  }
++
++  if (gst_video_content_light_level_from_caps (&hdr_cll, caps)) {
++    GST_DEBUG ("Got content light level information: Max CLL: %u Max FALL: %u",
++        hdr_cll.max_content_light_level, hdr_cll.max_frame_average_light_level);
++
++    if (!gst_video_content_light_level_is_equal (&hdr_cll, &self->hdr_cll)) {
++      self->hdr_cll = hdr_cll;
++      self->no_infoframe = FALSE;
++      self->has_hdr_info = TRUE;
++      /* to send again */
++      self->has_sent_hdrif = FALSE;
++    }
++
++    has_cll = TRUE;
++  } else {
++    gst_video_content_light_level_init (&self->hdr_cll);
++
++    if (self->has_hdr_info == TRUE) {
++      GST_WARNING ("Missing content light level info");
++    }
++
++    self->no_infoframe = TRUE;
++    self->has_hdr_info = FALSE;
++  }
++
++  /* need all caps set */
++  if ((has_hdr_eotf || has_cll) && !(has_hdr_eotf && has_cll)) {
++    GST_ELEMENT_WARNING (self, STREAM, FORMAT,
++        ("Stream doesn't have all HDR components needed"),
++        ("Check stream caps"));
++
++    self->no_infoframe = TRUE;
++    self->has_hdr_info = FALSE;
++  }
++}
++
++#endif /* HAVE_DRM_HDR */
++
+ static void
+ gst_kms_sink_set_render_rectangle (GstVideoOverlay * overlay,
+     gint x, gint y, gint width, gint height)
+@@ -1147,6 +1451,10 @@ gst_kms_sink_set_caps (GstBaseSink * bsink, GstCaps * caps)
+   if (GST_VIDEO_SINK_WIDTH (self) <= 0 || GST_VIDEO_SINK_HEIGHT (self) <= 0)
+     goto invalid_size;
+ 
++#ifdef HAVE_DRM_HDR
++  gst_kms_sink_set_hdr10_caps (self, caps);
++#endif
++
+   /* discard dumb buffer pool */
+   if (self->pool) {
+     gst_buffer_pool_set_active (self->pool, FALSE);
+@@ -1664,6 +1972,10 @@ retry_set_plane:
+     src.w = result.w;
+     src.h = result.h;
+   }
++#ifdef HAVE_DRM_HDR
++  /* Send the HDR infoframes if appropriate */
++  gst_kms_push_hdr_infoframe (self, FALSE);
++#endif
+ 
+   GST_TRACE_OBJECT (self,
+       "drmModeSetPlane at (%i,%i) %ix%i sourcing at (%i,%i) %ix%i",
+@@ -1683,7 +1995,7 @@ retry_set_plane:
+ 
+ sync_frame:
+   /* Wait for the previous frame to complete redraw */
+-  if (!gst_kms_sink_sync (self)) {
++  if (!self->skip_vsync && !gst_kms_sink_sync (self)) {
+     GST_OBJECT_UNLOCK (self);
+     goto bail;
+   }
+@@ -1884,6 +2196,9 @@ gst_kms_sink_set_property (GObject * object, guint prop_id,
+     case PROP_FD:
+       _validate_and_set_external_fd (sink, g_value_get_int (value));
+       break;
++    case PROP_SKIP_VSYNC:
++      sink->skip_vsync = g_value_get_boolean (value);
++      break;
+     default:
+       if (!gst_video_overlay_set_property (object, PROP_N, prop_id, value))
+         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+@@ -1940,6 +2255,9 @@ gst_kms_sink_get_property (GObject * object, guint prop_id,
+     case PROP_FD:
+       g_value_set_int (value, sink->fd);
+       break;
++    case PROP_SKIP_VSYNC:
++      g_value_set_boolean (value, sink->skip_vsync);
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -1973,6 +2291,18 @@ gst_kms_sink_init (GstKMSSink * sink)
+   gst_poll_fd_init (&sink->pollfd);
+   sink->poll = gst_poll_new (TRUE);
+   gst_video_info_init (&sink->vinfo);
++  sink->skip_vsync = FALSE;
++
++#ifdef HAVE_DRM_HDR
++  sink->no_infoframe = FALSE;
++  sink->has_hdr_info = FALSE;
++  sink->has_sent_hdrif = FALSE;
++  sink->edidPropID = 0;
++  sink->hdrPropID = 0;
++  sink->colorimetry = HDMI_EOTF_TRADITIONAL_GAMMA_SDR;
++  gst_video_mastering_display_info_init (&sink->hdr_minfo);
++  gst_video_content_light_level_init (&sink->hdr_cll);
++#endif
+ }
+ 
+ static void
+@@ -2152,6 +2482,20 @@ gst_kms_sink_class_init (GstKMSSinkClass * klass)
+       "DRM file descriptor", -1, G_MAXINT, -1,
+       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT);
+ 
++  /**
++   * kmssink:skip-vsync:
++   *
++   *  For some cases, to suppress internal vsync, which can drop framerate
++   *  in half, set this to 1.
++   *
++   *  Since: 1.22
++   */
++  g_properties[PROP_SKIP_VSYNC] =
++      g_param_spec_boolean ("skip-vsync", "Skip Internal VSync",
++      "When enabled will not wait internally for vsync. "
++      "Should be used for atomic drivers to avoid double vsync.", FALSE,
++      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT);
++
+   g_object_class_install_properties (gobject_class, PROP_N, g_properties);
+ 
+   gst_video_overlay_install_properties (gobject_class, PROP_N);
+diff --git a/subprojects/gst-plugins-bad/sys/kms/gstkmssink.h b/subprojects/gst-plugins-bad/sys/kms/gstkmssink.h
+index 536b0a7230..317f789ef9 100644
+--- a/subprojects/gst-plugins-bad/sys/kms/gstkmssink.h
++++ b/subprojects/gst-plugins-bad/sys/kms/gstkmssink.h
+@@ -27,6 +27,7 @@
+ #define __GST_KMS_SINK_H__
+ 
+ #include <gst/video/gstvideosink.h>
++#include <gst/video/video-hdr.h>
+ 
+ G_BEGIN_DECLS
+ 
+@@ -95,6 +96,19 @@ struct _GstKMSSink {
+   gboolean reconfigure;
+ 
+   gboolean is_internal_fd;
++  gboolean skip_vsync;
++
++#ifdef HAVE_DRM_HDR
++  /* HDR mastering related structure */
++  gboolean no_infoframe;
++  gboolean has_hdr_info;
++  gboolean has_sent_hdrif;
++  guint32 edidPropID;
++  guint32 hdrPropID;
++  gchar colorimetry;
++  GstVideoMasteringDisplayInfo hdr_minfo;
++  GstVideoContentLightLevel hdr_cll;
++#endif
+ };
+ 
+ struct _GstKMSSinkClass {
+diff --git a/subprojects/gst-plugins-bad/sys/kms/meson.build b/subprojects/gst-plugins-bad/sys/kms/meson.build
+index 54688707f0..2f960c8565 100644
+--- a/subprojects/gst-plugins-bad/sys/kms/meson.build
++++ b/subprojects/gst-plugins-bad/sys/kms/meson.build
+@@ -4,6 +4,7 @@ kmssink_sources = [
+   'gstkmssink.c',
+   'gstkmsutils.c',
+ ]
++extra_deps = []
+ 
+ if host_system != 'linux'
+   subdir_done()
+@@ -12,12 +13,22 @@ endif
+ libdrm_dep = dependency('libdrm', version : '>= 2.4.98',
+                         required : get_option('kms'),
+                         fallback: ['libdrm', 'ext_libdrm'])
++libdrm_hdr_dep = dependency('libdrm', version : '>= 2.4.104',
++                            required : false,
++                            fallback: ['libdrm', 'ext_libdrm'])
++mathlib = cc.find_library('m', required : false)
++
++if libdrm_hdr_dep.found() and mathlib.found()
++  cdata.set('HAVE_DRM_HDR', 1)
++  kmssink_sources += 'gstkmsedid.c'
++endif
++
+ if libdrm_dep.found()
+   gstkmssink = library('gstkms',
+     kmssink_sources,
+     c_args : gst_plugins_bad_args,
+     include_directories : [configinc],
+-    dependencies : [gstbase_dep, gstvideo_dep, gstallocators_dep, libdrm_dep],
++    dependencies : [gstbase_dep, gstvideo_dep, gstallocators_dep, libdrm_dep, mathlib],
+     install : true,
+     install_dir : plugins_install_dir,
+   )
 diff --git a/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfcapturedshow.cpp b/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfcapturedshow.cpp
-index 9bb8f97539..00144bfbf0 100644
+index 9bb8f97539..30ebe425e6 100644
 --- a/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfcapturedshow.cpp
 +++ b/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfcapturedshow.cpp
 @@ -168,7 +168,7 @@ public:
@@ -9335,6 +10361,16 @@ index 9bb8f97539..00144bfbf0 100644
    }
  
  private:
+@@ -1023,7 +1023,8 @@ gst_mf_dshow_enum_device (GstMFCaptureDShow * self,
+       return FALSE;
+   }
+ 
+-  if (!gst_mf_result (hr))
++  // Documentation states that the result of CreateClassEnumerator must be checked against S_OK
++  if (hr != S_OK)
+     return FALSE;
+ 
+   for (guint i = 0;; i++) {
 diff --git a/subprojects/gst-plugins-bad/sys/msdk/gstmsdkallocator.h b/subprojects/gst-plugins-bad/sys/msdk/gstmsdkallocator.h
 index 9035b548bf..53bbdda595 100644
 --- a/subprojects/gst-plugins-bad/sys/msdk/gstmsdkallocator.h

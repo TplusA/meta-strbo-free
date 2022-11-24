@@ -1,0 +1,5223 @@
+diff --git a/subprojects/gst-plugins-good/docs/gst_plugins_cache.json b/subprojects/gst-plugins-good/docs/gst_plugins_cache.json
+index e2c5054c5d..86e530d79c 100644
+--- a/subprojects/gst-plugins-good/docs/gst_plugins_cache.json
++++ b/subprojects/gst-plugins-good/docs/gst_plugins_cache.json
+@@ -7027,7 +7027,7 @@
+                         "construct": false,
+                         "construct-only": false,
+                         "controllable": false,
+-                        "default": "GStreamer 1.21.2 FLV muxer",
++                        "default": "GStreamer 1.21.2.1 FLV muxer",
+                         "mutable": "null",
+                         "readable": true,
+                         "type": "gchararray",
+@@ -7039,7 +7039,7 @@
+                         "construct": false,
+                         "construct-only": false,
+                         "controllable": false,
+-                        "default": "GStreamer 1.21.2 FLV muxer",
++                        "default": "GStreamer 1.21.2.1 FLV muxer",
+                         "mutable": "null",
+                         "readable": true,
+                         "type": "gchararray",
+@@ -17401,6 +17401,18 @@
+                         "type": "guint",
+                         "writable": true
+                     },
++                    "update-ntp64-header-ext": {
++                        "blurb": "Whether RTP NTP header extension should be updated with actual NTP time",
++                        "conditionally-available": false,
++                        "construct": false,
++                        "construct-only": false,
++                        "controllable": false,
++                        "default": "true",
++                        "mutable": "null",
++                        "readable": true,
++                        "type": "gboolean",
++                        "writable": true
++                    },
+                     "use-pipeline-clock": {
+                         "blurb": "Use the pipeline running-time to set the NTP time in the RTCP SR messages (DEPRECATED: Use ntp-time-source property)",
+                         "conditionally-available": false,
+@@ -19318,6 +19330,18 @@
+                         "type": "GstStructure",
+                         "writable": false
+                     },
++                    "update-ntp64-header-ext": {
++                        "blurb": "Whether RTP NTP header extension should be updated with actual NTP time",
++                        "conditionally-available": false,
++                        "construct": false,
++                        "construct-only": false,
++                        "controllable": false,
++                        "default": "true",
++                        "mutable": "null",
++                        "readable": true,
++                        "type": "gboolean",
++                        "writable": true
++                    },
+                     "use-pipeline-clock": {
+                         "blurb": "Use the pipeline running-time to set the NTP time in the RTCP SR messages (DEPRECATED: Use ntp-time-source property)",
+                         "conditionally-available": false,
+@@ -20083,6 +20107,18 @@
+                         "readable": true,
+                         "type": "guint64",
+                         "writable": true
++                    },
++                    "update-ntp64-header-ext": {
++                        "blurb": "Whether RTP NTP header extension should be updated with actual NTP time",
++                        "conditionally-available": false,
++                        "construct": false,
++                        "construct-only": false,
++                        "controllable": false,
++                        "default": "true",
++                        "mutable": "null",
++                        "readable": true,
++                        "type": "gboolean",
++                        "writable": true
+                     }
+                 },
+                 "signals": {
+@@ -21196,7 +21232,7 @@
+                         "construct": false,
+                         "construct-only": false,
+                         "controllable": false,
+-                        "default": "GStreamer/1.21.2",
++                        "default": "GStreamer/1.21.2.1",
+                         "mutable": "null",
+                         "readable": true,
+                         "type": "gchararray",
+@@ -21342,6 +21378,21 @@
+                         "return-type": "GstFlowReturn",
+                         "when": "last"
+                     },
++                    "push-backchannel-sample": {
++                        "action": true,
++                        "args": [
++                            {
++                                "name": "arg0",
++                                "type": "guint"
++                            },
++                            {
++                                "name": "arg1",
++                                "type": "GstSample"
++                            }
++                        ],
++                        "return-type": "GstFlowReturn",
++                        "when": "last"
++                    },
+                     "request-rtcp-key": {
+                         "args": [
+                             {
+@@ -21740,7 +21791,7 @@
+                         "construct": false,
+                         "construct-only": false,
+                         "controllable": false,
+-                        "default": "GStreamer 1.21.2",
++                        "default": "GStreamer 1.21.2.1",
+                         "mutable": "null",
+                         "readable": true,
+                         "type": "gchararray",
+@@ -23177,7 +23228,7 @@
+                         "construct": false,
+                         "construct-only": false,
+                         "controllable": false,
+-                        "default": "GStreamer souphttpsrc 1.21.2 ",
++                        "default": "GStreamer souphttpsrc 1.21.2.1 ",
+                         "mutable": "null",
+                         "readable": true,
+                         "type": "gchararray",
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdclient.c b/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdclient.c
+index 50af5ea15a..c245012ed0 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdclient.c
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdclient.c
+@@ -2045,9 +2045,7 @@ gst_mpd_client2_get_next_fragment (GstMPDClient2 * client,
+ 
+     GST_DEBUG ("currentChunk->SegmentURL = %p", currentChunk->SegmentURL);
+     if (currentChunk->SegmentURL != NULL) {
+-      mediaURL =
+-          g_strdup (gst_mpdparser_get_mediaURL (stream,
+-              currentChunk->SegmentURL));
++      mediaURL = gst_mpdparser_get_mediaURL (stream, currentChunk->SegmentURL);
+       indexURL = g_strdup (currentChunk->SegmentURL->index);
+     } else if (stream->cur_seg_template != NULL) {
+       mediaURL =
+@@ -2320,9 +2318,8 @@ gst_mpd_client2_get_next_header (GstMPDClient2 * client, gchar ** uri,
+   *uri = NULL;
+   if (stream->cur_segment_base) {
+     if (stream->cur_segment_base->Initialization) {
+-      *uri =
+-          g_strdup (gst_mpdparser_get_initializationURL (stream,
+-              stream->cur_segment_base->Initialization));
++      *uri = gst_mpdparser_get_initializationURL (stream,
++          stream->cur_segment_base->Initialization);
+       if (stream->cur_segment_base->Initialization->range) {
+         *range_start =
+             stream->cur_segment_base->Initialization->range->first_byte_pos;
+@@ -2330,9 +2327,8 @@ gst_mpd_client2_get_next_header (GstMPDClient2 * client, gchar ** uri,
+             stream->cur_segment_base->Initialization->range->last_byte_pos;
+       }
+     } else if (stream->cur_segment_base->indexRange) {
+-      *uri =
+-          g_strdup (gst_mpdparser_get_initializationURL (stream,
+-              stream->cur_segment_base->Initialization));
++      *uri = gst_mpdparser_get_initializationURL (stream,
++          stream->cur_segment_base->Initialization);
+       *range_start = 0;
+       *range_end = stream->cur_segment_base->indexRange->first_byte_pos - 1;
+     }
+@@ -2367,9 +2363,8 @@ gst_mpd_client2_get_next_header_index (GstMPDClient2 * client, gchar ** uri,
+   GST_DEBUG ("Looking for current representation index");
+   *uri = NULL;
+   if (stream->cur_segment_base && stream->cur_segment_base->indexRange) {
+-    *uri =
+-        g_strdup (gst_mpdparser_get_initializationURL (stream,
+-            stream->cur_segment_base->RepresentationIndex));
++    *uri = gst_mpdparser_get_initializationURL (stream,
++        stream->cur_segment_base->RepresentationIndex);
+     *range_start = stream->cur_segment_base->indexRange->first_byte_pos;
+     *range_end = stream->cur_segment_base->indexRange->last_byte_pos;
+   } else if (stream->cur_seg_template && stream->cur_seg_template->index) {
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdparser.c b/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdparser.c
+index 8e7ed18acb..431b374d57 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdparser.c
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdparser.c
+@@ -1397,34 +1397,56 @@ gst_mpdparser_free_active_stream (GstActiveStream * active_stream)
+   }
+ }
+ 
+-const gchar *
++static gchar *
++get_base_url_with_query (GstActiveStream * stream)
++{
++  GstUri *uri;
++  gchar *uri_str;
++
++  if (!stream->queryURL)
++    return g_strdup (stream->baseURL);
++
++  uri = gst_uri_from_string (stream->baseURL);
++  gst_uri_set_query_string (uri, stream->queryURL);
++  uri_str = gst_uri_to_string (uri);
++
++  gst_uri_unref (uri);
++  return uri_str;
++}
++
++/*
++ * gst_mpdparser_get_initializationURL:
++ *
++ * Returns: (transfer full): stream initializationURL if available,
++ *   baseURL combined with queryURL otherwise.
++ */
++gchar *
+ gst_mpdparser_get_initializationURL (GstActiveStream * stream,
+     GstMPDURLTypeNode * InitializationURL)
+ {
+-  const gchar *url_prefix;
+-
+   g_return_val_if_fail (stream != NULL, NULL);
+ 
+-  url_prefix = (InitializationURL
+-      && InitializationURL->sourceURL) ? InitializationURL->sourceURL : stream->
+-      baseURL;
+-
+-  return url_prefix;
++  return (InitializationURL && InitializationURL->sourceURL)
++      ? g_strdup (InitializationURL->sourceURL)
++      : get_base_url_with_query (stream);
+ }
+ 
++/*
++ * gst_mpdparser_get_mediaURL:
++ *
++ * Returns: (transfer full): stream mediaURL if available,
++ *   baseURL combined with queryURL otherwise.
++ */
+ gchar *
+ gst_mpdparser_get_mediaURL (GstActiveStream * stream,
+     GstMPDSegmentURLNode * segmentURL)
+ {
+-  const gchar *url_prefix;
+-
+   g_return_val_if_fail (stream != NULL, NULL);
+   g_return_val_if_fail (segmentURL != NULL, NULL);
+ 
+-  url_prefix = segmentURL->media ? segmentURL->media : stream->baseURL;
+-  g_return_val_if_fail (url_prefix != NULL, NULL);
+-
+-  return segmentURL->media;
++  return (segmentURL->media)
++      ? g_strdup (segmentURL->media)
++      : get_base_url_with_query (stream);
+ }
+ 
+ /* navigation functions */
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdparser.h b/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdparser.h
+index 7dd6f9638d..7ffadb2aed 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdparser.h
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/dash/gstmpdparser.h
+@@ -165,7 +165,7 @@ void gst_mpdparser_media_fragment_info_clear (GstMediaFragmentInfo * fragment);
+ /* Active stream methods*/
+ void gst_mpdparser_init_active_stream_segments (GstActiveStream * stream);
+ gchar *gst_mpdparser_get_mediaURL (GstActiveStream * stream, GstMPDSegmentURLNode * segmentURL);
+-const gchar *gst_mpdparser_get_initializationURL (GstActiveStream * stream, GstMPDURLTypeNode * InitializationURL);
++gchar *gst_mpdparser_get_initializationURL (GstActiveStream * stream, GstMPDURLTypeNode * InitializationURL);
+ gchar *gst_mpdparser_build_URL_from_template (const gchar * url_template, const gchar * id, guint number, guint bandwidth, guint64 time);
+ 
+ G_END_DECLS
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemux-stream.c b/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemux-stream.c
+index 56a5cf39b4..a7949bef3a 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemux-stream.c
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemux-stream.c
+@@ -135,7 +135,7 @@ gst_adaptive_demux2_stream_finalize (GObject * object)
+   if (stream->pending_caps)
+     gst_caps_unref (stream->pending_caps);
+ 
+-  g_clear_pointer (&stream->pending_tags, gst_tag_list_unref);
++  gst_clear_tag_list (&stream->pending_tags);
+   g_clear_pointer (&stream->stream_collection, gst_object_unref);
+ 
+   G_OBJECT_CLASS (parent_class)->finalize (object);
+@@ -999,9 +999,8 @@ match_parsebin_to_track (GstAdaptiveDemux2Stream * stream, GstPad * pad)
+   stream_type = gst_stream_get_stream_type (gst_stream);
+ 
+   GST_DEBUG_OBJECT (pad,
+-      "Trying to match pad from parsebin with internal streamid %s and caps %"
+-      GST_PTR_FORMAT, GST_STR_NULL (internal_stream_id),
+-      gst_stream_get_caps (gst_stream));
++      "Trying to match pad from parsebin with internal streamid %s and stream %"
++      GST_PTR_FORMAT, GST_STR_NULL (internal_stream_id), gst_stream);
+ 
+   /* Try to match directly by the track's pending upstream_stream_id */
+   for (tmp = stream->tracks; tmp; tmp = tmp->next) {
+@@ -2427,6 +2426,8 @@ can_handle_collection (GstAdaptiveDemux2Stream * stream,
+       default:
+         break;
+     }
++    if (tags)
++      gst_tag_list_unref (tags);
+   }
+ 
+   /* Check that we either have at most 1 of each track type, or that
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemux.c b/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemux.c
+index 622ebf225f..91161f69d0 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemux.c
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemux.c
+@@ -549,6 +549,7 @@ gst_adaptive_demux_init (GstAdaptiveDemux * demux,
+   gst_segment_init (&demux->segment, GST_FORMAT_TIME);
+   demux->instant_rate_multiplier = 1.0;
+ 
++  GST_OBJECT_FLAG_SET (demux, GST_BIN_FLAG_STREAMS_AWARE);
+   gst_bin_set_suppressed_flags (GST_BIN_CAST (demux),
+       GST_ELEMENT_FLAG_SOURCE | GST_ELEMENT_FLAG_SINK);
+ 
+@@ -652,7 +653,10 @@ gst_adaptive_demux_check_streams_aware (GstAdaptiveDemux * demux)
+   gboolean ret = FALSE;
+   GstObject *parent = gst_object_get_parent (GST_OBJECT (demux));
+ 
+-  ret = (parent && GST_OBJECT_FLAG_IS_SET (parent, GST_BIN_FLAG_STREAMS_AWARE));
++  if (parent) {
++    ret = GST_OBJECT_FLAG_IS_SET (parent, GST_BIN_FLAG_STREAMS_AWARE);
++    gst_object_unref (parent);
++  }
+ 
+   return ret;
+ }
+@@ -2829,9 +2833,7 @@ gst_adaptive_demux2_stream_set_tags (GstAdaptiveDemux2Stream * stream,
+ {
+   GST_DEBUG_OBJECT (stream,
+       "setting new tags for stream %" GST_PTR_FORMAT, tags);
+-  if (stream->pending_tags) {
+-    gst_tag_list_unref (stream->pending_tags);
+-  }
++  gst_clear_tag_list (&stream->pending_tags);
+   stream->pending_tags = tags;
+ }
+ 
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemuxutils.c b/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemuxutils.c
+index b27e029248..f9598194e2 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemuxutils.c
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/gstadaptivedemuxutils.c
+@@ -500,6 +500,7 @@ typedef struct
+ {
+   gboolean delivered;
+   GstEvent *event;
++  guint sticky_order;
+ } PadEvent;
+ 
+ void
+@@ -541,12 +542,12 @@ gst_event_store_insert_event (GstEventStore * store, GstEvent * event,
+     gboolean delivered)
+ {
+   guint i, len;
+-  GstEventType type;
+   GArray *events;
+   GQuark name_id = 0;
+   gboolean insert = TRUE;
+ 
+-  type = GST_EVENT_TYPE (event);
++  GstEventType type = GST_EVENT_TYPE (event);
++  guint event_sticky_order = gst_event_type_to_sticky_ordering (type);
+ 
+   if (type & GST_EVENT_TYPE_STICKY_MULTI)
+     name_id = gst_structure_get_name_id (gst_event_get_structure (event));
+@@ -578,23 +579,27 @@ gst_event_store_insert_event (GstEventStore * store, GstEvent * event,
+       break;
+     }
+ 
+-    if (type < GST_EVENT_TYPE (ev->event) || (type != GST_EVENT_TYPE (ev->event)
++    if (event_sticky_order < ev->sticky_order
++        || (type != GST_EVENT_TYPE (ev->event)
+             && GST_EVENT_TYPE (ev->event) == GST_EVENT_EOS)) {
+       /* STREAM_START, CAPS and SEGMENT must be delivered in this order. By
+        * storing the sticky ordered we can check that this is respected. */
+-      if (G_UNLIKELY (GST_EVENT_TYPE (ev->event) <= GST_EVENT_SEGMENT
+-              || GST_EVENT_TYPE (ev->event) == GST_EVENT_EOS))
++      if (G_UNLIKELY (ev->sticky_order <=
++              gst_event_type_to_sticky_ordering (GST_EVENT_SEGMENT)
++              || GST_EVENT_TYPE (ev->event) == GST_EVENT_EOS)) {
+         g_warning (G_STRLOC
+             ":%s:<store %p> Sticky event misordering, got '%s' before '%s'",
+             G_STRFUNC, store,
+             gst_event_type_get_name (GST_EVENT_TYPE (ev->event)),
+             gst_event_type_get_name (type));
++      }
+       break;
+     }
+   }
+   if (insert) {
+     PadEvent ev;
+     ev.event = gst_event_ref (event);
++    ev.sticky_order = event_sticky_order;
+     ev.delivered = delivered;
+     g_array_insert_val (events, i, ev);
+ 
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.c b/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.c
+index 280a420489..0cf7a346bc 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.c
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.c
+@@ -192,6 +192,7 @@ gst_hls_demux_stream_init (GstHLSDemuxStream * stream)
+   stream->do_typefind = TRUE;
+   stream->reset_pts = TRUE;
+   stream->presentation_offset = 60 * GST_SECOND;
++  stream->pdt_tag_sent = FALSE;
+ }
+ 
+ typedef struct _GstHLSDemux2 GstHLSDemux2;
+@@ -1683,8 +1684,9 @@ gst_hls_demux_stream_data_received (GstAdaptiveDemux2Stream * stream,
+ {
+   GstHLSDemuxStream *hls_stream = GST_HLS_DEMUX_STREAM_CAST (stream);
+   GstHLSDemux *hlsdemux = GST_HLS_DEMUX_CAST (stream->demux);
++  GstM3U8MediaSegment *file = hls_stream->current_segment;
+ 
+-  if (hls_stream->current_segment == NULL)
++  if (file == NULL)
+     return GST_ADAPTIVE_DEMUX_FLOW_LOST_SYNC;
+ 
+   if (hls_stream->current_offset == -1)
+@@ -1727,6 +1729,14 @@ gst_hls_demux_stream_data_received (GstAdaptiveDemux2Stream * stream,
+       return GST_FLOW_OK;
+   }
+ 
++  if (!hls_stream->pdt_tag_sent && file != NULL && file->datetime != NULL) {
++    gst_adaptive_demux2_stream_set_tags (stream,
++        gst_tag_list_new (GST_TAG_DATE_TIME,
++            gst_date_time_new_from_g_date_time (g_date_time_ref
++                (file->datetime)), NULL));
++    hls_stream->pdt_tag_sent = TRUE;
++  }
++
+   return gst_hls_demux_stream_handle_buffer (stream, buffer, FALSE);
+ }
+ 
+@@ -2598,6 +2608,14 @@ gst_hls_demux_reset (GstAdaptiveDemux * ademux)
+ 
+   GST_DEBUG_OBJECT (demux, "resetting");
+ 
++  if (ademux->input_period) {
++    GList *walk;
++    for (walk = ademux->input_period->streams; walk != NULL; walk = walk->next) {
++      GstHLSDemuxStream *hls_stream = GST_HLS_DEMUX_STREAM_CAST (walk->data);
++      hls_stream->pdt_tag_sent = FALSE;
++    }
++  }
++
+   if (demux->master) {
+     gst_hls_master_playlist_unref (demux->master);
+     demux->master = NULL;
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.h b/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.h
+index 1d7f7dbbab..d4acf754c3 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.h
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/hls/gsthlsdemux.h
+@@ -168,6 +168,8 @@ struct _GstHLSDemuxStream
+    * "output" stream times. Not enabled (i.e 0) if variant is ISOBMFF
+    */
+   GstClockTime presentation_offset;
++
++  gboolean pdt_tag_sent;
+ };
+ 
+ typedef struct {
+diff --git a/subprojects/gst-plugins-good/ext/adaptivedemux2/meson.build b/subprojects/gst-plugins-good/ext/adaptivedemux2/meson.build
+index 4d8f50ada0..6f4564deb0 100644
+--- a/subprojects/gst-plugins-good/ext/adaptivedemux2/meson.build
++++ b/subprojects/gst-plugins-good/ext/adaptivedemux2/meson.build
+@@ -105,7 +105,7 @@ if default_library in ['static', 'both']
+     include_directories: [configinc, libsinc],
+     c_args: [gst_plugins_good_args, soup_loader_args, soup_loader_args, hls_cargs,
+              '-DGST_ISOFF_API=G_GNUC_INTERNAL'],
+-    dependencies: [gsttag_dep, gstnet_dep, gstbase_dep,
++    dependencies: [gst_dep, gsttag_dep, gstnet_dep, gstbase_dep,
+                    gstpbutils_dep, gstapp_dep, soup_dep,
+                    gio_dep, adaptive_xml2_dep,
+                    hls_crypto_dep, libm],
+diff --git a/subprojects/gst-plugins-good/ext/gdk_pixbuf/gstgdkpixbufoverlay.c b/subprojects/gst-plugins-good/ext/gdk_pixbuf/gstgdkpixbufoverlay.c
+index a2585f385d..0d6b746a3e 100644
+--- a/subprojects/gst-plugins-good/ext/gdk_pixbuf/gstgdkpixbufoverlay.c
++++ b/subprojects/gst-plugins-good/ext/gdk_pixbuf/gstgdkpixbufoverlay.c
+@@ -21,17 +21,15 @@
+  * SECTION:element-gdkpixbufoverlay
+  * @title: gdkpixbufoverlay
+  *
+- * The gdkpixbufoverlay element overlays an image loaded from file onto
+- * a video stream.
++ * The gdkpixbufoverlay element overlays a provided GdkPixbuf or an image
++ * loaded from file onto a video stream.
+  *
+  * Changing the positioning or overlay width and height properties at runtime
+  * is supported, but it might be prudent to to protect the property setting
+  * code with GST_BASE_TRANSFORM_LOCK and GST_BASE_TRANSFORM_UNLOCK, as
+  * g_object_set() is not atomic for multiple properties passed in one go.
+  *
+- * Changing the image at runtime is currently not supported.
+- *
+- * Negative offsets are also not yet supported.
++ * Changing the image at runtime is supported.
+  *
+  * ## Example launch line
+  * |[
+diff --git a/subprojects/gst-plugins-good/ext/meson.build b/subprojects/gst-plugins-good/ext/meson.build
+index 9bf2240d82..00ce467f84 100644
+--- a/subprojects/gst-plugins-good/ext/meson.build
++++ b/subprojects/gst-plugins-good/ext/meson.build
+@@ -13,6 +13,7 @@ subdir('libpng')
+ subdir('mpg123')
+ subdir('raw1394')
+ subdir('qt')
++subdir('qt6')
+ subdir('pulse')
+ subdir('shout2')
+ subdir('soup')
+diff --git a/subprojects/gst-plugins-good/ext/qt6/gstplugin.cc b/subprojects/gst-plugins-good/ext/qt6/gstplugin.cc
+new file mode 100644
+index 0000000000..3ab792578f
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/gstplugin.cc
+@@ -0,0 +1,50 @@
++/*
++ * GStreamer
++ * Copyright (C) 2015 Matthew Waters <matthew@centricular.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#include "gstqt6elements.h"
++
++static gboolean
++plugin_init (GstPlugin * plugin)
++{
++  gboolean ret = FALSE;
++
++  ret |= GST_ELEMENT_REGISTER (qml6glsink, plugin);
++
++  return ret;
++}
++
++#ifndef GST_PACKAGE_NAME
++#define GST_PACKAGE_NAME   "GStreamer Bad Plug-ins (qmake)"
++#define GST_PACKAGE_ORIGIN "Unknown package origin"
++#define GST_LICENSE        "LGPL"
++#define PACKAGE            "gst-plugins-bad (qmake)"
++#define PACKAGE_VERSION    "1.21.0.1"
++#endif
++
++GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,
++    GST_VERSION_MINOR,
++    qml6,
++    "Qt6 Qml plugin",
++    plugin_init, PACKAGE_VERSION, GST_LICENSE, GST_PACKAGE_NAME,
++    GST_PACKAGE_ORIGIN)
+diff --git a/subprojects/gst-plugins-good/ext/qt6/gstqml6glsink.cc b/subprojects/gst-plugins-good/ext/qt6/gstqml6glsink.cc
+new file mode 100644
+index 0000000000..cff6277955
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/gstqml6glsink.cc
+@@ -0,0 +1,582 @@
++/*
++ * GStreamer
++ * Copyright (C) 2015 Matthew Waters <matthew@centricular.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++/**
++ * SECTION:gstqml6glsink
++ *
++ * qml6glsink provides a way to render a video stream as a Qml object inside
++ * the Qml scene graph.  This is achieved by providing the incoming OpenGL
++ * textures to Qt as a scene graph object.
++ *
++ * qml6glsink will attempt to retrieve the windowing system display connection
++ * that Qt is using (#GstGLDisplay).  This may be different to any already
++ * existing window system display connection already in use in the pipeline for
++ * a number of reasons.  A couple of examples of this are:
++ *
++ * 1. Adding qml6glsink to an already running pipeline
++ * 2. Not having any qml6glsink element start up before any
++ *    other OpenGL-based element in the pipeline.
++ *
++ * If one of these scenarios occurs, then there will be multiple OpenGL contexts
++ * in use in the pipeline.  This means that either the pipeline will fail to
++ * start up correctly, a downstream element may reject buffers, or a complete
++ * GPU->System memory->GPU transfer is performed for every buffer.
++ *
++ * The requirement to avoid this is that all elements share the same
++ * #GstGLDisplay object and as Qt cannot currently share an existing window
++ * system display connection, GStreamer must use the window system display
++ * connection provided by Qt.  This window system display connection can be
++ * retrieved by either a qmlglsink element or a qmlgloverlay element. The
++ * recommended usage is to have either element (qmlglsink or qmlgloverlay)
++ * be the first to propagate the #GstGLDisplay for the entire pipeline to use by
++ * setting either element to the READY element state before any other OpenGL
++ * element in the pipeline.
++ *
++ * In a dynamically adding qmlglsink (or qmlgloverlay) to a pipeline case,
++ * there are some considerations for ensuring that the window system display
++ * and OpenGL contexts are compatible with Qt.  When the qmlgloverlay (or
++ * qmlglsink) element is added and brought up to READY, it will propagate it's
++ * own #GstGLDisplay using the #GstContext mechanism regardless of any existing
++ * #GstGLDisplay used by the pipeline previously.  In order for the new
++ * #GstGLDisplay to be used, the application must then set the provided
++ * #GstGLDisplay containing #GstContext on the pipeline.  This may effectively
++ * cause each OpenGL element to replace the window system display and also the
++ * OpenGL context it is using.  As such this process may take a significant
++ * amount of time and resources as objects are recreated in the new OpenGL
++ * context.
++ *
++ * All instances of qmlglsink and qmlgloverlay will return the exact same
++ * #GstGLDisplay object while the pipeline is running regardless of whether
++ * any qmlglsink or qmlgloverlay elements are added or removed from the
++ * pipeline.
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#include "gstqt6elements.h"
++#include "gstqml6glsink.h"
++#include <QtGui/QGuiApplication>
++
++#include <gst/gl/gstglfuncs.h>
++
++#define GST_CAT_DEFAULT gst_debug_qml6_gl_sink
++GST_DEBUG_CATEGORY (GST_CAT_DEFAULT);
++
++static void gst_qml6_gl_sink_navigation_interface_init (GstNavigationInterface * iface);
++static void gst_qml6_gl_sink_finalize (GObject * object);
++static void gst_qml6_gl_sink_set_property (GObject * object, guint prop_id,
++    const GValue * value, GParamSpec * param_spec);
++static void gst_qml6_gl_sink_get_property (GObject * object, guint prop_id,
++    GValue * value, GParamSpec * param_spec);
++
++static gboolean gst_qml6_gl_sink_stop (GstBaseSink * bsink);
++
++static gboolean gst_qml6_gl_sink_query (GstBaseSink * bsink, GstQuery * query);
++
++static GstStateChangeReturn
++gst_qml6_gl_sink_change_state (GstElement * element, GstStateChange transition);
++
++static void gst_qml6_gl_sink_get_times (GstBaseSink * bsink, GstBuffer * buf,
++    GstClockTime * start, GstClockTime * end);
++static gboolean gst_qml6_gl_sink_set_caps (GstBaseSink * bsink, GstCaps * caps);
++static GstFlowReturn gst_qml6_gl_sink_show_frame (GstVideoSink * bsink,
++    GstBuffer * buf);
++static gboolean gst_qml6_gl_sink_propose_allocation (GstBaseSink * bsink,
++    GstQuery * query);
++
++static GstStaticPadTemplate gst_qt_sink_template =
++GST_STATIC_PAD_TEMPLATE ("sink",
++    GST_PAD_SINK,
++    GST_PAD_ALWAYS,
++    GST_STATIC_CAPS ("video/x-raw(" GST_CAPS_FEATURE_MEMORY_GL_MEMORY "), "
++    "format = (string) { RGB, RGBA }, "
++    "width = " GST_VIDEO_SIZE_RANGE ", "
++    "height = " GST_VIDEO_SIZE_RANGE ", "
++    "framerate = " GST_VIDEO_FPS_RANGE ", "
++    "texture-target = (string) 2D"));
++
++#define DEFAULT_FORCE_ASPECT_RATIO  TRUE
++#define DEFAULT_PAR_N               0
++#define DEFAULT_PAR_D               1
++
++enum
++{
++  ARG_0,
++  PROP_WIDGET,
++  PROP_FORCE_ASPECT_RATIO,
++  PROP_PIXEL_ASPECT_RATIO,
++};
++
++enum
++{
++  SIGNAL_0,
++  LAST_SIGNAL
++};
++
++#define gst_qml6_gl_sink_parent_class parent_class
++G_DEFINE_TYPE_WITH_CODE (GstQml6GLSink, gst_qml6_gl_sink,
++    GST_TYPE_VIDEO_SINK, GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT,
++        "qtsink", 0, "Qt Video Sink");
++    G_IMPLEMENT_INTERFACE (GST_TYPE_NAVIGATION,
++        gst_qml6_gl_sink_navigation_interface_init));
++GST_ELEMENT_REGISTER_DEFINE_WITH_CODE (qml6glsink, "qml6glsink",
++    GST_RANK_NONE, GST_TYPE_QML6_GL_SINK, qt6_element_init (plugin));
++
++static void
++gst_qml6_gl_sink_class_init (GstQml6GLSinkClass * klass)
++{
++  GObjectClass *gobject_class;
++  GstElementClass *gstelement_class;
++  GstBaseSinkClass *gstbasesink_class;
++  GstVideoSinkClass *gstvideosink_class;
++
++  gobject_class = (GObjectClass *) klass;
++  gstelement_class = (GstElementClass *) klass;
++  gstbasesink_class = (GstBaseSinkClass *) klass;
++  gstvideosink_class = (GstVideoSinkClass *) klass;
++
++  gobject_class->set_property = gst_qml6_gl_sink_set_property;
++  gobject_class->get_property = gst_qml6_gl_sink_get_property;
++
++  gst_element_class_set_metadata (gstelement_class, "Qt6 Video Sink",
++      "Sink/Video", "A video sink that renders to a QQuickItem for Qt6",
++      "Matthew Waters <matthew@centricular.com>");
++
++  g_object_class_install_property (gobject_class, PROP_WIDGET,
++      g_param_spec_pointer ("widget", "QQuickItem",
++          "The QQuickItem to place in the object hierarchy",
++          (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
++
++  g_object_class_install_property (gobject_class, PROP_FORCE_ASPECT_RATIO,
++      g_param_spec_boolean ("force-aspect-ratio",
++          "Force aspect ratio",
++          "When enabled, scaling will respect original aspect ratio",
++          DEFAULT_FORCE_ASPECT_RATIO,
++          (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
++
++  g_object_class_install_property (gobject_class, PROP_PIXEL_ASPECT_RATIO,
++      gst_param_spec_fraction ("pixel-aspect-ratio", "Pixel Aspect Ratio",
++          "The pixel aspect ratio of the device", DEFAULT_PAR_N, DEFAULT_PAR_D,
++          G_MAXINT, 1, 1, 1,
++          (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
++
++  gst_element_class_add_static_pad_template (gstelement_class, &gst_qt_sink_template);
++
++  gobject_class->finalize = gst_qml6_gl_sink_finalize;
++
++  gstelement_class->change_state = gst_qml6_gl_sink_change_state;
++  gstbasesink_class->query = gst_qml6_gl_sink_query;
++  gstbasesink_class->set_caps = gst_qml6_gl_sink_set_caps;
++  gstbasesink_class->get_times = gst_qml6_gl_sink_get_times;
++  gstbasesink_class->propose_allocation = gst_qml6_gl_sink_propose_allocation;
++  gstbasesink_class->stop = gst_qml6_gl_sink_stop;
++
++  gstvideosink_class->show_frame = gst_qml6_gl_sink_show_frame;
++}
++
++static void
++gst_qml6_gl_sink_init (GstQml6GLSink * qt_sink)
++{
++  qt_sink->widget = QSharedPointer<Qt6GLVideoItemInterface>();
++  if (qt_sink->widget)
++    qt_sink->widget->setSink (GST_ELEMENT_CAST (qt_sink));
++}
++
++static void
++gst_qml6_gl_sink_set_property (GObject * object, guint prop_id,
++    const GValue * value, GParamSpec * pspec)
++{
++  GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (object);
++
++  switch (prop_id) {
++    case PROP_WIDGET: {
++      Qt6GLVideoItem *qt_item = static_cast<Qt6GLVideoItem *> (g_value_get_pointer (value));
++      if (qt_item) {
++        qt_sink->widget = qt_item->getInterface();
++        if (qt_sink->widget) {
++          qt_sink->widget->setSink (GST_ELEMENT_CAST (qt_sink));
++        }
++      } else {
++        qt_sink->widget.clear();
++      }
++      break;
++    }
++    case PROP_FORCE_ASPECT_RATIO:
++      g_return_if_fail (qt_sink->widget);
++      qt_sink->widget->setForceAspectRatio (g_value_get_boolean (value));
++      break;
++    case PROP_PIXEL_ASPECT_RATIO:
++      g_return_if_fail (qt_sink->widget);
++      qt_sink->widget->setDAR (gst_value_get_fraction_numerator (value),
++          gst_value_get_fraction_denominator (value));
++      break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
++      break;
++  }
++}
++
++static void
++_reset (GstQml6GLSink * qt_sink)
++{
++  if (qt_sink->display) {
++    gst_object_unref (qt_sink->display);
++    qt_sink->display = NULL;
++  }
++
++  if (qt_sink->context) {
++    gst_object_unref (qt_sink->context);
++    qt_sink->context = NULL;
++  }
++
++  if (qt_sink->qt_context) {
++    gst_object_unref (qt_sink->qt_context);
++    qt_sink->qt_context = NULL;
++  }
++}
++
++static void
++gst_qml6_gl_sink_finalize (GObject * object)
++{
++  GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (object);
++
++  _reset (qt_sink);
++
++  qt_sink->widget.clear();
++
++  G_OBJECT_CLASS (parent_class)->finalize (object);
++}
++
++static void
++gst_qml6_gl_sink_get_property (GObject * object, guint prop_id,
++    GValue * value, GParamSpec * pspec)
++{
++  GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (object);
++
++  switch (prop_id) {
++    case PROP_WIDGET:
++      /* This is not really safe - the app needs to be
++       * sure the widget is going to be kept alive or
++       * this can crash */
++      if (qt_sink->widget)
++        g_value_set_pointer (value, qt_sink->widget->videoItem());
++      else
++        g_value_set_pointer (value, NULL);
++      break;
++    case PROP_FORCE_ASPECT_RATIO:
++      if (qt_sink->widget)
++        g_value_set_boolean (value, qt_sink->widget->getForceAspectRatio ());
++      else
++        g_value_set_boolean (value, DEFAULT_FORCE_ASPECT_RATIO);
++      break;
++    case PROP_PIXEL_ASPECT_RATIO:
++      if (qt_sink->widget) {
++        gint num, den;
++        qt_sink->widget->getDAR (&num, &den);
++        gst_value_set_fraction (value, num, den);
++      } else {
++        gst_value_set_fraction (value, DEFAULT_PAR_N, DEFAULT_PAR_D);
++      }
++      break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
++      break;
++  }
++}
++
++static gboolean
++gst_qml6_gl_sink_query (GstBaseSink * bsink, GstQuery * query)
++{
++  GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (bsink);
++  gboolean res = FALSE;
++
++  switch (GST_QUERY_TYPE (query)) {
++    case GST_QUERY_CONTEXT:
++    {
++      if (gst_gl_handle_context_query ((GstElement *) qt_sink, query,
++          qt_sink->display, qt_sink->context, qt_sink->qt_context))
++        return TRUE;
++
++      /* fallthrough */
++    }
++    default:
++      res = GST_BASE_SINK_CLASS (parent_class)->query (bsink, query);
++      break;
++  }
++
++  return res;
++}
++
++static gboolean
++gst_qml6_gl_sink_stop (GstBaseSink * bsink)
++{
++  return TRUE;
++}
++
++static GstStateChangeReturn
++gst_qml6_gl_sink_change_state (GstElement * element, GstStateChange transition)
++{
++  GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (element);
++  GstStateChangeReturn ret = GST_STATE_CHANGE_SUCCESS;
++  QGuiApplication *app;
++
++  GST_DEBUG ("changing state: %s => %s",
++      gst_element_state_get_name (GST_STATE_TRANSITION_CURRENT (transition)),
++      gst_element_state_get_name (GST_STATE_TRANSITION_NEXT (transition)));
++
++  switch (transition) {
++    case GST_STATE_CHANGE_NULL_TO_READY:
++      app = static_cast<QGuiApplication *> (QCoreApplication::instance ());
++      if (!app) {
++        GST_ELEMENT_ERROR (element, RESOURCE, NOT_FOUND,
++            ("%s", "Failed to connect to Qt"),
++            ("%s", "Could not retrieve QGuiApplication instance"));
++        return GST_STATE_CHANGE_FAILURE;
++      }
++
++      if (!qt_sink->widget) {
++        GST_ELEMENT_ERROR (element, RESOURCE, NOT_FOUND,
++            ("%s", "Required property \'widget\' not set"),
++            (NULL));
++        return GST_STATE_CHANGE_FAILURE;
++      }
++
++      if (!qt_sink->widget->initWinSys()) {
++        GST_ELEMENT_ERROR (element, RESOURCE, NOT_FOUND,
++            ("%s", "Could not initialize window system"),
++            (NULL));
++        return GST_STATE_CHANGE_FAILURE;
++      }
++
++      qt_sink->display = qt_sink->widget->getDisplay();
++      qt_sink->context = qt_sink->widget->getContext();
++      qt_sink->qt_context = qt_sink->widget->getQtContext();
++
++      if (!qt_sink->display || !qt_sink->context || !qt_sink->qt_context) {
++        GST_ELEMENT_ERROR (element, RESOURCE, NOT_FOUND,
++            ("%s", "Could not retrieve window system OpenGL configuration"),
++            (NULL));
++        return GST_STATE_CHANGE_FAILURE;
++      }
++
++      GST_OBJECT_LOCK (qt_sink->display);
++      gst_gl_display_add_context (qt_sink->display, qt_sink->context);
++      GST_OBJECT_UNLOCK (qt_sink->display);
++
++      gst_gl_element_propagate_display_context (GST_ELEMENT (qt_sink), qt_sink->display);
++
++      break;
++    case GST_STATE_CHANGE_READY_TO_PAUSED:
++      break;
++    case GST_STATE_CHANGE_PAUSED_TO_PLAYING:
++      break;
++    default:
++      break;
++  }
++
++  ret = GST_ELEMENT_CLASS (parent_class)->change_state (element, transition);
++  if (ret == GST_STATE_CHANGE_FAILURE)
++    return ret;
++
++  switch (transition) {
++    case GST_STATE_CHANGE_PLAYING_TO_PAUSED:
++      break;
++    case GST_STATE_CHANGE_PAUSED_TO_READY:
++      if (qt_sink->widget)
++        qt_sink->widget->setBuffer(NULL);
++      break;
++    case GST_STATE_CHANGE_READY_TO_NULL:
++      break;
++    default:
++      break;
++  }
++
++  return ret;
++}
++
++static void
++gst_qml6_gl_sink_get_times (GstBaseSink * bsink, GstBuffer * buf,
++    GstClockTime * start, GstClockTime * end)
++{
++  GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (bsink);
++
++  if (GST_BUFFER_TIMESTAMP_IS_VALID (buf)) {
++    *start = GST_BUFFER_TIMESTAMP (buf);
++    if (GST_BUFFER_DURATION_IS_VALID (buf))
++      *end = *start + GST_BUFFER_DURATION (buf);
++    else {
++      if (GST_VIDEO_INFO_FPS_N (&qt_sink->v_info) > 0) {
++        *end = *start +
++            gst_util_uint64_scale_int (GST_SECOND,
++            GST_VIDEO_INFO_FPS_D (&qt_sink->v_info),
++            GST_VIDEO_INFO_FPS_N (&qt_sink->v_info));
++      }
++    }
++  }
++}
++
++gboolean
++gst_qml6_gl_sink_set_caps (GstBaseSink * bsink, GstCaps * caps)
++{
++  GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (bsink);
++
++  GST_DEBUG ("set caps with %" GST_PTR_FORMAT, caps);
++
++  if (!gst_video_info_from_caps (&qt_sink->v_info, caps))
++    return FALSE;
++
++  if (!qt_sink->widget)
++    return FALSE;
++
++  return qt_sink->widget->setCaps(caps);
++}
++
++static GstFlowReturn
++gst_qml6_gl_sink_show_frame (GstVideoSink * vsink, GstBuffer * buf)
++{
++  GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (vsink);
++
++  GST_TRACE ("rendering buffer:%p", buf);
++
++  if (qt_sink->widget)
++    qt_sink->widget->setBuffer(buf);
++
++  return GST_FLOW_OK;
++}
++
++static gboolean
++gst_qml6_gl_sink_propose_allocation (GstBaseSink * bsink, GstQuery * query)
++{
++  GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (bsink);
++  GstBufferPool *pool;
++  GstStructure *config;
++  GstCaps *caps;
++  guint size;
++  gboolean need_pool;
++
++  if (!qt_sink->display || !qt_sink->context)
++    return FALSE;
++
++  gst_query_parse_allocation (query, &caps, &need_pool);
++
++  if (caps == NULL)
++    goto no_caps;
++
++  /* FIXME re-using buffer pool breaks renegotiation */
++  if ((pool = qt_sink->pool))
++    gst_object_ref (pool);
++
++  if (pool != NULL) {
++    GstCaps *pcaps;
++
++    /* we had a pool, check caps */
++    GST_DEBUG_OBJECT (qt_sink, "check existing pool caps");
++    config = gst_buffer_pool_get_config (pool);
++    gst_buffer_pool_config_get_params (config, &pcaps, &size, NULL, NULL);
++
++    if (!gst_caps_is_equal (caps, pcaps)) {
++      GST_DEBUG_OBJECT (qt_sink, "pool has different caps");
++      /* different caps, we can't use this pool */
++      gst_object_unref (pool);
++      pool = NULL;
++    }
++    gst_structure_free (config);
++  } else {
++    GstVideoInfo info;
++
++    if (!gst_video_info_from_caps (&info, caps))
++      goto invalid_caps;
++
++    /* the normal size of a frame */
++    size = info.size;
++  }
++
++  if (pool == NULL && need_pool) {
++  
++    GST_DEBUG_OBJECT (qt_sink, "create new pool");
++    pool = gst_gl_buffer_pool_new (qt_sink->context);
++
++    config = gst_buffer_pool_get_config (pool);
++    gst_buffer_pool_config_set_params (config, caps, size, 0, 0);
++    if (!gst_buffer_pool_set_config (pool, config))
++      goto config_failed;
++  }
++
++  /* we need at least 2 buffer because we hold on to the last one */
++  gst_query_add_allocation_pool (query, pool, size, 2, 0);
++  if (pool)
++    gst_object_unref (pool);
++
++  /* we also support various metadata */
++  gst_query_add_allocation_meta (query, GST_VIDEO_META_API_TYPE, 0);
++
++  if (qt_sink->context->gl_vtable->FenceSync)
++    gst_query_add_allocation_meta (query, GST_GL_SYNC_META_API_TYPE, 0);
++
++  return TRUE;
++
++  /* ERRORS */
++no_caps:
++  {
++    GST_DEBUG_OBJECT (bsink, "no caps specified");
++    return FALSE;
++  }
++invalid_caps:
++  {
++    GST_DEBUG_OBJECT (bsink, "invalid caps specified");
++    return FALSE;
++  }
++config_failed:
++  {
++    GST_DEBUG_OBJECT (bsink, "failed setting config");
++    return FALSE;
++  }
++}
++
++static void
++gst_qml6_gl_sink_navigation_send_event (GstNavigation * navigation,
++                                   GstEvent * event)
++{
++  GstQml6GLSink *qt_sink = GST_QML6_GL_SINK (navigation);
++  GstPad *pad;
++
++  pad = gst_pad_get_peer (GST_VIDEO_SINK_PAD (qt_sink));
++
++  GST_TRACE_OBJECT (qt_sink, "navigation event %" GST_PTR_FORMAT,
++      gst_event_get_structure(event));
++
++  if (GST_IS_PAD (pad) && GST_IS_EVENT (event)) {
++    if (!gst_pad_send_event (pad, gst_event_ref (event))) {
++      /* If upstream didn't handle the event we'll post a message with it
++       * for the application in case it wants to do something with it */
++      gst_element_post_message (GST_ELEMENT_CAST (qt_sink),
++                                gst_navigation_message_new_event (GST_OBJECT_CAST (qt_sink), event));
++    }
++    gst_event_unref (event);
++    gst_object_unref (pad);
++  }
++}
++
++static void gst_qml6_gl_sink_navigation_interface_init (GstNavigationInterface * iface)
++{
++  iface->send_event_simple = gst_qml6_gl_sink_navigation_send_event;
++}
+diff --git a/subprojects/gst-plugins-good/ext/qt6/gstqml6glsink.h b/subprojects/gst-plugins-good/ext/qt6/gstqml6glsink.h
+new file mode 100644
+index 0000000000..4eeeddbced
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/gstqml6glsink.h
+@@ -0,0 +1,62 @@
++/*
++ * GStreamer
++ * Copyright (C) 2015 Matthew Waters <matthew@centricular.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#ifndef __GST_QT6_SINK_H__
++#define __GST_QT6_SINK_H__
++
++#include <gst/gst.h>
++#include <gst/video/gstvideosink.h>
++#include <gst/video/video.h>
++#include <gst/gl/gl.h>
++#include "qt6glitem.h"
++
++typedef struct _GstQml6GLSinkPrivate GstQml6GLSinkPrivate;
++
++G_BEGIN_DECLS
++
++#define GST_TYPE_QML6_GL_SINK (gst_qml6_gl_sink_get_type())
++G_DECLARE_FINAL_TYPE (GstQml6GLSink, gst_qml6_gl_sink, GST, QML6_GL_SINK, GstVideoSink)
++#define GST_QML6_GL_SINK_CAST(obj) ((GstQml6GLSink*)(obj))
++
++/**
++ * GstQml6GLSink:
++ *
++ * Opaque #GstQml6GLSink object
++ */
++struct _GstQml6GLSink
++{
++  /* <private> */
++  GstVideoSink          parent;
++
++  GstVideoInfo          v_info;
++  GstBufferPool        *pool;
++
++  GstGLDisplay         *display;
++  GstGLContext         *context;
++  GstGLContext         *qt_context;
++
++  QSharedPointer<Qt6GLVideoItemInterface> widget;
++};
++
++GstQml6GLSink *    gst_qml6_gl_sink_new (void);
++
++G_END_DECLS
++
++#endif /* __GST_QT6_SINK_H__ */
+diff --git a/subprojects/gst-plugins-good/ext/qt6/gstqsg6glnode.cc b/subprojects/gst-plugins-good/ext/qt6/gstqsg6glnode.cc
+new file mode 100644
+index 0000000000..f36cb2a7d4
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/gstqsg6glnode.cc
+@@ -0,0 +1,186 @@
++/*
++ * GStreamer
++ * Copyright (C) 2022 Matthew Waters <matthew@centricular.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#include "gstqsg6glnode.h"
++
++#include <QtQuick/QSGTextureProvider>
++#include <QtQuick/QSGSimpleTextureNode>
++#include <QtQuick/QQuickWindow>
++#include <QtQuick/QSGTexture>
++
++#define GST_CAT_DEFAULT gst_qsg_texture_debug
++GST_DEBUG_CATEGORY_STATIC (GST_CAT_DEFAULT);
++
++GstQSG6OpenGLNode::GstQSG6OpenGLNode(QQuickItem * item)
++{
++  static gsize _debug;
++
++  if (g_once_init_enter (&_debug)) {
++    GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT, "qtqsgtexture", 0,
++        "Qt Scenegraph Texture");
++    g_once_init_leave (&_debug, 1);
++  }
++
++  gst_video_info_init (&this->v_info);
++
++  this->buffer_ = NULL;
++  this->sync_buffer_ = gst_buffer_new ();
++  this->dummy_tex_ = nullptr;
++  // TODO; handle windowChanged?
++  this->window_ = item->window();
++}
++
++GstQSG6OpenGLNode::~GstQSG6OpenGLNode()
++{
++  gst_buffer_replace (&this->buffer_, NULL);
++  gst_buffer_replace (&this->sync_buffer_, NULL);
++  this->buffer_was_bound = FALSE;
++  delete this->dummy_tex_;
++  this->dummy_tex_ = nullptr;
++}
++
++QSGTexture *
++GstQSG6OpenGLNode::texture() const
++{
++  return QSGSimpleTextureNode::texture();
++}
++
++/* only called from the streaming thread with scene graph thread blocked */
++void
++GstQSG6OpenGLNode::setCaps (GstCaps * caps)
++{
++  GST_LOG ("%p setCaps %" GST_PTR_FORMAT, this, caps);
++
++  if (caps)
++    gst_video_info_from_caps (&this->v_info, caps);
++  else
++    gst_video_info_init (&this->v_info);
++}
++
++/* only called from the streaming thread with scene graph thread blocked */
++GstBuffer *
++GstQSG6OpenGLNode::getBuffer ()
++{
++  GstBuffer *buffer = NULL;
++
++  if (this->buffer_)
++    buffer = gst_buffer_ref (this->buffer_);
++
++  return buffer;
++}
++
++/* only called from the streaming thread with scene graph thread blocked */
++void
++GstQSG6OpenGLNode::setBuffer (GstBuffer * buffer)
++{
++  GstGLContext *qt_context = NULL;
++  gboolean buffer_changed;
++
++  GST_LOG ("%p setBuffer %" GST_PTR_FORMAT, this, buffer);
++  /* FIXME: update more state here */
++  buffer_changed = gst_buffer_replace (&this->buffer_, buffer);
++
++  if (buffer_changed) {
++    GstGLContext *context;
++    GstGLSyncMeta *sync_meta;
++    GstMemory *mem;
++    guint tex_id;
++    QQuickWindow::CreateTextureOptions options = QQuickWindow::TextureHasAlphaChannel;
++    QSGTexture *texture = nullptr;
++    QSize texSize;
++
++    qt_context = gst_gl_context_get_current();
++    if (!qt_context)
++      goto use_dummy_tex;
++
++    if (!this->buffer_)
++      goto use_dummy_tex;
++    if (GST_VIDEO_INFO_FORMAT (&this->v_info) == GST_VIDEO_FORMAT_UNKNOWN)
++      goto use_dummy_tex;
++
++    this->mem_ = gst_buffer_peek_memory (this->buffer_, 0);
++    if (!this->mem_)
++      goto use_dummy_tex;
++
++    /* FIXME: should really lock the memory to prevent write access */
++    if (!gst_video_frame_map (&this->v_frame, &this->v_info, this->buffer_,
++          (GstMapFlags) (GST_MAP_READ | GST_MAP_GL))) {
++      g_assert_not_reached ();
++      goto use_dummy_tex;
++    }
++
++    mem = gst_buffer_peek_memory (this->buffer_, 0);
++    g_assert (gst_is_gl_memory (mem));
++
++    context = ((GstGLBaseMemory *)mem)->context;
++
++    sync_meta = gst_buffer_get_gl_sync_meta (this->sync_buffer_);
++    if (!sync_meta)
++      sync_meta = gst_buffer_add_gl_sync_meta (context, this->sync_buffer_);
++
++    gst_gl_sync_meta_set_sync_point (sync_meta, context);
++
++    gst_gl_sync_meta_wait (sync_meta, qt_context);
++
++    tex_id = *(guint *) this->v_frame.data[0];
++    GST_LOG ("%p binding Qt texture %u", this, tex_id);
++
++    texSize = QSize(GST_VIDEO_FRAME_WIDTH (&this->v_frame), GST_VIDEO_FRAME_HEIGHT (&this->v_frame));
++    // XXX: ideally, we would like to subclass the relevant texture object
++    // ourselves but this is good enough for now
++    texture = QNativeInterface::QSGOpenGLTexture::fromNative(tex_id, this->window_, texSize, options);
++
++    setTexture(texture);
++    setOwnsTexture(true);
++    markDirty(QSGNode::DirtyMaterial);
++
++    gst_video_frame_unmap (&this->v_frame);
++
++    /* Texture was successfully bound, so we do not need
++     * to use the dummy texture */
++  }
++
++  if (!texture()) {
++use_dummy_tex:
++    /* Create dummy texture if not already present. */
++    if (this->dummy_tex_ == nullptr) {
++      /* Make this a black 64x64 pixel RGBA texture.
++       * This size and format is supported pretty much everywhere, so these
++       * are a safe pick. (64 pixel sidelength must be supported according
++       * to the GLES2 spec, table 6.18.)
++       * Set min/mag filters to GL_LINEAR to make sure no mipmapping is used. */
++      const int tex_sidelength = 64;
++      QImage image(tex_sidelength, tex_sidelength, QImage::Format_ARGB32);
++      image.fill(QColor(0, 0, 0, 255));
++
++      this->dummy_tex_ = this->window_->createTextureFromImage(image);
++    }
++
++    g_assert (this->dummy_tex_ != nullptr);
++
++    if (texture() != this->dummy_tex_) {
++      setTexture(this->dummy_tex_);
++      setOwnsTexture(false);
++      markDirty(QSGNode::DirtyMaterial);
++    }
++
++    GST_LOG ("%p binding fallback dummy Qt texture %p", this, this->dummy_tex_);
++  }
++}
+diff --git a/subprojects/gst-plugins-good/ext/qt6/gstqsg6glnode.h b/subprojects/gst-plugins-good/ext/qt6/gstqsg6glnode.h
+new file mode 100644
+index 0000000000..0428fa5dea
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/gstqsg6glnode.h
+@@ -0,0 +1,58 @@
++/*
++ * GStreamer
++ * Copyright (C) 2022 Matthew Waters <matthew@centricular.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#pragma once
++
++#include <gst/gst.h>
++#include <gst/gl/gl.h>
++
++#include "gstqt6gl.h"
++#include <QtQuick/QQuickItem>
++#include <QtQuick/QSGTexture>
++#include <QtQuick/QSGTextureProvider>
++#include <QtQuick/QSGSimpleTextureNode>
++#include <QtGui/QOpenGLFunctions>
++
++class GstQSG6OpenGLNode : public QSGTextureProvider, public QSGSimpleTextureNode, protected QOpenGLFunctions
++{
++  Q_OBJECT
++
++public:
++  GstQSG6OpenGLNode(QQuickItem *item);
++  ~GstQSG6OpenGLNode();
++
++  QSGTexture *texture() const override;
++
++  void setCaps(GstCaps *caps);
++  void setBuffer(GstBuffer *buffer);
++  GstBuffer *getBuffer();
++
++  void updateQSGTexture();
++
++private:
++  QQuickWindow *window_;
++  GstBuffer * buffer_;
++  gboolean buffer_was_bound;
++  GstBuffer * sync_buffer_;
++  GstMemory * mem_;
++  QSGTexture *dummy_tex_;
++  GstVideoInfo v_info;
++  GstVideoFrame v_frame;
++};
+diff --git a/subprojects/gst-plugins-good/ext/qt6/gstqt6element.cc b/subprojects/gst-plugins-good/ext/qt6/gstqt6element.cc
+new file mode 100644
+index 0000000000..aa93471031
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/gstqt6element.cc
+@@ -0,0 +1,38 @@
++/*
++ * GStreamer
++ * Copyright (C) 2015 Matthew Waters <matthew@centricular.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#include "gstqt6elements.h"
++#include "qt6glitem.h"
++#include <QtQml/QQmlApplicationEngine>
++
++void
++qt6_element_init (GstPlugin * plugin)
++{
++  static gsize res = FALSE;
++  if (g_once_init_enter (&res)) {
++    /* this means the plugin must be loaded before the qml engine is loaded */
++    qmlRegisterType<Qt6GLVideoItem> ("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
++    g_once_init_leave (&res, TRUE);
++  }
++}
+diff --git a/subprojects/gst-plugins-good/ext/qt6/gstqt6elements.h b/subprojects/gst-plugins-good/ext/qt6/gstqt6elements.h
+new file mode 100644
+index 0000000000..7b18455ba9
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/gstqt6elements.h
+@@ -0,0 +1,33 @@
++/*
++ * Copyright (C) 2020 Huawei Technologies Co., Ltd.
++ *   @Author: Julian Bouzas <julian.bouzas@collabora.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the Free
++ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
++ */
++
++#ifndef __GST_QT6_ELEMENTS_H__
++#define __GST_QT6_ELEMENTS_H__
++
++#include <gst/gst.h>
++
++G_BEGIN_DECLS
++
++void qt6_element_init (GstPlugin * plugin);
++
++GST_ELEMENT_REGISTER_DECLARE (qml6glsink);
++
++G_END_DECLS
++
++#endif /* __GST_QT6_ELEMENTS_H__ */
+diff --git a/subprojects/gst-plugins-good/ext/qt6/gstqt6gl.h b/subprojects/gst-plugins-good/ext/qt6/gstqt6gl.h
+new file mode 100644
+index 0000000000..a1babaad18
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/gstqt6gl.h
+@@ -0,0 +1,56 @@
++/*
++ * GStreamer
++ * Copyright (C) 2015 Matthew Waters <matthew@centricular.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++#include <QtCore/qglobal.h>
++#if (QT_VERSION >= QT_VERSION_CHECK(5, 9, 0))
++#include <QtGui/qtgui-config.h>
++#endif
++
++#include <gst/gl/gstglconfig.h>
++
++/* The glext.h guard was renamed in 2018, but some software which
++ * includes their own copy of the GL headers (such as qt) might have
++ * older version which use the old guard. This would result in the
++ * header being included again (and symbols redefined).
++ *
++ * To avoid this, we define the "old" guard if the "new" guard is
++ * defined.*/
++#if GST_GL_HAVE_OPENGL
++#ifdef __gl_glext_h_
++#ifndef __glext_h_
++#define __glext_h_ 1
++#endif
++#endif
++#endif
++
++/* pulls in GLsync, see below */
++#include <QtGui/qopengl.h>
++
++/* qt uses the same trick as us to typedef GLsync on GLES2 but to a different
++ * type which confuses the preprocessor. Instead of trying to reconcile the
++ * two, we instead use the GLsync definition from Qt from above, and ensure
++ * that we don't typedef GLsync in gstglfuncs.h */
++#undef GST_GL_HAVE_GLSYNC
++#define GST_GL_HAVE_GLSYNC 1
++#include <gst/gl/gstglfuncs.h>
++
++#if defined(QT_OPENGL_ES_2)
++#include <QtGui/QOpenGLContext>
++#include <QtGui/QOpenGLFunctions>
++#endif /* defined(QT_OPENGL_ES_2) */
+diff --git a/subprojects/gst-plugins-good/ext/qt6/gstqt6glutility.cc b/subprojects/gst-plugins-good/ext/qt6/gstqt6glutility.cc
+new file mode 100644
+index 0000000000..ae219040b6
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/gstqt6glutility.cc
+@@ -0,0 +1,358 @@
++/*
++ * GStreamer
++ * Copyright (C) 2016 Freescale Semiconductor, Inc. All rights reserved.
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#include "gstqt6glutility.h"
++#include <QtGui/QGuiApplication>
++#if GST_GL_HAVE_WINDOW_X11 && defined (HAVE_QT_X11)
++#include <gst/gl/x11/gstgldisplay_x11.h>
++//#include <QtPlatformHeaders/QGLXNativeContext>
++#endif
++#if GST_GL_HAVE_PLATFORM_EGL && (defined (HAVE_QT_WAYLAND) || defined (HAVE_QT_EGLFS) || defined (HAVE_QT_ANDROID))
++#include <gst/gl/egl/gstegl.h>
++#ifdef HAVE_QT_QPA_HEADER
++#include QT_QPA_HEADER
++#endif
++//#include <QtPlatformHeaders/QEGLNativeContext>
++#include <gst/gl/egl/gstgldisplay_egl.h>
++#endif
++
++#if GST_GL_HAVE_WINDOW_WAYLAND && defined (HAVE_QT_WAYLAND)
++#include <gst/gl/wayland/gstgldisplay_wayland.h>
++#endif
++#if 0
++#if GST_GL_HAVE_WINDOW_VIV_FB
++#include <gst/gl/viv-fb/gstgldisplay_viv_fb.h>
++#endif
++
++#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
++#include <windows.h>
++#include <QtPlatformHeaders/QWGLNativeContext>
++#endif
++#endif
++#include <gst/gl/gstglfuncs.h>
++
++#define GST_CAT_DEFAULT qml6_gl_utils_debug
++GST_DEBUG_CATEGORY_STATIC (GST_CAT_DEFAULT);
++
++G_LOCK_DEFINE_STATIC (display_lock);
++static GWeakRef qt_display;
++static gboolean sink_retrieved = FALSE;
++
++GstGLDisplay *
++gst_qml6_get_gl_display (gboolean sink)
++{
++  GstGLDisplay *display = NULL;
++  QGuiApplication *app = static_cast<QGuiApplication *> (QCoreApplication::instance ());
++  static gsize _debug;
++
++  g_assert (app != NULL);
++
++  if (g_once_init_enter (&_debug)) {
++    GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT, "qtglutility", 0,
++        "Qt gl utility functions");
++    g_once_init_leave (&_debug, 1);
++  }
++
++  G_LOCK (display_lock);
++  /* XXX: this assumes that only one display will ever be created by Qt */
++  display = static_cast<GstGLDisplay *>(g_weak_ref_get (&qt_display));
++  if (display) {
++    if (sink_retrieved) {
++      GST_INFO ("returning previously created display");
++      G_UNLOCK (display_lock);
++      return display;
++    }
++    gst_clear_object (&display);
++  }
++  if (sink)
++    sink_retrieved = sink;
++
++  GST_INFO ("QGuiApplication::instance()->platformName() %s", app->platformName().toUtf8().data());
++#if GST_GL_HAVE_WINDOW_X11 && defined (HAVE_QT_X11)
++  if (QString::fromUtf8 ("xcb") == app->platformName()) {
++    auto x11_native = app->nativeInterface<QNativeInterface::QX11Application>();
++    if (x11_native) {
++      display = (GstGLDisplay *)
++          gst_gl_display_x11_new_with_display (x11_native->display());
++    }
++  }
++#endif
++#if GST_GL_HAVE_WINDOW_WAYLAND && GST_GL_HAVE_PLATFORM_EGL && defined (HAVE_QT_WAYLAND)
++  if (QString::fromUtf8 ("wayland") == app->platformName()
++        || QString::fromUtf8 ("wayland-egl") == app->platformName()){
++    struct wl_display * wayland_display;
++    QPlatformNativeInterface *native =
++        QGuiApplication::platformNativeInterface();
++    wayland_display = (struct wl_display *)
++        native->nativeResourceForWindow("display", NULL);
++    display = (GstGLDisplay *)
++        gst_gl_display_wayland_new_with_display (wayland_display);
++  }
++#endif
++#if GST_GL_HAVE_PLATFORM_EGL && GST_GL_HAVE_WINDOW_ANDROID
++  if (QString::fromUtf8 ("android") == app->platformName()) {
++    EGLDisplay egl_display = (EGLDisplay) gst_gl_display_egl_get_from_native (GST_GL_DISPLAY_TYPE_ANY, 0);
++    display = (GstGLDisplay *) gst_gl_display_egl_new_with_egl_display (egl_display);
++  }
++#elif GST_GL_HAVE_PLATFORM_EGL && defined (HAVE_QT_EGLFS)
++  if (QString::fromUtf8("eglfs") == app->platformName()) {
++#if GST_GL_HAVE_WINDOW_VIV_FB
++    /* FIXME: Could get the display directly from Qt like this
++     * QPlatformNativeInterface *native =
++     *     QGuiApplication::platformNativeInterface();
++     * EGLDisplay egl_display = (EGLDisplay)
++     *     native->nativeResourceForWindow("egldisplay", NULL);
++     *
++     * However we seem to have no way for getting the EGLNativeDisplayType, aka
++     * native_display, via public API. As such we have to assume that display 0
++     * is always used. Only way around that is parsing the index the same way as
++     * Qt does in QEGLDeviceIntegration::fbDeviceName(), so let's do that.
++     */
++    const gchar *fb_dev;
++    gint disp_idx = 0;
++
++    fb_dev = g_getenv ("QT_QPA_EGLFS_FB");
++    if (fb_dev) {
++      if (sscanf (fb_dev, "/dev/fb%d", &disp_idx) != 1)
++        disp_idx = 0;
++    }
++
++    display = (GstGLDisplay *) gst_gl_display_viv_fb_new (disp_idx);
++#elif defined(HAVE_QT_QPA_HEADER)
++    QPlatformNativeInterface *native =
++        QGuiApplication::platformNativeInterface();
++    EGLDisplay egl_display = (EGLDisplay)
++        native->nativeResourceForWindow("egldisplay", NULL);
++    if (egl_display != EGL_NO_DISPLAY)
++      display = (GstGLDisplay *) gst_gl_display_egl_new_with_egl_display (egl_display);
++#else
++    EGLDisplay egl_display = (EGLDisplay) gst_gl_display_egl_get_from_native (GST_GL_DISPLAY_TYPE_ANY, 0);
++    display = (GstGLDisplay *) gst_gl_display_egl_new_with_egl_display (egl_display);
++#endif
++  }
++#endif
++#if GST_GL_HAVE_WINDOW_COCOA && GST_GL_HAVE_PLATFORM_CGL && defined (HAVE_QT_MAC)
++  if (QString::fromUtf8 ("cocoa") == app->platformName())
++    display = (GstGLDisplay *) gst_gl_display_new ();
++#endif
++#if GST_GL_HAVE_WINDOW_EAGL && GST_GL_HAVE_PLATFORM_EAGL && defined (HAVE_QT_IOS)
++  if (QString::fromUtf8 ("ios") == app->platformName())
++    display = gst_gl_display_new ();
++#endif
++#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
++  if (QString::fromUtf8 ("windows") == app->platformName())
++    display = gst_gl_display_new ();
++#endif
++
++  if (!display)
++    display = gst_gl_display_new ();
++
++  g_weak_ref_set (&qt_display, display);
++  G_UNLOCK (display_lock);
++
++  return display;
++}
++
++gboolean
++gst_qml6_get_gl_wrapcontext (GstGLDisplay * display,
++    GstGLContext **wrap_glcontext, GstGLContext **context)
++{
++  GstGLPlatform G_GNUC_UNUSED platform = (GstGLPlatform) 0;
++  GstGLAPI G_GNUC_UNUSED gl_api;
++  guintptr G_GNUC_UNUSED gl_handle;
++  GstGLContext *current;
++  GError *error = NULL;
++
++  g_return_val_if_fail (display != NULL && wrap_glcontext != NULL, FALSE);
++#if GST_GL_HAVE_WINDOW_X11 && defined (HAVE_QT_X11)
++  if (GST_IS_GL_DISPLAY_X11 (display)) {
++#if GST_GL_HAVE_PLATFORM_GLX
++    platform = GST_GL_PLATFORM_GLX;
++#elif GST_GL_HAVE_PLATFORM_EGL
++    platform = GST_GL_PLATFORM_EGL;
++#endif
++  }
++#endif
++#if GST_GL_HAVE_WINDOW_WAYLAND && defined (HAVE_QT_WAYLAND)
++  if (GST_IS_GL_DISPLAY_WAYLAND (display)) {
++    platform = GST_GL_PLATFORM_EGL;
++  }
++#endif
++#if GST_GL_HAVE_PLATFORM_EGL && defined (HAVE_QT_EGLFS)
++#if GST_GL_HAVE_WINDOW_VIV_FB
++  if (GST_IS_GL_DISPLAY_VIV_FB (display)) {
++#else
++  if (GST_IS_GL_DISPLAY_EGL (display)) {
++#endif
++    platform = GST_GL_PLATFORM_EGL;
++  }
++#endif
++  if (platform == 0) {
++#if GST_GL_HAVE_WINDOW_COCOA && GST_GL_HAVE_PLATFORM_CGL && defined (HAVE_QT_MAC)
++    platform = GST_GL_PLATFORM_CGL;
++#elif GST_GL_HAVE_WINDOW_EAGL && GST_GL_HAVE_PLATFORM_EAGL && defined (HAVE_QT_IOS)
++    platform = GST_GL_PLATFORM_EAGL;
++#elif GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
++    platform = GST_GL_PLATFORM_WGL;
++#elif GST_GL_HAVE_WINDOW_ANDROID && GST_GL_HAVE_PLATFORM_EGL && defined (HAVE_QT_ANDROID)
++    platform = GST_GL_PLATFORM_EGL;
++#else
++    GST_ERROR ("Unknown platform");
++    return FALSE;
++#endif
++  }
++
++  gl_api = gst_gl_context_get_current_gl_api (platform, NULL, NULL);
++  gl_handle = gst_gl_context_get_current_gl_context (platform);
++
++  /* see if we already have a current GL context in GStreamer for this thread */
++  current = gst_gl_context_get_current ();
++  if (current && current->display == display) {
++    /* just use current context we found */
++    *wrap_glcontext = static_cast<GstGLContext *> (gst_object_ref (current));
++  }
++  else {
++    if (gl_handle)
++      *wrap_glcontext =
++          gst_gl_context_new_wrapped (display, gl_handle,
++          platform, gl_api);
++
++    if (!*wrap_glcontext) {
++      GST_ERROR ("cannot wrap qt OpenGL context");
++      return FALSE;
++    }
++
++    gst_gl_context_activate(*wrap_glcontext, TRUE);
++    if (!gst_gl_context_fill_info (*wrap_glcontext, &error)) {
++      GST_ERROR ("failed to retrieve qt context info: %s", error->message);
++      gst_clear_object (wrap_glcontext);
++      return FALSE;
++    }
++
++    gst_gl_display_filter_gl_api (display, gst_gl_context_get_gl_api (*wrap_glcontext));
++    gst_gl_context_activate (*wrap_glcontext, FALSE);
++  }
++#if 0
++#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
++  g_return_val_if_fail (context != NULL, FALSE);
++
++  G_STMT_START {
++    /* If there's no wglCreateContextAttribsARB() support, then we would fallback to
++     * wglShareLists() which will fail with ERROR_BUSY (0xaa) if either of the GL
++     * contexts are current in any other thread.
++     *
++     * The workaround here is to temporarily disable Qt's GL context while we
++     * set up our own.
++     *
++     * Sometimes wglCreateContextAttribsARB()
++     * exists, but isn't functional (some Intel drivers), so it's easiest to do this
++     * unconditionally.
++     */
++
++    /* retrieve Qt's GL device context as current device context */
++    HDC device = wglGetCurrentDC ();
++
++    *context = gst_gl_context_new (display);
++
++    wglMakeCurrent (NULL, NULL);
++    if (!gst_gl_context_create (*context, *wrap_glcontext, &error)) {
++      GST_ERROR ("failed to create shared GL context: %s", error->message);
++      gst_clear_object (wrap_glcontext);
++      gst_clear_object (context);
++    }
++    wglMakeCurrent (device, (HGLRC) gl_handle);
++
++    if (!*context)
++      return FALSE;
++
++  } G_STMT_END;
++#endif
++#endif
++  return TRUE;
++}
++#if 0
++QVariant
++qt_opengl_native_context_from_gst_gl_context (GstGLContext * context)
++{
++    guintptr handle;
++    GstGLPlatform platform;
++
++    handle = gst_gl_context_get_gl_context (context);
++    platform = gst_gl_context_get_gl_platform (context);
++
++#if GST_GL_HAVE_WINDOW_X11 && defined (HAVE_QT_X11)
++    if (platform == GST_GL_PLATFORM_GLX) {
++        GstGLDisplay *display = gst_gl_context_get_display (context);
++        GstGLWindow *window = gst_gl_context_get_window (context);
++        Display *xdisplay = (Display *) gst_gl_display_get_handle (display);
++        Window win = gst_gl_window_get_window_handle (window);
++        gst_object_unref (window);
++        gst_object_unref (display);
++        return QVariant::fromValue(QGLXNativeContext((GLXContext) handle, xdisplay, win));
++    }
++#endif
++#if GST_GL_HAVE_PLATFORM_EGL && (defined (HAVE_QT_WAYLAND) || defined (HAVE_QT_EGLFS) || defined (HAVE_QT_ANDROID))
++    if (platform == GST_GL_PLATFORM_EGL) {
++        EGLDisplay egl_display = EGL_DEFAULT_DISPLAY;
++        GstGLDisplay *display = gst_gl_context_get_display (context);
++        GstGLDisplayEGL *display_egl = gst_gl_display_egl_from_gl_display (display);
++#if GST_GL_HAVE_WINDOW_WAYLAND && defined (HAVE_QT_WAYLAND)
++        if (gst_gl_display_get_handle_type (display) == GST_GL_DISPLAY_TYPE_WAYLAND) {
++#if 1
++            g_warning ("Qt does not support wrapping native OpenGL contexts "
++                "on wayland. See https://bugreports.qt.io/browse/QTBUG-82528");
++            gst_object_unref (display_egl);
++            gst_object_unref (display);
++            return QVariant::fromValue(nullptr);
++#else
++            if (display_egl)
++                egl_display = (EGLDisplay) gst_gl_display_get_handle ((GstGLDisplay *) display_egl);
++#endif
++        }
++#endif
++        gst_object_unref (display_egl);
++        gst_object_unref (display);
++        return QVariant::fromValue(QEGLNativeContext((EGLContext) handle, egl_display));
++    }
++#endif
++#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
++    if (platform == GST_GL_PLATFORM_WGL) {
++        GstGLWindow *window = gst_gl_context_get_window (context);
++        guintptr hwnd = gst_gl_window_get_window_handle (window);
++        gst_object_unref (window);
++        return QVariant::fromValue(QWGLNativeContext((HGLRC) handle, (HWND) hwnd));
++    }
++#endif
++    {
++      gchar *platform_s = gst_gl_platform_to_string (platform);
++      g_warning ("Unimplemented configuration!  This means either:\n"
++          "1. The qmlgl plugin was built without support for your platform.\n"
++          "2. The necessary code to convert from a GstGLContext to Qt's "
++          "native context type for \'%s\' currently does not exist.",
++          platform_s);
++      g_free (platform_s);
++    }
++    return QVariant::fromValue(nullptr);
++}
++#endif
+diff --git a/subprojects/gst-plugins-good/ext/qt6/gstqt6glutility.h b/subprojects/gst-plugins-good/ext/qt6/gstqt6glutility.h
+new file mode 100644
+index 0000000000..ba436230da
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/gstqt6glutility.h
+@@ -0,0 +1,55 @@
++/*
++ * GStreamer
++ * Copyright (C) 2016 Freescale Semiconductor, Inc. All rights reserved.
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#ifndef __QML6_GL_UTILS_H__
++#define __QML6_GL_UTILS_H__
++
++#include <gst/gst.h>
++#include <gst/gl/gl.h>
++
++#include <QVariant>
++#include <QRunnable>
++
++G_BEGIN_DECLS
++
++struct RenderJob : public QRunnable {
++    using Callable = std::function<void()>;
++
++    explicit RenderJob(Callable c) : _c(c) { }
++
++    void run() { _c(); }
++
++private:
++    Callable _c;
++};
++
++GstGLDisplay * gst_qml6_get_gl_display (gboolean sink);
++gboolean       gst_qml6_get_gl_wrapcontext (GstGLDisplay * display,
++    GstGLContext **wrap_glcontext, GstGLContext **context);
++
++G_END_DECLS
++
++#if 0
++#if defined(__cplusplus)
++QVariant       qt_opengl_native_context_from_gst_gl_context     (GstGLContext * context);
++#endif
++#endif
++
++#endif /* __QML6_GL_UTILS_H__ */
+diff --git a/subprojects/gst-plugins-good/ext/qt6/meson.build b/subprojects/gst-plugins-good/ext/qt6/meson.build
+new file mode 100644
+index 0000000000..4523d2d94d
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/meson.build
+@@ -0,0 +1,144 @@
++sources = [
++  'gstplugin.cc',
++  'gstqt6element.cc',
++  'gstqsg6glnode.cc',
++  'gstqt6glutility.cc',
++  'gstqml6glsink.cc',
++  'qt6glitem.cc',
++]
++
++moc_headers = [
++  'qt6glitem.h',
++  'gstqsg6glnode.h',
++]
++
++qt6qml_dep = dependency('', required: false)
++qt6_option = get_option('qt6')
++
++if qt6_option.disabled()
++  subdir_done()
++endif
++
++if not have_gstgl
++  if qt6_option.enabled()
++    error('qt6 qmlglsink plugin is enabled, but gstreamer-gl-1.0 was not found')
++  endif
++  subdir_done()
++endif
++
++if not add_languages('cpp', native: false, required: qt6_option)
++  subdir_done()
++endif
++
++qt6_mod = import('qt6')
++if not qt6_mod.has_tools()
++  if qt6_option.enabled()
++    error('qt6 qmlglsink plugin is enabled, but qt specific tools were not found')
++  endif
++  subdir_done()
++endif
++
++qt6qml_dep = dependency('qt6', modules : ['Core', 'Gui', 'Qml', 'Quick'],
++                        required: qt6_option, static: host_machine.system() == 'ios')
++if not qt6qml_dep.found()
++  subdir_done()
++endif
++
++optional_deps = []
++qt_defines = []
++have_qpa_include = false
++have_qt_windowing = false
++
++# Look for the QPA platform native interface header
++qpa_header_path = join_paths(qt6qml_dep.version(), 'QtGui')
++qpa_header = join_paths(qpa_header_path, 'qpa/qplatformnativeinterface.h')
++if cxx.has_header(qpa_header, dependencies : qt6qml_dep)
++  qt_defines += '-DHAVE_QT_QPA_HEADER'
++  qt_defines += '-DQT_QPA_HEADER=' + '<@0@>'.format(qpa_header)
++  have_qpa_include = true
++  message('Found QtGui QPA header in ' + qpa_header_path)
++endif
++
++# Try to come up with all the platform/winsys combinations that will work
++
++if gst_gl_have_window_x11 and gst_gl_have_platform_glx
++  # FIXME: automagic
++  qt_defines += ['-DHAVE_QT_X11']
++  have_qt_windowing = true
++endif
++
++if gst_gl_have_platform_egl
++  # Embedded linux (e.g. i.MX6) with or without windowing support
++  qt_defines += ['-DHAVE_QT_EGLFS']
++  optional_deps += gstglegl_dep
++  have_qt_windowing = true
++  if have_qpa_include
++    # Wayland windowing
++    if gst_gl_have_window_wayland
++      # FIXME: automagic
++      qt6waylandextras = dependency('qt6', modules : ['WaylandClient'], required : false)
++      if qt6waylandextras.found()
++        optional_deps += [qt6waylandextras, gstglwayland_dep]
++        qt_defines += ['-DHAVE_QT_WAYLAND']
++        have_qt_windowing = true
++      endif
++    endif
++    # Android windowing
++#    if gst_gl_have_window_android
++      # FIXME: automagic
++#      qt5androidextras = dependency('qt5', modules : ['AndroidExtras'], required : false)
++      # for gl functions in QtGui/qopenglfunctions.h
++      # FIXME: automagic
++#      glesv2_dep = cc.find_library('GLESv2', required : false)
++#      if glesv2_dep.found() and qt5androidextras.found()
++#        optional_deps += [qt5androidextras, glesv2_dep]
++#        qt_defines += ['-DHAVE_QT_ANDROID']
++#        have_qt_windowing = true
++        # Needed for C++11 support in Cerbero. People building with Android
++        # in some other way need to add the necessary bits themselves.
++#        optional_deps += dependency('gnustl', required : false)
++#      endif
++#    endif
++  endif
++endif
++
++#if gst_gl_have_platform_wgl and gst_gl_have_window_win32
++  # for wglMakeCurrent()
++  # FIXME: automagic
++#  opengl32_dep = cc.find_library('opengl32', required : false)
++#  if opengl32_dep.found()
++#    qt_defines += ['-DHAVE_QT_WIN32']
++#    optional_deps += opengl32_dep
++#    have_qt_windowing = true
++#  endif
++#endif
++
++if gst_gl_have_window_cocoa and gst_gl_have_platform_cgl
++  # FIXME: automagic
++  if host_machine.system() == 'darwin'
++    qt_defines += ['-DHAVE_QT_MAC']
++    have_qt_windowing = true
++  endif
++endif
++
++if gst_gl_have_window_eagl and gst_gl_have_platform_eagl
++  if host_machine.system() == 'ios'
++    qt_defines += ['-DHAVE_QT_IOS']
++    have_qt_windowing = true
++  endif
++endif
++
++if have_qt_windowing
++  # Build it!
++  moc_files = qt6_mod.preprocess(moc_headers : moc_headers)
++  gstqml6gl = library('gstqml6', sources, moc_files,
++    cpp_args : gst_plugins_good_args + qt_defines,
++    link_args : noseh_link_args,
++    include_directories: [configinc, libsinc],
++    dependencies : [gst_dep, gstvideo_dep, gstgl_dep, gstglproto_dep, qt6qml_dep, optional_deps],
++    override_options : ['cpp_std=c++17'],
++    install: true,
++    install_dir : plugins_install_dir)
++  pkgconfig.generate(gstqml6gl, install_dir : plugins_pkgconfig_install_dir)
++  plugins += [gstqml6gl]
++endif
+diff --git a/subprojects/gst-plugins-good/ext/qt6/qt6glitem.cc b/subprojects/gst-plugins-good/ext/qt6/qt6glitem.cc
+new file mode 100644
+index 0000000000..dc0abed348
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/qt6glitem.cc
+@@ -0,0 +1,905 @@
++/*
++ * GStreamer
++ * Copyright (C) 2015 Matthew Waters <matthew@centricular.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#include <stdio.h>
++
++#include <gst/video/video.h>
++#include "qt6glitem.h"
++#include "gstqsg6glnode.h"
++#include "gstqt6glutility.h"
++
++#include <QtCore/QMutexLocker>
++#include <QtCore/QPointer>
++#include <QtGui/QGuiApplication>
++#include <QtQuick/QQuickWindow>
++#include <QtQuick/QSGSimpleTextureNode>
++
++/**
++ * SECTION:Qt6GLVideoItem
++ * @short_description: a Qt5 QtQuick item that renders GStreamer video #GstBuffers
++ *
++ * #QtGLVideoItem is an #QQuickItem that renders GStreamer video buffers.
++ */
++
++#define GST_CAT_DEFAULT qt_item_debug
++GST_DEBUG_CATEGORY_STATIC (GST_CAT_DEFAULT);
++
++#define DEFAULT_FORCE_ASPECT_RATIO  TRUE
++#define DEFAULT_PAR_N               0
++#define DEFAULT_PAR_D               1
++
++enum
++{
++  PROP_0,
++  PROP_FORCE_ASPECT_RATIO,
++  PROP_PIXEL_ASPECT_RATIO,
++};
++
++struct _Qt6GLVideoItemPrivate
++{
++  GMutex lock;
++
++  /* properties */
++  gboolean force_aspect_ratio;
++  gint par_n, par_d;
++
++  GWeakRef sink;
++
++  gint display_width;
++  gint display_height;
++
++  GstBuffer *buffer;
++  GstCaps *new_caps;
++  GstCaps *caps;
++  GstVideoInfo new_v_info;
++  GstVideoInfo v_info;
++
++  gboolean initted;
++  GstGLDisplay *display;
++  QOpenGLContext *qt_context;
++  GstGLContext *other_context;
++  GstGLContext *context;
++
++  /* buffers with textures that were bound by QML */
++  GQueue bound_buffers;
++  /* buffers that were previously bound but in the meantime a new one was
++   * bound so this one is most likely not used anymore
++   * FIXME: Ideally we would use fences for this but there seems to be no
++   * way to reliably "try wait" on a fence */
++  GQueue potentially_unbound_buffers;
++
++  GstQSG6OpenGLNode *m_node;
++};
++
++Qt6GLVideoItem::Qt6GLVideoItem()
++{
++  static gsize _debug;
++
++  if (g_once_init_enter (&_debug)) {
++    GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT, "qtglwidget", 0, "Qt GL Widget");
++    g_once_init_leave (&_debug, 1);
++  }
++
++  this->setFlag (QQuickItem::ItemHasContents, true);
++
++  this->priv = g_new0 (Qt6GLVideoItemPrivate, 1);
++
++  this->priv->force_aspect_ratio = DEFAULT_FORCE_ASPECT_RATIO;
++  this->priv->par_n = DEFAULT_PAR_N;
++  this->priv->par_d = DEFAULT_PAR_D;
++
++  this->priv->initted = FALSE;
++
++  g_mutex_init (&this->priv->lock);
++
++  g_weak_ref_init (&priv->sink, NULL);
++
++  this->priv->display = gst_qml6_get_gl_display(TRUE);
++
++  connect(this, SIGNAL(windowChanged(QQuickWindow*)), this,
++          SLOT(handleWindowChanged(QQuickWindow*)));
++
++  this->proxy = QSharedPointer<Qt6GLVideoItemInterface>(new Qt6GLVideoItemInterface(this));
++
++  setFlag(ItemHasContents, true);
++  setAcceptedMouseButtons(Qt::AllButtons);
++  setAcceptHoverEvents(true);
++
++  setAcceptTouchEvents(true);
++
++  GST_DEBUG ("%p init Qt6 Video Item", this);
++}
++
++Qt6GLVideoItem::~Qt6GLVideoItem()
++{
++  GstBuffer *tmp_buffer;
++
++  /* Before destroying the priv info, make sure
++   * no qmlglsink's will call in again, and that
++   * any ongoing calls are done by invalidating the proxy
++   * pointer */
++  GST_INFO ("%p Destroying QtGLVideoItem and invalidating the proxy %p", this, proxy.data());
++  proxy->invalidateRef();
++  proxy.clear();
++
++  g_mutex_clear (&this->priv->lock);
++  if (this->priv->context)
++    gst_object_unref(this->priv->context);
++  if (this->priv->other_context)
++    gst_object_unref(this->priv->other_context);
++  if (this->priv->display)
++    gst_object_unref(this->priv->display);
++
++  while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&this->priv->potentially_unbound_buffers))) {
++    GST_TRACE ("old buffer %p should be unbound now, unreffing", tmp_buffer);
++    gst_buffer_unref (tmp_buffer);
++  }
++  while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&this->priv->bound_buffers))) {
++    GST_TRACE ("old buffer %p should be unbound now, unreffing", tmp_buffer);
++    gst_buffer_unref (tmp_buffer);
++  }
++
++  gst_buffer_replace (&this->priv->buffer, NULL);
++
++  gst_caps_replace (&this->priv->caps, NULL);
++  gst_caps_replace (&this->priv->new_caps, NULL);
++
++  g_weak_ref_clear (&this->priv->sink);
++
++  g_free (this->priv);
++  this->priv = NULL;
++}
++
++void
++Qt6GLVideoItem::setDAR(gint num, gint den)
++{
++  this->priv->par_n = num;
++  this->priv->par_d = den;
++}
++
++void
++Qt6GLVideoItem::getDAR(gint * num, gint * den)
++{
++  if (num)
++    *num = this->priv->par_n;
++  if (den)
++    *den = this->priv->par_d;
++}
++
++void
++Qt6GLVideoItem::setForceAspectRatio(bool force_aspect_ratio)
++{
++  this->priv->force_aspect_ratio = !!force_aspect_ratio;
++
++  emit forceAspectRatioChanged(force_aspect_ratio);
++}
++
++bool
++Qt6GLVideoItem::getForceAspectRatio()
++{
++  return this->priv->force_aspect_ratio;
++}
++
++bool
++Qt6GLVideoItem::itemInitialized()
++{
++  return this->priv->initted;
++}
++
++static gboolean
++_calculate_par (Qt6GLVideoItem * widget, GstVideoInfo * info)
++{
++  gboolean ok;
++  gint width, height;
++  gint par_n, par_d;
++  gint display_par_n, display_par_d;
++  guint display_ratio_num, display_ratio_den;
++
++  width = GST_VIDEO_INFO_WIDTH (info);
++  height = GST_VIDEO_INFO_HEIGHT (info);
++
++  par_n = GST_VIDEO_INFO_PAR_N (info);
++  par_d = GST_VIDEO_INFO_PAR_D (info);
++
++  if (!par_n)
++    par_n = 1;
++
++  /* get display's PAR */
++  if (widget->priv->par_n != 0 && widget->priv->par_d != 0) {
++    display_par_n = widget->priv->par_n;
++    display_par_d = widget->priv->par_d;
++  } else {
++    display_par_n = 1;
++    display_par_d = 1;
++  }
++
++  ok = gst_video_calculate_display_ratio (&display_ratio_num,
++      &display_ratio_den, width, height, par_n, par_d, display_par_n,
++      display_par_d);
++
++  if (!ok)
++    return FALSE;
++
++  widget->setImplicitWidth (width);
++  widget->setImplicitHeight (height);
++
++  GST_LOG ("%p PAR: %u/%u DAR:%u/%u", widget, par_n, par_d, display_par_n,
++      display_par_d);
++
++  if (height % display_ratio_den == 0) {
++    GST_DEBUG ("%p keeping video height", widget);
++    widget->priv->display_width = (guint)
++        gst_util_uint64_scale_int (height, display_ratio_num,
++        display_ratio_den);
++    widget->priv->display_height = height;
++  } else if (width % display_ratio_num == 0) {
++    GST_DEBUG ("%p keeping video width", widget);
++    widget->priv->display_width = width;
++    widget->priv->display_height = (guint)
++        gst_util_uint64_scale_int (width, display_ratio_den, display_ratio_num);
++  } else {
++    GST_DEBUG ("%p approximating while keeping video height", widget);
++    widget->priv->display_width = (guint)
++        gst_util_uint64_scale_int (height, display_ratio_num,
++        display_ratio_den);
++    widget->priv->display_height = height;
++  }
++  GST_DEBUG ("%p scaling to %dx%d", widget, widget->priv->display_width,
++      widget->priv->display_height);
++
++  return TRUE;
++}
++
++QSGNode *
++Qt6GLVideoItem::updatePaintNode(QSGNode * oldNode,
++    UpdatePaintNodeData * updatePaintNodeData)
++{
++  GstBuffer *old_buffer;
++
++  if (!this->priv->initted)
++    return oldNode;
++
++  GstQSG6OpenGLNode *texNode = static_cast<GstQSG6OpenGLNode *> (oldNode);
++  GstVideoRectangle src, dst, result;
++
++  g_mutex_lock (&this->priv->lock);
++
++  GST_TRACE ("%p updatePaintNode", this);
++
++  if (gst_gl_context_get_current() == NULL)
++    gst_gl_context_activate (this->priv->other_context, TRUE);
++
++  if (!texNode) {
++    texNode = new GstQSG6OpenGLNode (this);
++    this->priv->m_node = texNode;
++  }
++
++  if ((old_buffer = texNode->getBuffer())) {
++    if (old_buffer == this->priv->buffer) {
++      /* same buffer */
++      gst_buffer_unref (old_buffer);
++    } else {
++      GstBuffer *tmp_buffer;
++
++      GST_TRACE ("old buffer %p was bound, queueing up for later", old_buffer);
++      /* Unref all buffers that were previously not bound anymore. At least
++       * one more buffer was bound in the meantime so this one is most likely
++       * not in use anymore. */
++      while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&this->priv->potentially_unbound_buffers))) {
++        GST_TRACE ("old buffer %p should be unbound now, unreffing", tmp_buffer);
++        gst_buffer_unref (tmp_buffer);
++      }
++
++      /* Move previous bound buffers to the next queue. We now know that
++       * another buffer was bound in the meantime and will free them on
++       * the next iteration above. */
++      while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&this->priv->bound_buffers))) {
++        GST_TRACE ("old buffer %p is potentially unbound now", tmp_buffer);
++        g_queue_push_tail (&this->priv->potentially_unbound_buffers, tmp_buffer);
++      }
++      g_queue_push_tail (&this->priv->bound_buffers, old_buffer);
++    }
++    old_buffer = NULL;
++  }
++
++  texNode->setCaps (this->priv->caps);
++  texNode->setBuffer (this->priv->buffer);
++
++  if (this->priv->force_aspect_ratio && this->priv->caps) {
++    src.w = this->priv->display_width;
++    src.h = this->priv->display_height;
++
++    dst.x = boundingRect().x();
++    dst.y = boundingRect().y();
++    dst.w = boundingRect().width();
++    dst.h = boundingRect().height();
++
++    gst_video_sink_center_rect (src, dst, &result, TRUE);
++  } else {
++    result.x = boundingRect().x();
++    result.y = boundingRect().y();
++    result.w = boundingRect().width();
++    result.h = boundingRect().height();
++  }
++
++  texNode->setRect (QRectF (result.x, result.y, result.w, result.h));
++
++  g_mutex_unlock (&this->priv->lock);
++
++  return texNode;
++}
++
++/* This method has to be invoked with the the priv->lock taken */
++void
++Qt6GLVideoItem::fitStreamToAllocatedSize(GstVideoRectangle * result)
++{
++  if (this->priv->force_aspect_ratio) {
++    GstVideoRectangle src, dst;
++
++    src.x = 0;
++    src.y = 0;
++    src.w = this->priv->display_width;
++    src.h = this->priv->display_height;
++
++    dst.x = 0;
++    dst.y = 0;
++    dst.w = width();
++    dst.h = height();
++
++    gst_video_sink_center_rect (src, dst, result, TRUE);
++  } else {
++    result->x = 0;
++    result->y = 0;
++    result->w = width();
++    result->h = height();
++  }
++}
++
++/* This method has to be invoked with the the priv->lock taken */
++QPointF
++Qt6GLVideoItem::mapPointToStreamSize(QPointF pos)
++{
++  gdouble stream_width, stream_height;
++  GstVideoRectangle result;
++  double stream_x, stream_y;
++  double x, y;
++
++  fitStreamToAllocatedSize(&result);
++
++  stream_width = (gdouble) GST_VIDEO_INFO_WIDTH (&this->priv->v_info);
++  stream_height = (gdouble) GST_VIDEO_INFO_HEIGHT (&this->priv->v_info);
++  x = pos.x();
++  y = pos.y();
++
++  /* from display coordinates to stream coordinates */
++  if (result.w > 0)
++    stream_x = (x - result.x) / result.w * stream_width;
++  else
++    stream_x = 0.;
++
++  /* clip to stream size */
++  stream_x = CLAMP(stream_x, 0., stream_width);
++
++  /* same for y-axis */
++  if (result.h > 0)
++    stream_y = (y - result.y) / result.h * stream_height;
++  else
++    stream_y = 0.;
++
++  stream_y = CLAMP(stream_y, 0., stream_height);
++  GST_TRACE ("transform %fx%f into %fx%f", x, y, stream_x, stream_y);
++
++  return QPointF(stream_x, stream_y);
++}
++
++static GstNavigationModifierType
++translateModifiers(Qt::KeyboardModifiers modifiers)
++{
++  return (GstNavigationModifierType)(
++    ((modifiers & Qt::KeyboardModifier::ShiftModifier) ? GST_NAVIGATION_MODIFIER_SHIFT_MASK : 0) |
++    ((modifiers & Qt::KeyboardModifier::ControlModifier) ? GST_NAVIGATION_MODIFIER_CONTROL_MASK : 0) |
++    ((modifiers & Qt::KeyboardModifier::AltModifier) ? GST_NAVIGATION_MODIFIER_ALT_MASK : 0) |
++    ((modifiers & Qt::KeyboardModifier::MetaModifier) ? GST_NAVIGATION_MODIFIER_META_MASK : 0));
++}
++
++static GstNavigationModifierType
++translateMouseButtons(Qt::MouseButtons buttons)
++{
++  return (GstNavigationModifierType)(
++    ((buttons & Qt::LeftButton) ? GST_NAVIGATION_MODIFIER_BUTTON1_MASK : 0) |
++    ((buttons & Qt::RightButton) ? GST_NAVIGATION_MODIFIER_BUTTON2_MASK : 0) |
++    ((buttons & Qt::MiddleButton) ? GST_NAVIGATION_MODIFIER_BUTTON3_MASK : 0) |
++    ((buttons & Qt::BackButton) ? GST_NAVIGATION_MODIFIER_BUTTON4_MASK : 0) |
++    ((buttons & Qt::ForwardButton) ? GST_NAVIGATION_MODIFIER_BUTTON5_MASK : 0));
++}
++
++void
++Qt6GLVideoItem::wheelEvent(QWheelEvent * event)
++{
++  g_mutex_lock (&this->priv->lock);
++  QPoint delta = event->angleDelta();
++  GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
++
++  if (element != NULL) {
++    auto position = event->position();
++    gst_navigation_send_event_simple (GST_NAVIGATION (element),
++        gst_navigation_event_new_mouse_scroll (position.x(), position.y(),
++                                               delta.x(), delta.y(),
++                                               (GstNavigationModifierType) (
++                                                 translateModifiers(event->modifiers()) | translateMouseButtons(event->buttons()))));
++    g_object_unref (element);
++  }
++  g_mutex_unlock (&this->priv->lock);
++}
++
++void
++Qt6GLVideoItem::hoverEnterEvent(QHoverEvent *)
++{
++  mouseHovering = true;
++}
++
++void
++Qt6GLVideoItem::hoverLeaveEvent(QHoverEvent *)
++{
++  mouseHovering = false;
++}
++
++void
++Qt6GLVideoItem::hoverMoveEvent(QHoverEvent * event)
++{
++  if (!mouseHovering)
++    return;
++
++  g_mutex_lock (&this->priv->lock);
++
++  /* can't do anything when we don't have input format */
++  if (!this->priv->caps) {
++    g_mutex_unlock (&this->priv->lock);
++    return;
++  }
++
++  if (event->position() != event->oldPos()) {
++    QPointF pos = mapPointToStreamSize(event->position());
++    GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
++
++    if (element != NULL) {
++      gst_navigation_send_event_simple (GST_NAVIGATION (element),
++          gst_navigation_event_new_mouse_move (pos.x(), pos.y(),
++                                               translateModifiers(event->modifiers())));
++      g_object_unref (element);
++    }
++  }
++  g_mutex_unlock (&this->priv->lock);
++}
++
++void
++Qt6GLVideoItem::touchEvent(QTouchEvent * event)
++{
++  g_mutex_lock (&this->priv->lock);
++
++  /* can't do anything when we don't have input format */
++  if (!this->priv->caps) {
++    g_mutex_unlock (&this->priv->lock);
++    return;
++  }
++
++  GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
++  if (element == NULL)
++    return;
++
++  if (event->type() == QEvent::TouchCancel) {
++    gst_navigation_send_event_simple (GST_NAVIGATION (element),
++        gst_navigation_event_new_touch_cancel (translateModifiers(event->modifiers())));
++  } else {
++    const QList<QTouchEvent::TouchPoint> points = event->points();
++    gboolean sent_event = FALSE;
++
++    for (int i = 0; i < points.count(); i++) {
++      GstEvent *nav_event;
++      QPointF pos = mapPointToStreamSize(points[i].position());
++
++      switch (points[i].state()) {
++        case QEventPoint::Pressed:
++          nav_event = gst_navigation_event_new_touch_down ((guint) points[i].id(),
++              pos.x(), pos.y(), (gdouble) points[i].pressure(), translateModifiers(event->modifiers()));
++          break;
++        case QEventPoint::Updated:
++          nav_event = gst_navigation_event_new_touch_motion ((guint) points[i].id(),
++              pos.x(), pos.y(), (gdouble) points[i].pressure(), translateModifiers(event->modifiers()));
++          break;
++        case QEventPoint::Released:
++          nav_event = gst_navigation_event_new_touch_up ((guint) points[i].id(),
++              pos.x(), pos.y(), translateModifiers(event->modifiers()));
++          break;
++        /* Don't send an event if the point did not change */
++        default:
++          nav_event = NULL;
++          break;
++      }
++
++      if (nav_event) {
++        gst_navigation_send_event_simple (GST_NAVIGATION (element), nav_event);
++        sent_event = TRUE;
++      }
++    }
++
++    /* Group simultaneos touch events with a frame event */
++    if (sent_event) {
++      gst_navigation_send_event_simple (GST_NAVIGATION (element),
++          gst_navigation_event_new_touch_frame (translateModifiers(event->modifiers())));
++    }
++  }
++
++  g_object_unref (element);
++  g_mutex_unlock (&this->priv->lock);
++}
++
++void
++Qt6GLVideoItem::sendMouseEvent(QMouseEvent * event, gboolean is_press)
++{
++  quint32 button = 0;
++
++  switch (event->button()) {
++  case Qt::LeftButton:
++    button = 1;
++    break;
++  case Qt::RightButton:
++    button = 2;
++    break;
++  default:
++    break;
++  }
++
++  mousePressedButton = button;
++
++  g_mutex_lock (&this->priv->lock);
++
++  /* can't do anything when we don't have input format */
++  if (!this->priv->caps) {
++    g_mutex_unlock (&this->priv->lock);
++    return;
++  }
++
++  QPointF pos = mapPointToStreamSize(event->pos());
++  GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
++
++  if (element != NULL) {
++    gst_navigation_send_event_simple (GST_NAVIGATION (element),
++        (is_press) ? gst_navigation_event_new_mouse_button_press (button,
++                pos.x(), pos.y(),
++                (GstNavigationModifierType) (
++                  translateModifiers(event->modifiers()) | translateMouseButtons(event->buttons()))) :
++            gst_navigation_event_new_mouse_button_release (button, pos.x(),
++                pos.y(),
++                (GstNavigationModifierType) (
++                  translateModifiers(event->modifiers()) | translateMouseButtons(event->buttons()))));
++    g_object_unref (element);
++  }
++
++  g_mutex_unlock (&this->priv->lock);
++}
++
++void
++Qt6GLVideoItem::mousePressEvent(QMouseEvent * event)
++{
++  forceActiveFocus();
++  sendMouseEvent(event, TRUE);
++}
++
++void
++Qt6GLVideoItem::mouseReleaseEvent(QMouseEvent * event)
++{
++  sendMouseEvent(event, FALSE);
++}
++
++void
++Qt6GLVideoItemInterface::setSink (GstElement * sink)
++{
++  QMutexLocker locker(&lock);
++  if (qt_item == NULL)
++    return;
++
++  g_mutex_lock (&qt_item->priv->lock);
++  g_weak_ref_set (&qt_item->priv->sink, sink);
++  g_mutex_unlock (&qt_item->priv->lock);
++}
++
++void
++Qt6GLVideoItemInterface::setBuffer (GstBuffer * buffer)
++{
++  QMutexLocker locker(&lock);
++
++  if (qt_item == NULL) {
++    GST_WARNING ("%p actual item is NULL. setBuffer call ignored", this);
++    return;
++  }
++
++  if (!qt_item->priv->caps && !qt_item->priv->new_caps) {
++    GST_WARNING ("%p Got buffer on unnegotiated QtGLVideoItem. Dropping", this);
++    return;
++  }
++
++  g_mutex_lock (&qt_item->priv->lock);
++
++  if (qt_item->priv->new_caps) {
++    GST_DEBUG ("%p caps change from %" GST_PTR_FORMAT " to %" GST_PTR_FORMAT,
++        this, qt_item->priv->caps, qt_item->priv->new_caps);
++    gst_caps_take (&qt_item->priv->caps, qt_item->priv->new_caps);
++    qt_item->priv->new_caps = NULL;
++    qt_item->priv->v_info = qt_item->priv->new_v_info;
++
++    if (!_calculate_par (qt_item, &qt_item->priv->v_info)) {
++      g_mutex_unlock (&qt_item->priv->lock);
++      return;
++    }
++  }
++
++  gst_buffer_replace (&qt_item->priv->buffer, buffer);
++
++  QMetaObject::invokeMethod(qt_item, "update", Qt::QueuedConnection);
++
++  g_mutex_unlock (&qt_item->priv->lock);
++}
++
++void
++Qt6GLVideoItem::onSceneGraphInitialized ()
++{
++  QSGRendererInterface *renderer;
++  QOpenGLContext *gl_context;
++
++  if (this->window() == NULL)
++    return;
++
++  renderer = this->window()->rendererInterface();
++  if (!renderer)
++    return;
++
++  if (renderer->graphicsApi() != QSGRendererInterface::GraphicsApi::OpenGL) {
++    GST_WARNING ("%p scene graph initialized with a non-OpenGL renderer interface", this);
++    return;
++  }
++
++  gl_context =
++      static_cast<QOpenGLContext *> (
++      renderer->getResource(
++          this->window(),
++          QSGRendererInterface::Resource::OpenGLContextResource));
++
++  GST_DEBUG ("%p scene graph initialization with Qt GL context %p", this,
++      gl_context);
++
++  if (this->priv->qt_context == gl_context)
++    return;
++
++  this->priv->qt_context = gl_context;
++  if (this->priv->qt_context == NULL) {
++    g_assert_not_reached ();
++    return;
++  }
++
++  this->priv->initted = gst_qml6_get_gl_wrapcontext (this->priv->display,
++      &this->priv->other_context, &this->priv->context);
++
++  GST_DEBUG ("%p created wrapped GL context %" GST_PTR_FORMAT, this,
++      this->priv->other_context);
++
++  emit itemInitializedChanged();
++}
++
++void
++Qt6GLVideoItem::onSceneGraphInvalidated ()
++{
++  this->priv->m_node = nullptr;
++  GST_FIXME ("%p scene graph invalidated", this);
++}
++
++/**
++ * Retrieve and populate the GL context information from the current
++ * OpenGL context.
++ */
++gboolean
++Qt6GLVideoItemInterface::initWinSys ()
++{
++  QMutexLocker locker(&lock);
++
++  GError *error = NULL;
++
++  if (qt_item == NULL)
++    return FALSE;
++
++  g_mutex_lock (&qt_item->priv->lock);
++
++  if (qt_item->priv->display && qt_item->priv->qt_context
++      && qt_item->priv->other_context && qt_item->priv->context) {
++    /* already have the necessary state */
++    g_mutex_unlock (&qt_item->priv->lock);
++    return TRUE;
++  }
++
++  if (!GST_IS_GL_DISPLAY (qt_item->priv->display)) {
++    GST_ERROR ("%p failed to retrieve display connection %" GST_PTR_FORMAT,
++        qt_item, qt_item->priv->display);
++    g_mutex_unlock (&qt_item->priv->lock);
++    return FALSE;
++  }
++
++  if (!GST_IS_GL_CONTEXT (qt_item->priv->other_context)) {
++    GST_ERROR ("%p failed to retrieve wrapped context %" GST_PTR_FORMAT, qt_item,
++        qt_item->priv->other_context);
++    g_mutex_unlock (&qt_item->priv->lock);
++    return FALSE;
++  }
++
++  qt_item->priv->context = gst_gl_context_new (qt_item->priv->display);
++
++  if (!qt_item->priv->context) {
++    g_mutex_unlock (&qt_item->priv->lock);
++    return FALSE;
++  }
++
++  if (!gst_gl_context_create (qt_item->priv->context, qt_item->priv->other_context,
++        &error)) {
++    GST_ERROR ("%s", error->message);
++    g_mutex_unlock (&qt_item->priv->lock);
++    return FALSE;
++  }
++
++  g_mutex_unlock (&qt_item->priv->lock);
++  return TRUE;
++}
++
++void
++Qt6GLVideoItem::handleWindowChanged (QQuickWindow * win)
++{
++  if (win) {
++    if (win->isSceneGraphInitialized ())
++      win->scheduleRenderJob (new RenderJob (std::
++              bind (&Qt6GLVideoItem::onSceneGraphInitialized, this)),
++          QQuickWindow::BeforeSynchronizingStage);
++    else
++      connect (win, SIGNAL (sceneGraphInitialized ()), this,
++          SLOT (onSceneGraphInitialized ()), Qt::DirectConnection);
++
++    connect (win, SIGNAL (sceneGraphInvalidated ()), this,
++        SLOT (onSceneGraphInvalidated ()), Qt::DirectConnection);
++  } else {
++    this->priv->qt_context = NULL;
++    this->priv->initted = FALSE;
++  }
++  this->priv->m_node = nullptr;
++}
++
++void
++Qt6GLVideoItem::releaseResources()
++{
++  this->priv->m_node = nullptr;
++}
++
++gboolean
++Qt6GLVideoItemInterface::setCaps (GstCaps * caps)
++{
++  QMutexLocker locker(&lock);
++  GstVideoInfo v_info;
++
++  g_return_val_if_fail (GST_IS_CAPS (caps), FALSE);
++  g_return_val_if_fail (gst_caps_is_fixed (caps), FALSE);
++
++  if (qt_item == NULL)
++    return FALSE;
++
++  if (qt_item->priv->caps && gst_caps_is_equal_fixed (qt_item->priv->caps, caps))
++    return TRUE;
++
++  if (!gst_video_info_from_caps (&v_info, caps))
++    return FALSE;
++
++  g_mutex_lock (&qt_item->priv->lock);
++
++  GST_DEBUG ("%p set caps %" GST_PTR_FORMAT, qt_item, caps);
++
++  gst_caps_replace (&qt_item->priv->new_caps, caps);
++
++  qt_item->priv->new_v_info = v_info;
++
++  g_mutex_unlock (&qt_item->priv->lock);
++
++  return TRUE;
++}
++
++GstGLContext *
++Qt6GLVideoItemInterface::getQtContext ()
++{
++  QMutexLocker locker(&lock);
++
++  if (!qt_item || !qt_item->priv->other_context)
++    return NULL;
++
++  return (GstGLContext *) gst_object_ref (qt_item->priv->other_context);
++}
++
++GstGLContext *
++Qt6GLVideoItemInterface::getContext ()
++{
++  QMutexLocker locker(&lock);
++
++  if (!qt_item || !qt_item->priv->context)
++    return NULL;
++
++  return (GstGLContext *) gst_object_ref (qt_item->priv->context);
++}
++
++GstGLDisplay *
++Qt6GLVideoItemInterface::getDisplay()
++{
++  QMutexLocker locker(&lock);
++
++  if (!qt_item || !qt_item->priv->display)
++    return NULL;
++
++  return (GstGLDisplay *) gst_object_ref (qt_item->priv->display);
++}
++
++void
++Qt6GLVideoItemInterface::setDAR(gint num, gint den)
++{
++  QMutexLocker locker(&lock);
++  if (!qt_item)
++    return;
++  qt_item->setDAR(num, den);
++}
++
++void
++Qt6GLVideoItemInterface::getDAR(gint * num, gint * den)
++{
++  QMutexLocker locker(&lock);
++  if (!qt_item)
++    return;
++  qt_item->getDAR (num, den);
++}
++
++void
++Qt6GLVideoItemInterface::setForceAspectRatio(bool force_aspect_ratio)
++{
++  QMutexLocker locker(&lock);
++  if (!qt_item)
++    return;
++  qt_item->setForceAspectRatio(force_aspect_ratio);
++}
++
++bool
++Qt6GLVideoItemInterface::getForceAspectRatio()
++{
++  QMutexLocker locker(&lock);
++  if (!qt_item)
++    return FALSE;
++  return qt_item->getForceAspectRatio();
++}
++
++void
++Qt6GLVideoItemInterface::invalidateRef()
++{
++  QMutexLocker locker(&lock);
++  qt_item = NULL;
++}
++
+diff --git a/subprojects/gst-plugins-good/ext/qt6/qt6glitem.h b/subprojects/gst-plugins-good/ext/qt6/qt6glitem.h
+new file mode 100644
+index 0000000000..bfe28a1fc6
+--- /dev/null
++++ b/subprojects/gst-plugins-good/ext/qt6/qt6glitem.h
+@@ -0,0 +1,127 @@
++/*
++ * GStreamer
++ * Copyright (C) 2015 Matthew Waters <matthew@centricular.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#ifndef __QT6_GL_ITEM_H__
++#define __QT6_GL_ITEM_H__
++
++#include <gst/gst.h>
++#include <gst/gl/gl.h>
++
++#include "gstqt6gl.h"
++#include <QtCore/QMutex>
++#include <QtQuick/QQuickItem>
++#include <QtGui/QOpenGLContext>
++#include <QtGui/QOpenGLFunctions>
++
++typedef struct _Qt6GLVideoItemPrivate Qt6GLVideoItemPrivate;
++
++class Qt6GLVideoItem;
++
++class Qt6GLVideoItemInterface : public QObject
++{
++    Q_OBJECT
++    QML_ELEMENT
++public:
++    Qt6GLVideoItemInterface (Qt6GLVideoItem *w) : qt_item (w), lock() {};
++
++    void invalidateRef();
++
++    void setSink (GstElement * sink);
++    void setBuffer (GstBuffer * buffer);
++    gboolean setCaps (GstCaps *caps);
++    gboolean initWinSys ();
++    GstGLContext *getQtContext();
++    GstGLContext *getContext();
++    GstGLDisplay *getDisplay();
++    Qt6GLVideoItem *videoItem () { return qt_item; };
++
++    void setDAR(gint, gint);
++    void getDAR(gint *, gint *);
++    void setForceAspectRatio(bool);
++    bool getForceAspectRatio();
++private:
++    Qt6GLVideoItem *qt_item;
++    QMutex lock;
++};
++
++class Qt6GLVideoItem : public QQuickItem, protected QOpenGLFunctions
++{
++    Q_OBJECT
++    QML_ELEMENT
++
++    Q_PROPERTY(bool itemInitialized
++               READ itemInitialized
++               NOTIFY itemInitializedChanged)
++    Q_PROPERTY(bool forceAspectRatio
++               READ getForceAspectRatio
++               WRITE setForceAspectRatio
++               NOTIFY forceAspectRatioChanged)
++
++public:
++    Qt6GLVideoItem();
++    ~Qt6GLVideoItem();
++
++    void setDAR(gint, gint);
++    void getDAR(gint *, gint *);
++    void setForceAspectRatio(bool);
++    bool getForceAspectRatio();
++    bool itemInitialized();
++
++    QSharedPointer<Qt6GLVideoItemInterface> getInterface() { return proxy; };
++    /* private for C interface ... */
++    Qt6GLVideoItemPrivate *priv;
++
++Q_SIGNALS:
++    void itemInitializedChanged();
++    void forceAspectRatioChanged(bool);
++
++private Q_SLOTS:
++    void handleWindowChanged(QQuickWindow * win);
++    void onSceneGraphInitialized();
++    void onSceneGraphInvalidated();
++
++protected:
++    QSGNode * updatePaintNode (QSGNode * oldNode, UpdatePaintNodeData * updatePaintNodeData) override;
++    void releaseResources() override;
++    void wheelEvent(QWheelEvent *) override;
++    void hoverEnterEvent(QHoverEvent *) override;
++    void hoverLeaveEvent (QHoverEvent *) override;
++    void hoverMoveEvent (QHoverEvent *) override;
++    void mousePressEvent(QMouseEvent*) override;
++    void mouseReleaseEvent(QMouseEvent*) override;
++    void touchEvent(QTouchEvent*) override;
++
++private:
++
++    void setViewportSize(const QSize &size);
++    void shareContext();
++
++    void fitStreamToAllocatedSize(GstVideoRectangle * result);
++    QPointF mapPointToStreamSize(QPointF);
++
++    void sendMouseEvent(QMouseEvent * event, gboolean is_press);
++
++    quint32 mousePressedButton;
++    bool mouseHovering;
++
++    QSharedPointer<Qt6GLVideoItemInterface> proxy;
++};
++
++#endif /* __QT_GL_ITEM_H__ */
+diff --git a/subprojects/gst-plugins-good/gst/isomp4/atoms.c b/subprojects/gst-plugins-good/gst/isomp4/atoms.c
+index 2e8b4444d6..829d0e5ef7 100644
+--- a/subprojects/gst-plugins-good/gst/isomp4/atoms.c
++++ b/subprojects/gst-plugins-good/gst/isomp4/atoms.c
+@@ -4825,30 +4825,23 @@ atom_trun_set_offset (AtomTRUN * trun, gint32 offset)
+ }
+ 
+ static gboolean
+-atom_trun_can_append_samples_to_entry (AtomTRUN * trun,
+-    TRUNSampleEntry * nentry, guint32 nsamples, guint32 delta, guint32 size,
+-    guint32 flags, gint32 data_offset, gint64 pts_offset)
++atom_trun_can_append (AtomTRUN * trun, gint32 data_offset)
+ {
+-  if (pts_offset != 0)
+-    return FALSE;
+-  if (nentry->sample_flags != flags)
+-    return FALSE;
+-  if (trun->data_offset + nentry->sample_size != data_offset)
+-    return FALSE;
+-  if (nentry->sample_size != size)
+-    return FALSE;
+-  if (nentry->sample_duration != delta)
+-    return FALSE;
++  gsize trun_data_offset_end = trun->data_offset;
++  int i, n;
+ 
+-  /* FIXME: this should be TRUE but currently fails on demuxing */
+-  return FALSE;
+-}
++  if (data_offset == 0)
++    return TRUE;
+ 
+-static void
+-atom_trun_append_samples (AtomTRUN * trun, TRUNSampleEntry * nentry,
+-    guint32 nsamples, guint32 delta, guint32 size)
+-{
+-  trun->sample_count += nsamples;
++  n = atom_array_get_len (&trun->entries);
++  for (i = 0; i < n; i++) {
++    TRUNSampleEntry *entry = &atom_array_index (&trun->entries, i);
++    trun_data_offset_end += entry->sample_size;
++  }
++  if (trun_data_offset_end != data_offset)
++    return FALSE;
++
++  return TRUE;
+ }
+ 
+ static void
+@@ -4919,7 +4912,6 @@ atom_traf_add_samples (AtomTRAF * traf, guint32 nsamples,
+ {
+   GList *l = NULL;
+   AtomTRUN *prev_trun, *trun = NULL;
+-  TRUNSampleEntry *nentry = NULL;
+   guint32 flags;
+ 
+   /* 0x10000 is sample-is-difference-sample flag
+@@ -4928,16 +4920,9 @@ atom_traf_add_samples (AtomTRAF * traf, guint32 nsamples,
+ 
+   if (traf->truns) {
+     trun = g_list_last (traf->truns)->data;
+-    nentry =
+-        &atom_array_index (&trun->entries,
+-        atom_array_get_len (&trun->entries) - 1);
+ 
+-    if (!atom_trun_can_append_samples_to_entry (trun, nentry, nsamples, delta,
+-            size, flags, data_offset, pts_offset)) {
+-      /* if we can't add to the previous trun, write a new one */
++    if (!atom_trun_can_append (trun, data_offset))
+       trun = NULL;
+-      nentry = NULL;
+-    }
+   }
+   prev_trun = trun;
+ 
+@@ -4986,11 +4971,7 @@ atom_traf_add_samples (AtomTRAF * traf, guint32 nsamples,
+     }
+   }
+ 
+-  if (prev_trun == trun) {
+-    atom_trun_append_samples (trun, nentry, nsamples, delta, size);
+-  } else {
+-    atom_trun_add_samples (trun, nsamples, delta, size, flags, pts_offset);
+-  }
++  atom_trun_add_samples (trun, nsamples, delta, size, flags, pts_offset);
+ 
+   if (traf->sdtps)
+     atom_sdtp_add_samples (traf->sdtps->data, 0x10 | ((flags & 0xff) >> 4));
+diff --git a/subprojects/gst-plugins-good/gst/matroska/matroska-demux.c b/subprojects/gst-plugins-good/gst/matroska/matroska-demux.c
+index 773a306343..38e4e4d8ee 100644
+--- a/subprojects/gst-plugins-good/gst/matroska/matroska-demux.c
++++ b/subprojects/gst-plugins-good/gst/matroska/matroska-demux.c
+@@ -1839,9 +1839,10 @@ gst_matroska_demux_query (GstMatroskaDemux * demux, GstPad * pad,
+ 
+       gst_query_parse_duration (query, &format, NULL);
+ 
+-      res = TRUE;
+       if (format == GST_FORMAT_TIME) {
+-        res = gst_pad_query_default (pad, GST_OBJECT_CAST (demux), query);
++        res = FALSE;
++        if (pad)
++          res = gst_pad_query_default (pad, GST_OBJECT_CAST (demux), query);
+         if (!res) {
+           GST_OBJECT_LOCK (demux);
+           gst_query_set_duration (query, GST_FORMAT_TIME,
+@@ -1852,6 +1853,8 @@ gst_matroska_demux_query (GstMatroskaDemux * demux, GstPad * pad,
+         }
+       } else if (format == GST_FORMAT_DEFAULT && context
+           && context->default_duration) {
++        res = TRUE;
++
+         GST_OBJECT_LOCK (demux);
+         gst_query_set_duration (query, GST_FORMAT_DEFAULT,
+             demux->common.segment.duration / context->default_duration);
+diff --git a/subprojects/gst-plugins-good/gst/multifile/gstimagesequencesrc.c b/subprojects/gst-plugins-good/gst/multifile/gstimagesequencesrc.c
+index 90dc9fff05..8581e73e3a 100644
+--- a/subprojects/gst-plugins-good/gst/multifile/gstimagesequencesrc.c
++++ b/subprojects/gst-plugins-good/gst/multifile/gstimagesequencesrc.c
+@@ -531,6 +531,8 @@ gst_image_sequence_src_set_caps (GstImageSequenceSrc * self, GstCaps * caps)
+   gst_pad_set_caps (GST_BASE_SRC_PAD (self), new_caps);
+ 
+   GST_DEBUG_OBJECT (self, "Setting new caps: %" GST_PTR_FORMAT, new_caps);
++
++  gst_caps_unref (new_caps);
+ }
+ 
+ /* Call with LOCK */
+diff --git a/subprojects/gst-plugins-good/gst/multifile/gstsplitmuxsink.c b/subprojects/gst-plugins-good/gst/multifile/gstsplitmuxsink.c
+index 5e4ae02e31..ad6c3d3782 100644
+--- a/subprojects/gst-plugins-good/gst/multifile/gstsplitmuxsink.c
++++ b/subprojects/gst-plugins-good/gst/multifile/gstsplitmuxsink.c
+@@ -3178,11 +3178,13 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
+         }
+         break;
+       case SPLITMUX_INPUT_STATE_WAITING_GOP_COLLECT:{
+-        /* We're collecting a GOP, this is only ever called for non-reference
++        /* We're collecting a GOP, this is normally only called for non-reference
+          * contexts as the reference context would be waiting inside
+          * check_completed_gop() */
+-
+-        g_assert (!ctx->is_reference);
++        if (G_UNLIKELY (ctx->is_reference)) {
++          check_completed_gop (splitmux, ctx);
++          break;
++        }
+ 
+         /* If we overran the target timestamp, it might be time to process
+          * the GOP, otherwise bail out for more data. */
+diff --git a/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpbin.c b/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpbin.c
+index bee500eeef..0fbf0820c1 100644
+--- a/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpbin.c
++++ b/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpbin.c
+@@ -357,6 +357,7 @@ enum
+ #define DEFAULT_MAX_TS_OFFSET        G_GINT64_CONSTANT(3000000000)
+ #define DEFAULT_MIN_TS_OFFSET        MIN_TS_OFFSET_ROUND_OFF_COMP
+ #define DEFAULT_TS_OFFSET_SMOOTHING_FACTOR  0
++#define DEFAULT_UPDATE_NTP64_HEADER_EXT TRUE
+ 
+ enum
+ {
+@@ -389,6 +390,7 @@ enum
+   PROP_TS_OFFSET_SMOOTHING_FACTOR,
+   PROP_FEC_DECODERS,
+   PROP_FEC_ENCODERS,
++  PROP_UPDATE_NTP64_HEADER_EXT,
+ };
+ 
+ #define GST_RTP_BIN_RTCP_SYNC_TYPE (gst_rtp_bin_rtcp_sync_get_type())
+@@ -777,6 +779,10 @@ create_session (GstRtpBin * rtpbin, gint id)
+ 
+   g_object_set (session, "max-dropout-time", rtpbin->max_dropout_time,
+       "max-misorder-time", rtpbin->max_misorder_time, NULL);
++
++  g_object_set (session, "update-ntp64-header-ext",
++      rtpbin->update_ntp64_header_ext, NULL);
++
+   GST_OBJECT_UNLOCK (rtpbin);
+ 
+   /* provide clock_rate to the session manager when needed */
+@@ -2980,6 +2986,22 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
+           "fec-encoders='fec,0=\"rtpst2022-1-fecenc\\ rows\\=5\\ columns\\=5\";'",
+           GST_TYPE_STRUCTURE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+ 
++  /**
++   * GstRtpBin:update-ntp64-header-ext:
++   *
++   * Whether RTP NTP header extension should be updated with actual
++   * NTP time. If not, use the NTP time from buffer timestamp metadata
++   *
++   * Since: 1.22
++   */
++  g_object_class_install_property (gobject_class,
++      PROP_UPDATE_NTP64_HEADER_EXT,
++      g_param_spec_boolean ("update-ntp64-header-ext",
++          "Update NTP-64 RTP Header Extension",
++          "Whether RTP NTP header extension should be updated with actual NTP time",
++          DEFAULT_UPDATE_NTP64_HEADER_EXT,
++          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++
+   gstelement_class->change_state = GST_DEBUG_FUNCPTR (gst_rtp_bin_change_state);
+   gstelement_class->request_new_pad =
+       GST_DEBUG_FUNCPTR (gst_rtp_bin_request_new_pad);
+@@ -3070,6 +3092,7 @@ gst_rtp_bin_init (GstRtpBin * rtpbin)
+   rtpbin->min_ts_offset = DEFAULT_MIN_TS_OFFSET;
+   rtpbin->min_ts_offset_is_set = FALSE;
+   rtpbin->ts_offset_smoothing_factor = DEFAULT_TS_OFFSET_SMOOTHING_FACTOR;
++  rtpbin->update_ntp64_header_ext = DEFAULT_UPDATE_NTP64_HEADER_EXT;
+ 
+   /* some default SDES entries */
+   cname = g_strdup_printf ("user%u@host-%x", g_random_int (), g_random_int ());
+@@ -3409,6 +3432,13 @@ gst_rtp_bin_set_property (GObject * object, guint prop_id,
+     case PROP_FEC_ENCODERS:
+       gst_rtp_bin_set_fec_encoders_struct (rtpbin, g_value_get_boxed (value));
+       break;
++    case PROP_UPDATE_NTP64_HEADER_EXT:
++      GST_RTP_BIN_LOCK (rtpbin);
++      rtpbin->update_ntp64_header_ext = g_value_get_boolean (value);
++      GST_RTP_BIN_UNLOCK (rtpbin);
++      gst_rtp_bin_propagate_property_to_session (rtpbin,
++          "update-ntp64-header-ext", value);
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -3518,6 +3548,9 @@ gst_rtp_bin_get_property (GObject * object, guint prop_id,
+     case PROP_FEC_ENCODERS:
+       g_value_take_boxed (value, gst_rtp_bin_get_fec_encoders_struct (rtpbin));
+       break;
++    case PROP_UPDATE_NTP64_HEADER_EXT:
++      g_value_set_boolean (value, rtpbin->update_ntp64_header_ext);
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+diff --git a/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpbin.h b/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpbin.h
+index afb322ac2e..eb98eb28e8 100644
+--- a/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpbin.h
++++ b/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpbin.h
+@@ -98,6 +98,8 @@ struct _GstRtpBin {
+   /* the default FEC encoder factories for sessions */
+   GstStructure   *fec_encoders;
+ 
++  gboolean       update_ntp64_header_ext;
++
+   /*< private >*/
+   GstRtpBinPrivate *priv;
+ };
+diff --git a/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpjitterbuffer.c b/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpjitterbuffer.c
+index 600ec62345..063e39b9f7 100644
+--- a/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpjitterbuffer.c
++++ b/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpjitterbuffer.c
+@@ -232,6 +232,13 @@ enum
+   (priv)->waiting_timer--;                                \
+   GST_DEBUG ("waiting timer done");                       \
+ } G_STMT_END
++#define JBUF_WAIT_TIMER_CHECK(priv, label) G_STMT_START { \
++    if (G_UNLIKELY (priv->srcresult != GST_FLOW_OK))	  \
++      goto label;					  \
++    JBUF_WAIT_TIMER (priv);				  \
++    if (G_UNLIKELY (priv->srcresult != GST_FLOW_OK))	  \
++      goto label;					  \
++  } G_STMT_END
+ #define JBUF_SIGNAL_TIMER(priv) G_STMT_START {            \
+   if (G_UNLIKELY ((priv)->waiting_timer)) {               \
+     GST_DEBUG ("signal timer, %d waiters", (priv)->waiting_timer); \
+@@ -1704,6 +1711,7 @@ gst_rtp_jitter_buffer_flush_start (GstRtpJitterBuffer * jitterbuffer)
+   JBUF_SIGNAL_EVENT (priv);
+   JBUF_SIGNAL_QUERY (priv, FALSE);
+   JBUF_SIGNAL_QUEUE (priv);
++  JBUF_SIGNAL_TIMER (priv);
+   JBUF_UNLOCK (priv);
+ }
+ 
+@@ -2266,10 +2274,9 @@ update_timer_offsets (GstRtpJitterBuffer * jitterbuffer)
+         test->timeout = GST_CLOCK_TIME_NONE;
+         test->offset = 0;
+       }
+-      /* as we apply the offset on all timers, the order of timers won't
+-       * change and we can skip updating the timer queue */
+     }
+ 
++    rtp_timer_queue_reschedule (priv->timers, test);
+     test = rtp_timer_get_next (test);
+   }
+ }
+@@ -3851,7 +3858,7 @@ pop_and_push_next (GstRtpJitterBuffer * jitterbuffer, guint seqnum)
+     while (rtp_timer_queue_length (priv->timers) > 0) {
+       /* Stopping timers */
+       unschedule_current_timer (jitterbuffer);
+-      JBUF_WAIT_TIMER (priv);
++      JBUF_WAIT_TIMER_CHECK (priv, out_flushing_wait);
+     }
+   }
+ 
+@@ -3918,6 +3925,12 @@ out_flushing:
+   {
+     return priv->srcresult;
+   }
++
++out_flushing_wait:
++  {
++    rtp_jitter_buffer_free_item (item);
++    return priv->srcresult;
++  }
+ }
+ 
+ #define GST_FLOW_WAIT GST_FLOW_CUSTOM_SUCCESS
+diff --git a/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpsession.c b/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpsession.c
+index 3d38e14736..b131e77611 100644
+--- a/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpsession.c
++++ b/subprojects/gst-plugins-good/gst/rtpmanager/gstrtpsession.c
+@@ -223,6 +223,7 @@ enum
+ #define DEFAULT_RTP_PROFILE          GST_RTP_PROFILE_AVP
+ #define DEFAULT_NTP_TIME_SOURCE      GST_RTP_NTP_TIME_SOURCE_NTP
+ #define DEFAULT_RTCP_SYNC_SEND_TIME  TRUE
++#define DEFAULT_UPDATE_NTP64_HEADER_EXT  TRUE
+ 
+ enum
+ {
+@@ -244,7 +245,8 @@ enum
+   PROP_TWCC_STATS,
+   PROP_RTP_PROFILE,
+   PROP_NTP_TIME_SOURCE,
+-  PROP_RTCP_SYNC_SEND_TIME
++  PROP_RTCP_SYNC_SEND_TIME,
++  PROP_UPDATE_NTP64_HEADER_EXT
+ };
+ 
+ #define GST_RTP_SESSION_LOCK(sess)   g_mutex_lock (&(sess)->priv->lock)
+@@ -810,6 +812,22 @@ gst_rtp_session_class_init (GstRtpSessionClass * klass)
+           DEFAULT_RTCP_SYNC_SEND_TIME,
+           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+ 
++  /**
++   * GstRtpSession:update-ntp64-header-ext:
++   *
++   * Whether RTP NTP header extension should be updated with actual
++   * NTP time. If not, use the NTP time from buffer timestamp metadata
++   *
++   * Since: 1.22
++   */
++  g_object_class_install_property (gobject_class,
++      PROP_UPDATE_NTP64_HEADER_EXT,
++      g_param_spec_boolean ("update-ntp64-header-ext",
++          "Update NTP-64 RTP Header Extension",
++          "Whether RTP NTP header extension should be updated with actual NTP time",
++          DEFAULT_UPDATE_NTP64_HEADER_EXT,
++          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++
+   gstelement_class->change_state =
+       GST_DEBUG_FUNCPTR (gst_rtp_session_change_state);
+   gstelement_class->request_new_pad =
+@@ -982,6 +1000,10 @@ gst_rtp_session_set_property (GObject * object, guint prop_id,
+     case PROP_RTCP_SYNC_SEND_TIME:
+       priv->rtcp_sync_send_time = g_value_get_boolean (value);
+       break;
++    case PROP_UPDATE_NTP64_HEADER_EXT:
++      g_object_set_property (G_OBJECT (priv->session),
++          "update-ntp64-header-ext", value);
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -1061,6 +1083,10 @@ gst_rtp_session_get_property (GObject * object, guint prop_id,
+     case PROP_RTCP_SYNC_SEND_TIME:
+       g_value_set_boolean (value, priv->rtcp_sync_send_time);
+       break;
++    case PROP_UPDATE_NTP64_HEADER_EXT:
++      g_object_get_property (G_OBJECT (priv->session),
++          "update-ntp64-header-ext", value);
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+diff --git a/subprojects/gst-plugins-good/gst/rtpmanager/rtpsession.c b/subprojects/gst-plugins-good/gst/rtpmanager/rtpsession.c
+index 7a2042426b..294bcf0c17 100644
+--- a/subprojects/gst-plugins-good/gst/rtpmanager/rtpsession.c
++++ b/subprojects/gst-plugins-good/gst/rtpmanager/rtpsession.c
+@@ -81,6 +81,7 @@ enum
+ #define DEFAULT_RTCP_DISABLE_SR_TIMESTAMP FALSE
+ #define DEFAULT_FAVOR_NEW            FALSE
+ #define DEFAULT_TWCC_FEEDBACK_INTERVAL GST_CLOCK_TIME_NONE
++#define DEFAULT_UPDATE_NTP64_HEADER_EXT TRUE
+ 
+ enum
+ {
+@@ -108,6 +109,7 @@ enum
+   PROP_RTCP_REDUCED_SIZE,
+   PROP_RTCP_DISABLE_SR_TIMESTAMP,
+   PROP_TWCC_FEEDBACK_INTERVAL,
++  PROP_UPDATE_NTP64_HEADER_EXT,
+   PROP_LAST,
+ };
+ 
+@@ -643,6 +645,21 @@ rtp_session_class_init (RTPSessionClass * klass)
+       0, G_MAXUINT64, DEFAULT_TWCC_FEEDBACK_INTERVAL,
+       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+ 
++  /**
++   * RTPSession:update-ntp64-header-ext:
++   *
++   * Whether RTP NTP header extension should be updated with actual
++   * NTP time. If not, use the NTP time from buffer timestamp metadata
++   *
++   * Since: 1.22
++   */
++  properties[PROP_UPDATE_NTP64_HEADER_EXT] =
++      g_param_spec_boolean ("update-ntp64-header-ext",
++      "Update NTP-64 RTP Header Extension",
++      "Whether RTP NTP header extension should be updated with actual NTP time",
++      DEFAULT_UPDATE_NTP64_HEADER_EXT,
++      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
++
+   g_object_class_install_properties (gobject_class, PROP_LAST, properties);
+ 
+   klass->get_source_by_ssrc =
+@@ -688,6 +705,8 @@ rtp_session_init (RTPSession * sess)
+   sess->header_len = UDP_IP_HEADER_OVERHEAD;
+   sess->mtu = DEFAULT_RTCP_MTU;
+ 
++  sess->update_ntp64_header_ext = DEFAULT_UPDATE_NTP64_HEADER_EXT;
++
+   sess->probation = DEFAULT_PROBATION;
+   sess->max_dropout_time = DEFAULT_MAX_DROPOUT_TIME;
+   sess->max_misorder_time = DEFAULT_MAX_MISORDER_TIME;
+@@ -928,6 +947,9 @@ rtp_session_set_property (GObject * object, guint prop_id,
+       rtp_twcc_manager_set_feedback_interval (sess->twcc,
+           g_value_get_uint64 (value));
+       break;
++    case PROP_UPDATE_NTP64_HEADER_EXT:
++      sess->update_ntp64_header_ext = g_value_get_boolean (value);
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -1014,6 +1036,9 @@ rtp_session_get_property (GObject * object, guint prop_id,
+       g_value_set_uint64 (value,
+           rtp_twcc_manager_get_feedback_interval (sess->twcc));
+       break;
++    case PROP_UPDATE_NTP64_HEADER_EXT:
++      g_value_set_boolean (value, sess->update_ntp64_header_ext);
++      break;
+     default:
+       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+       break;
+@@ -2742,9 +2767,13 @@ rtp_session_process_app (RTPSession * sess, GstRTCPPacket * packet,
+ 
+ static gboolean
+ rtp_session_request_local_key_unit (RTPSession * sess, RTPSource * src,
+-    guint32 media_ssrc, gboolean fir, GstClockTime current_time)
++    const guint32 * ssrcs, guint num_ssrcs, gboolean fir,
++    GstClockTime current_time)
+ {
+   guint32 round_trip = 0;
++  gint i;
++
++  g_return_val_if_fail (ssrcs != NULL && num_ssrcs > 0, FALSE);
+ 
+   rtp_source_get_last_rb (src, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+       &round_trip);
+@@ -2770,14 +2799,17 @@ rtp_session_request_local_key_unit (RTPSession * sess, RTPSource * src,
+ 
+   src->last_keyframe_request = current_time;
+ 
+-  GST_LOG ("received %s request from %X about %X %p(%p)", fir ? "FIR" : "PLI",
+-      rtp_source_get_ssrc (src), media_ssrc, sess->callbacks.process_rtp,
+-      sess->callbacks.request_key_unit);
++  for (i = 0; i < num_ssrcs; ++i) {
++    GST_LOG ("received %s request from %X about %X %p(%p)",
++        fir ? "FIR" : "PLI",
++        rtp_source_get_ssrc (src), ssrcs[i], sess->callbacks.process_rtp,
++        sess->callbacks.request_key_unit);
+ 
+-  RTP_SESSION_UNLOCK (sess);
+-  sess->callbacks.request_key_unit (sess, media_ssrc, fir,
+-      sess->request_key_unit_user_data);
+-  RTP_SESSION_LOCK (sess);
++    RTP_SESSION_UNLOCK (sess);
++    sess->callbacks.request_key_unit (sess, ssrcs[i], fir,
++        sess->request_key_unit_user_data);
++    RTP_SESSION_LOCK (sess);
++  }
+ 
+   return TRUE;
+ }
+@@ -2799,19 +2831,19 @@ rtp_session_process_pli (RTPSession * sess, guint32 sender_ssrc,
+       return;
+   }
+ 
+-  rtp_session_request_local_key_unit (sess, src, media_ssrc, FALSE,
++  rtp_session_request_local_key_unit (sess, src, &media_ssrc, 1, FALSE,
+       current_time);
+ }
+ 
+ static void
+ rtp_session_process_fir (RTPSession * sess, guint32 sender_ssrc,
+-    guint32 media_ssrc, guint8 * fci_data, guint fci_length,
+-    GstClockTime current_time)
++    guint8 * fci_data, guint fci_length, GstClockTime current_time)
+ {
+   RTPSource *src;
+   guint32 ssrc;
+   guint position = 0;
+-  gboolean our_request = FALSE;
++  guint32 ssrcs[32];
++  guint num_ssrcs = 0;
+ 
+   if (!sess->callbacks.request_key_unit)
+     return;
+@@ -2849,15 +2881,14 @@ rtp_session_process_fir (RTPSession * sess, guint32 sender_ssrc,
+     if (own == NULL)
+       continue;
+ 
+-    if (own->internal) {
+-      our_request = TRUE;
+-      break;
++    if (own->internal && num_ssrcs < 32) {
++      ssrcs[num_ssrcs++] = ssrc;
+     }
+   }
+-  if (!our_request)
++  if (num_ssrcs == 0)
+     return;
+ 
+-  rtp_session_request_local_key_unit (sess, src, media_ssrc, TRUE,
++  rtp_session_request_local_key_unit (sess, src, ssrcs, num_ssrcs, TRUE,
+       current_time);
+ }
+ 
+@@ -3022,8 +3053,8 @@ rtp_session_process_feedback (RTPSession * sess, GstRTCPPacket * packet,
+           case GST_RTCP_PSFB_TYPE_FIR:
+             if (src)
+               src->stats.recv_fir_count++;
+-            rtp_session_process_fir (sess, sender_ssrc, media_ssrc, fci_data,
+-                fci_length, current_time);
++            rtp_session_process_fir (sess, sender_ssrc, fci_data, fci_length,
++                current_time);
+             break;
+           default:
+             break;
+@@ -3416,7 +3447,9 @@ rtp_session_send_rtp (RTPSession * sess, gpointer data, gboolean is_list,
+     goto invalid_packet;
+ 
+   /* Update any 64-bit NTP header extensions with the actual NTP time here */
+-  update_ntp64_header_ext (&pinfo);
++  if (sess->update_ntp64_header_ext)
++    update_ntp64_header_ext (&pinfo);
++
+   rtp_twcc_manager_send_packet (sess->twcc, &pinfo);
+ 
+   source = obtain_internal_source (sess, pinfo.ssrc, &created, current_time);
+diff --git a/subprojects/gst-plugins-good/gst/rtpmanager/rtpsession.h b/subprojects/gst-plugins-good/gst/rtpmanager/rtpsession.h
+index eb512c78f3..84b2948dc4 100644
+--- a/subprojects/gst-plugins-good/gst/rtpmanager/rtpsession.h
++++ b/subprojects/gst-plugins-good/gst/rtpmanager/rtpsession.h
+@@ -313,6 +313,8 @@ struct _RTPSession {
+   /* RFC6051 64-bit NTP header extension */
+   guint8 send_ntp64_ext_id;
+ 
++  gboolean update_ntp64_header_ext;
++
+   /* Transport-wide cc-extension */
+   RTPTWCCManager *twcc;
+   RTPTWCCStats *twcc_stats;
+diff --git a/subprojects/gst-plugins-good/gst/rtpmanager/rtpsource.c b/subprojects/gst-plugins-good/gst/rtpmanager/rtpsource.c
+index d7f2a015e5..c221c1f229 100644
+--- a/subprojects/gst-plugins-good/gst/rtpmanager/rtpsource.c
++++ b/subprojects/gst-plugins-good/gst/rtpmanager/rtpsource.c
+@@ -1251,6 +1251,28 @@ update_receiver_stats (RTPSource * src, RTPPacketInfo * pinfo,
+       GST_INFO ("duplicate or reordered packet (seqnr %u, expected %u)",
+           seqnr, expected);
+     }
++  } else {
++    /* Sender stats - update the outbound sequence number */
++    expected = src->stats.max_seq + 1;
++    delta = gst_rtp_buffer_compare_seqnum (expected, seqnr);
++    /* No probation for local senders, just check for lost / dropouts */
++    if (delta >= 0 && delta < max_dropout) {
++      stats->bad_seq = RTP_SEQ_MOD + 1; /* so seq == bad_seq is false */
++      /* in order, with permissible gap */
++      if (seqnr < stats->max_seq) {
++        /* sequence number wrapped - count another 64K cycle. */
++        stats->cycles += RTP_SEQ_MOD;
++      }
++      stats->max_seq = seqnr;
++    } else if (delta < -max_misorder || delta >= max_dropout) {
++      /* the sequence number made a very large jump */
++      if (seqnr != stats->bad_seq) {
++        /* unacceptable jump */
++        stats->bad_seq = (seqnr + 1) & (RTP_SEQ_MOD - 1);
++      }
++    } else {                    /* delta < 0 && delta >= -max_misorder */
++      stats->bad_seq = RTP_SEQ_MOD + 1; /* so seq == bad_seq is false */
++    }
+   }
+ 
+   src->stats.octets_received += pinfo->payload_len;
+diff --git a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
+index 6922deabe0..304563cc1b 100644
+--- a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
++++ b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
+@@ -151,6 +151,7 @@ enum
+   SIGNAL_GET_PARAMETER,
+   SIGNAL_GET_PARAMETERS,
+   SIGNAL_SET_PARAMETER,
++  SIGNAL_PUSH_BACKCHANNEL_SAMPLE,
+   LAST_SIGNAL
+ };
+ 
+@@ -467,6 +468,9 @@ static gboolean set_parameter (GstRTSPSrc * src, const gchar * name,
+ static GstFlowReturn gst_rtspsrc_push_backchannel_buffer (GstRTSPSrc * src,
+     guint id, GstSample * sample);
+ 
++static GstFlowReturn gst_rtspsrc_push_backchannel_sample (GstRTSPSrc * src,
++    guint id, GstSample * sample);
++
+ typedef struct
+ {
+   guint8 pt;
+@@ -1226,15 +1230,34 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
+   /**
+    * GstRTSPSrc::push-backchannel-buffer:
+    * @rtspsrc: a #GstRTSPSrc
++   * @id: stream ID where the sample should be sent
+    * @sample: RTP sample to send back
+    *
++   * Deprecated: 1.22: Use action signal GstRTSPSrc::push-backchannel-sample instead.
++   * IMPORTANT: Please note that this signal decrements the reference count 
++   *            of sample internally! So it cannot be used from other
++   *            language bindings in general.
+    *
+    */
+   gst_rtspsrc_signals[SIGNAL_PUSH_BACKCHANNEL_BUFFER] =
+       g_signal_new ("push-backchannel-buffer", G_TYPE_FROM_CLASS (klass),
+-      G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (GstRTSPSrcClass,
+-          push_backchannel_buffer), NULL, NULL, NULL,
+-      GST_TYPE_FLOW_RETURN, 2, G_TYPE_UINT, GST_TYPE_SAMPLE);
++      G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION | G_SIGNAL_DEPRECATED,
++      G_STRUCT_OFFSET (GstRTSPSrcClass, push_backchannel_buffer), NULL, NULL,
++      NULL, GST_TYPE_FLOW_RETURN, 2, G_TYPE_UINT, GST_TYPE_SAMPLE);
++
++  /**
++   * GstRTSPSrc::push-backchannel-sample:
++   * @rtspsrc: a #GstRTSPSrc
++   * @id: stream ID where the sample should be sent
++   * @sample: RTP sample to send back
++   *
++   * Since: 1.22
++   */
++  gst_rtspsrc_signals[SIGNAL_PUSH_BACKCHANNEL_SAMPLE] =
++      g_signal_new ("push-backchannel-sample", G_TYPE_FROM_CLASS (klass),
++      G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION | G_SIGNAL_DEPRECATED,
++      G_STRUCT_OFFSET (GstRTSPSrcClass, push_backchannel_buffer), NULL, NULL,
++      NULL, GST_TYPE_FLOW_RETURN, 2, G_TYPE_UINT, GST_TYPE_SAMPLE);
+ 
+   /**
+    * GstRTSPSrc::get-parameter:
+@@ -1307,6 +1330,7 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
+   gstbin_class->handle_message = gst_rtspsrc_handle_message;
+ 
+   klass->push_backchannel_buffer = gst_rtspsrc_push_backchannel_buffer;
++  klass->push_backchannel_sample = gst_rtspsrc_push_backchannel_sample;
+   klass->get_parameter = GST_DEBUG_FUNCPTR (get_parameter);
+   klass->get_parameters = GST_DEBUG_FUNCPTR (get_parameters);
+   klass->set_parameter = GST_DEBUG_FUNCPTR (set_parameter);
+@@ -2755,8 +2779,7 @@ gst_rtspsrc_set_state (GstRTSPSrc * src, GstState state)
+ }
+ 
+ static void
+-gst_rtspsrc_flush (GstRTSPSrc * src, gboolean flush, gboolean playing,
+-    guint32 seqnum)
++gst_rtspsrc_flush (GstRTSPSrc * src, gboolean flush, gboolean playing)
+ {
+   GstEvent *event;
+   gint cmd;
+@@ -2764,13 +2787,11 @@ gst_rtspsrc_flush (GstRTSPSrc * src, gboolean flush, gboolean playing,
+ 
+   if (flush) {
+     event = gst_event_new_flush_start ();
+-    gst_event_set_seqnum (event, seqnum);
+     GST_DEBUG_OBJECT (src, "start flush");
+     cmd = CMD_WAIT;
+     state = GST_STATE_PAUSED;
+   } else {
+     event = gst_event_new_flush_stop (TRUE);
+-    gst_event_set_seqnum (event, seqnum);
+     GST_DEBUG_OBJECT (src, "stop flush; playing %d", playing);
+     cmd = CMD_LOOP;
+     if (playing)
+@@ -2903,7 +2924,7 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
+    * blocking in preroll). */
+   if (flush) {
+     GST_DEBUG_OBJECT (src, "starting flush");
+-    gst_rtspsrc_flush (src, TRUE, FALSE, gst_event_get_seqnum (event));
++    gst_rtspsrc_flush (src, TRUE, FALSE);
+   } else {
+     if (src->task) {
+       gst_task_pause (src->task);
+@@ -2953,7 +2974,7 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
+   if (flush) {
+     /* if we started flush, we stop now */
+     GST_DEBUG_OBJECT (src, "stopping flush");
+-    gst_rtspsrc_flush (src, FALSE, playing, gst_event_get_seqnum (event));
++    gst_rtspsrc_flush (src, FALSE, playing);
+   }
+ 
+   /* now we did the seek and can activate the new segment values */
+@@ -3084,15 +3105,10 @@ gst_rtspsrc_stream_start_event_add_group_id (GstRTSPSrc * src, GstEvent * event)
+   gst_event_set_group_id (event, src->group_id);
+ }
+ 
+-static gboolean
+-gst_rtspsrc_handle_src_sink_event (GstPad * pad, GstObject * parent,
++static GstEvent *
++gst_rtspsrc_update_src_event (GstRTSPSrc * self, GstRTSPStream * stream,
+     GstEvent * event)
+ {
+-  GstRTSPStream *stream;
+-  GstRTSPSrc *self = GST_RTSPSRC (GST_OBJECT_PARENT (parent));
+-
+-  stream = gst_pad_get_element_private (pad);
+-
+   switch (GST_EVENT_TYPE (event)) {
+     case GST_EVENT_STREAM_START:{
+       GChecksum *cs;
+@@ -3112,16 +3128,30 @@ gst_rtspsrc_handle_src_sink_event (GstPad * pad, GstObject * parent,
+       event = gst_event_new_stream_start (stream_id);
+       gst_rtspsrc_stream_start_event_add_group_id (self, event);
+       g_free (stream_id);
++
++      gst_event_set_seqnum (event, self->seek_seqnum);
+       break;
+     }
+-    case GST_EVENT_SEGMENT:
+-      if (self->seek_seqnum != GST_SEQNUM_INVALID)
+-        GST_EVENT_SEQNUM (event) = self->seek_seqnum;
+-      break;
+     default:
++      event = gst_event_make_writable (event);
++      gst_event_set_seqnum (event, self->seek_seqnum);
+       break;
+   }
+ 
++  return event;
++}
++
++static gboolean
++gst_rtspsrc_handle_src_sink_event (GstPad * pad, GstObject * parent,
++    GstEvent * event)
++{
++  GstRTSPStream *stream;
++  GstRTSPSrc *self = GST_RTSPSRC (GST_OBJECT_PARENT (parent));
++
++  stream = gst_pad_get_element_private (pad);
++
++  event = gst_rtspsrc_update_src_event (self, stream, event);
++
+   return gst_pad_push_event (stream->srcpad, event);
+ }
+ 
+@@ -3330,6 +3360,19 @@ gst_rtspsrc_sink_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
+ static GstFlowReturn
+ gst_rtspsrc_push_backchannel_buffer (GstRTSPSrc * src, guint id,
+     GstSample * sample)
++{
++  GstFlowReturn res;
++
++  res = gst_rtspsrc_push_backchannel_sample (src, id, sample);
++
++  gst_sample_unref (sample);
++
++  return res;
++}
++
++static GstFlowReturn
++gst_rtspsrc_push_backchannel_sample (GstRTSPSrc * src, guint id,
++    GstSample * sample)
+ {
+   GstFlowReturn res = GST_FLOW_OK;
+   GstRTSPStream *stream;
+@@ -3376,8 +3419,6 @@ gst_rtspsrc_push_backchannel_buffer (GstRTSPSrc * src, guint id,
+   }
+ 
+ out:
+-  gst_sample_unref (sample);
+-
+   return res;
+ }
+ 
+@@ -3415,10 +3456,8 @@ udpsrc_probe_cb (GstPad * pad, GstPadProbeInfo * info, gpointer user_data)
+ 
+   switch (GST_EVENT_TYPE (info->data)) {
+     case GST_EVENT_SEGMENT:
+-      if (!gst_event_is_writable (info->data))
+-        info->data = gst_event_make_writable (info->data);
+-
+       *segment_seqnum = gst_event_get_seqnum (info->data);
++      break;
+     default:
+       break;
+   }
+@@ -3426,13 +3465,25 @@ udpsrc_probe_cb (GstPad * pad, GstPadProbeInfo * info, gpointer user_data)
+   return GST_PAD_PROBE_OK;
+ }
+ 
++typedef struct
++{
++  GstRTSPSrc *src;
++  GstRTSPStream *stream;
++} CopyStickyEventsData;
++
+ static gboolean
+ copy_sticky_events (GstPad * pad, GstEvent ** event, gpointer user_data)
+ {
+-  GstPad *gpad = GST_PAD_CAST (user_data);
++  CopyStickyEventsData *data = user_data;
++  GstEvent *new_event;
+ 
+-  GST_DEBUG_OBJECT (gpad, "store sticky event %" GST_PTR_FORMAT, *event);
+-  gst_pad_store_sticky_event (gpad, *event);
++  GST_DEBUG_OBJECT (data->stream->srcpad, "send sticky event %" GST_PTR_FORMAT,
++      *event);
++  new_event =
++      gst_rtspsrc_update_src_event (data->src, data->stream,
++      gst_event_ref (*event));
++  gst_pad_store_sticky_event (data->stream->srcpad, new_event);
++  gst_event_unref (new_event);
+ 
+   return TRUE;
+ }
+@@ -3478,6 +3529,7 @@ new_manager_pad (GstElement * manager, GstPad * pad, GstRTSPSrc * src)
+   GstRTSPStream *stream;
+   gboolean all_added;
+   GstPad *internal_src;
++  CopyStickyEventsData copy_sticky_events_data;
+ 
+   GST_DEBUG_OBJECT (src, "got new manager pad %" GST_PTR_FORMAT, pad);
+ 
+@@ -3527,12 +3579,17 @@ new_manager_pad (GstElement * manager, GstPad * pad, GstRTSPSrc * src)
+       GST_PAD (gst_proxy_pad_get_internal (GST_PROXY_PAD (stream->srcpad)));
+   gst_pad_set_element_private (internal_src, stream);
+   gst_pad_set_event_function (internal_src, gst_rtspsrc_handle_src_sink_event);
+-  gst_object_unref (internal_src);
+ 
+   gst_pad_set_event_function (stream->srcpad, gst_rtspsrc_handle_src_event);
+   gst_pad_set_query_function (stream->srcpad, gst_rtspsrc_handle_src_query);
+   gst_pad_set_active (stream->srcpad, TRUE);
+-  gst_pad_sticky_events_foreach (pad, copy_sticky_events, stream->srcpad);
++
++  copy_sticky_events_data.src = src;
++  copy_sticky_events_data.stream = stream;
++  gst_pad_sticky_events_foreach (pad, copy_sticky_events,
++      &copy_sticky_events_data);
++
++  gst_object_unref (internal_src);
+ 
+   /* don't add the srcpad if this is a sendonly stream */
+   if (stream->is_backchannel)
+@@ -3605,19 +3662,7 @@ gst_rtspsrc_do_stream_eos (GstRTSPSrc * src, GstRTSPStream * stream)
+ {
+   GST_DEBUG_OBJECT (src, "setting stream for session %u to EOS", stream->id);
+ 
+-  if (stream->eos)
+-    goto was_eos;
+-
+-  stream->eos = TRUE;
+   gst_rtspsrc_stream_push_event (src, stream, gst_event_new_eos ());
+-  return;
+-
+-  /* ERRORS */
+-was_eos:
+-  {
+-    GST_DEBUG_OBJECT (src, "stream for session %u was already EOS", stream->id);
+-    return;
+-  }
+ }
+ 
+ static void
+@@ -4425,25 +4470,29 @@ element_make_from_addr (const GstURIType type, const char *addr_s,
+   char *uri = NULL;
+ 
+   addr = g_inet_address_new_from_string (addr_s);
+-
+-  switch (g_inet_address_get_family (addr)) {
+-    case G_SOCKET_FAMILY_IPV6:
+-      uri = g_strdup_printf ("udp://[%s]:%i", addr_s, port);
+-      break;
+-    case G_SOCKET_FAMILY_INVALID:
+-      GST_ERROR ("Unknown family type for %s", addr_s);
+-      goto out;
+-    case G_SOCKET_FAMILY_UNIX:
+-      GST_ERROR ("Unexpected family type UNIX for %s", addr_s);
+-      goto out;
+-    case G_SOCKET_FAMILY_IPV4:
+-      uri = g_strdup_printf ("udp://%s:%i", addr_s, port);
+-      break;
++  if (addr == NULL) {
++    /* Address is a hostname, not an IP address */
++    uri = g_strdup_printf ("udp://%s:%i", addr_s, port);
++  } else {
++    switch (g_inet_address_get_family (addr)) {
++      case G_SOCKET_FAMILY_IPV6:
++        uri = g_strdup_printf ("udp://[%s]:%i", addr_s, port);
++        break;
++      case G_SOCKET_FAMILY_INVALID:
++        GST_ERROR ("Unknown family type for %s", addr_s);
++        goto out;
++      case G_SOCKET_FAMILY_UNIX:
++        GST_ERROR ("Unexpected family type UNIX for %s", addr_s);
++        goto out;
++      case G_SOCKET_FAMILY_IPV4:
++        uri = g_strdup_printf ("udp://%s:%i", addr_s, port);
++        break;
++    }
+   }
+ 
+   element = gst_element_make_from_uri (type, uri, name, error);
+ out:
+-  g_object_unref (addr);
++  g_clear_object (&addr);
+   g_free (uri);
+   return element;
+ }
+@@ -4884,6 +4933,8 @@ gst_rtspsrc_stream_configure_transport (GstRTSPStream * stream,
+     add_backchannel_fakesink (src, stream, outpad);
+     gst_object_unref (outpad);
+   } else if (outpad) {
++    GstPad *internal_src;
++
+     GST_DEBUG_OBJECT (src, "creating ghostpad for stream %p", stream);
+ 
+     gst_pad_use_fixed_caps (outpad);
+@@ -4898,6 +4949,17 @@ gst_rtspsrc_stream_configure_transport (GstRTSPStream * stream,
+     gst_object_unref (template);
+     g_free (name);
+ 
++    /* We intercept and modify the stream start event */
++    internal_src =
++        GST_PAD (gst_proxy_pad_get_internal (GST_PROXY_PAD (stream->srcpad)));
++    gst_pad_set_element_private (internal_src, stream);
++    gst_pad_set_event_function (internal_src,
++        gst_rtspsrc_handle_src_sink_event);
++    gst_object_unref (internal_src);
++
++    gst_pad_set_event_function (stream->srcpad, gst_rtspsrc_handle_src_event);
++    gst_pad_set_query_function (stream->srcpad, gst_rtspsrc_handle_src_query);
++
+     gst_object_unref (outpad);
+   }
+   /* mark pad as ok */
+@@ -5120,11 +5182,22 @@ gst_rtspsrc_stream_push_event (GstRTSPSrc * src, GstRTSPStream * stream,
+   if (!stream->setup)
+     goto done;
+ 
++  switch (GST_EVENT_TYPE (event)) {
++    case GST_EVENT_EOS:
++      stream->eos = TRUE;
++      break;
++    case GST_EVENT_FLUSH_STOP:
++      stream->eos = FALSE;
++      break;
++    default:
++      break;
++  }
++
+   if (stream->udpsrc[0]) {
+     GstEvent *sent_event;
+ 
+-    if (GST_EVENT_TYPE (event) == GST_EVENT_EOS) {
+-      sent_event = gst_event_new_eos ();
++    if (stream->segment_seqnum[0] != GST_SEQNUM_INVALID) {
++      sent_event = gst_event_copy (event);
+       gst_event_set_seqnum (sent_event, stream->segment_seqnum[0]);
+     } else {
+       sent_event = gst_event_ref (event);
+@@ -5132,32 +5205,38 @@ gst_rtspsrc_stream_push_event (GstRTSPSrc * src, GstRTSPStream * stream,
+ 
+     res = gst_element_send_event (stream->udpsrc[0], sent_event);
+   } else if (stream->channelpad[0]) {
+-    gst_event_ref (event);
++    GstEvent *sent_event;
++
++    sent_event = gst_event_copy (event);
++    gst_event_set_seqnum (sent_event, src->seek_seqnum);
++
+     if (GST_PAD_IS_SRC (stream->channelpad[0]))
+-      res = gst_pad_push_event (stream->channelpad[0], event);
++      res = gst_pad_push_event (stream->channelpad[0], sent_event);
+     else
+-      res = gst_pad_send_event (stream->channelpad[0], event);
++      res = gst_pad_send_event (stream->channelpad[0], sent_event);
+   }
+ 
+   if (stream->udpsrc[1]) {
+     GstEvent *sent_event;
+ 
+-    if (GST_EVENT_TYPE (event) == GST_EVENT_EOS) {
+-      sent_event = gst_event_new_eos ();
+-      if (stream->segment_seqnum[1] != GST_SEQNUM_INVALID) {
+-        gst_event_set_seqnum (sent_event, stream->segment_seqnum[1]);
+-      }
++    if (stream->segment_seqnum[1] != GST_SEQNUM_INVALID) {
++      sent_event = gst_event_copy (event);
++      gst_event_set_seqnum (sent_event, stream->segment_seqnum[1]);
+     } else {
+       sent_event = gst_event_ref (event);
+     }
+ 
+     res &= gst_element_send_event (stream->udpsrc[1], sent_event);
+   } else if (stream->channelpad[1]) {
+-    gst_event_ref (event);
++    GstEvent *sent_event;
++
++    sent_event = gst_event_copy (event);
++    gst_event_set_seqnum (sent_event, src->seek_seqnum);
++
+     if (GST_PAD_IS_SRC (stream->channelpad[1]))
+-      res &= gst_pad_push_event (stream->channelpad[1], event);
++      res &= gst_pad_push_event (stream->channelpad[1], sent_event);
+     else
+-      res &= gst_pad_send_event (stream->channelpad[1], event);
++      res &= gst_pad_send_event (stream->channelpad[1], sent_event);
+   }
+ 
+ done:
+@@ -6357,21 +6436,21 @@ gst_rtsp_auth_method_to_string (GstRTSPAuthMethod method)
+  *
+  * At the moment, for Basic auth, we just do a minimal check and don't
+  * even parse out the realm */
+-static void
++static gboolean
+ gst_rtspsrc_parse_auth_hdr (GstRTSPMessage * response,
+     GstRTSPAuthMethod * methods, GstRTSPConnection * conn, gboolean * stale)
+ {
+   GstRTSPAuthCredential **credentials, **credential;
+ 
+-  g_return_if_fail (response != NULL);
+-  g_return_if_fail (methods != NULL);
+-  g_return_if_fail (stale != NULL);
++  g_return_val_if_fail (response != NULL, FALSE);
++  g_return_val_if_fail (methods != NULL, FALSE);
++  g_return_val_if_fail (stale != NULL, FALSE);
+ 
+   credentials =
+       gst_rtsp_message_parse_auth_credentials (response,
+       GST_RTSP_HDR_WWW_AUTHENTICATE);
+   if (!credentials)
+-    return;
++    return FALSE;
+ 
+   credential = credentials;
+   while (*credential) {
+@@ -6399,6 +6478,8 @@ gst_rtspsrc_parse_auth_hdr (GstRTSPMessage * response,
+   }
+ 
+   gst_rtsp_auth_credentials_free (credentials);
++
++  return TRUE;
+ }
+ 
+ /**
+@@ -6427,10 +6508,14 @@ gst_rtspsrc_setup_auth (GstRTSPSrc * src, GstRTSPMessage * response)
+   GstRTSPConnection *conn;
+   gboolean stale = FALSE;
+ 
++  g_return_val_if_fail (response != NULL, FALSE);
++
+   conn = src->conninfo.connection;
+ 
+-  /* Identify the available auth methods and see if any are supported */
+-  gst_rtspsrc_parse_auth_hdr (response, &avail_methods, conn, &stale);
++  /* Identify the available auth methods and see if any are supported. If no
++   * headers were found, propagate the HTTP error. */
++  if (!gst_rtspsrc_parse_auth_hdr (response, &avail_methods, conn, &stale))
++    goto propagate_error;
+ 
+   if (avail_methods == GST_RTSP_AUTH_NONE)
+     goto no_auth_available;
+@@ -6462,9 +6547,10 @@ gst_rtspsrc_setup_auth (GstRTSPSrc * src, GstRTSPMessage * response)
+    * already, request a username and passwd from the application via some kind
+    * of credentials request message */
+ 
+-  /* If we don't have a username and passwd at this point, bail out. */
++  /* If we don't have a username and passwd at this point, bail out and
++   * propagate the normal NOT_AUTHORIZED error. */
+   if (user == NULL || pass == NULL)
+-    goto no_user_pass;
++    goto propagate_error;
+ 
+   /* Try to configure for each available authentication method, strongest to
+    * weakest */
+@@ -6497,10 +6583,11 @@ no_auth_available:
+         ("No supported authentication protocol was found"));
+     return FALSE;
+   }
+-no_user_pass:
++
++propagate_error:
+   {
+     /* We don't fire an error message, we just return FALSE and let the
+-     * normal NOT_AUTHORIZED error be propagated */
++     * normal error be propagated */
+     return FALSE;
+   }
+ }
+@@ -9387,6 +9474,7 @@ gst_rtspsrc_change_state (GstElement * element, GstStateChange transition)
+         goto start_failed;
+       break;
+     case GST_STATE_CHANGE_READY_TO_PAUSED:
++      rtspsrc->seek_seqnum = gst_util_seqnum_next ();
+       /* init some state */
+       rtspsrc->cur_protocols = rtspsrc->protocols;
+       /* first attempt, don't ignore timeouts */
+diff --git a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.h b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.h
+index 93ad288fd1..9457972b56 100644
+--- a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.h
++++ b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.h
+@@ -339,6 +339,7 @@ struct _GstRTSPSrcClass {
+   gboolean (*get_parameters) (GstRTSPSrc *rtsp, gchar **parameters, const gchar *content_type, GstPromise *promise);
+   gboolean (*set_parameter) (GstRTSPSrc *rtsp, const gchar *name, const gchar *value, const gchar *content_type, GstPromise *promise);
+   GstFlowReturn (*push_backchannel_buffer) (GstRTSPSrc *src, guint id, GstSample *sample);
++  GstFlowReturn (*push_backchannel_sample) (GstRTSPSrc *src, guint id, GstSample *sample);
+ };
+ 
+ GType gst_rtspsrc_get_type(void);
+diff --git a/subprojects/gst-plugins-good/gst/videobox/gstvideobox.c b/subprojects/gst-plugins-good/gst/videobox/gstvideobox.c
+index 302e714260..5267c9180c 100644
+--- a/subprojects/gst-plugins-good/gst/videobox/gstvideobox.c
++++ b/subprojects/gst-plugins-good/gst/videobox/gstvideobox.c
+@@ -3189,29 +3189,25 @@ static gboolean
+ gst_video_box_src_event (GstBaseTransform * trans, GstEvent * event)
+ {
+   GstVideoBox *video_box = GST_VIDEO_BOX (trans);
+-  GstNavigationEventType type;
+-  gdouble pointer_x;
+-  gdouble pointer_y;
++  gdouble x, y, new_x, new_y;
+ 
+   GST_OBJECT_LOCK (video_box);
+-  type = gst_navigation_event_get_type (event);
+-  if (GST_EVENT_TYPE (event) == GST_EVENT_NAVIGATION &&
+-      (video_box->box_left != 0 || video_box->box_top != 0) &&
+-      (type == GST_NAVIGATION_EVENT_MOUSE_MOVE
+-          || type == GST_NAVIGATION_EVENT_MOUSE_BUTTON_PRESS
+-          || type == GST_NAVIGATION_EVENT_MOUSE_BUTTON_RELEASE)) {
+-    if (gst_navigation_event_get_coordinates (event, &pointer_x, &pointer_y)) {
+-      gdouble new_pointer_x, new_pointer_y;
+-
+-      event = gst_event_make_writable (event);
+-      new_pointer_x = pointer_x + video_box->box_left;
+-      new_pointer_y = pointer_y + video_box->box_top;
+-
+-      gst_navigation_event_set_coordinates (event, new_pointer_x,
+-          new_pointer_y);
+-    } else {
+-      GST_WARNING_OBJECT (video_box, "Failed to read navigation event");
+-    }
++
++  switch (GST_EVENT_TYPE (event)) {
++    case GST_EVENT_NAVIGATION:
++      if ((video_box->box_left != 0 || video_box->box_top != 0)
++          && gst_navigation_event_get_coordinates (event, &x, &y)) {
++
++        event = gst_event_make_writable (event);
++        new_x = x + video_box->box_left;
++        new_y = y + video_box->box_top;
++
++        GST_TRACE_OBJECT (video_box, "from %fx%f to %fx%f", x, y, new_x, new_y);
++        gst_navigation_event_set_coordinates (event, new_x, new_y);
++      }
++      break;
++    default:
++      break;
+   }
+   GST_OBJECT_UNLOCK (video_box);
+ 
+diff --git a/subprojects/gst-plugins-good/gst/videocrop/gstvideocrop.c b/subprojects/gst-plugins-good/gst/videocrop/gstvideocrop.c
+index 9ef4d1e55d..b87ee96198 100644
+--- a/subprojects/gst-plugins-good/gst/videocrop/gstvideocrop.c
++++ b/subprojects/gst-plugins-good/gst/videocrop/gstvideocrop.c
+@@ -123,26 +123,27 @@ static GstFlowReturn gst_video_crop_transform_ip (GstBaseTransform * trans,
+ static gboolean
+ gst_video_crop_src_event (GstBaseTransform * trans, GstEvent * event)
+ {
+-  GstNavigationEventType type;
+-  double pointer_x;
+-  double pointer_y;
++  double x, y, new_x, new_y;
+ 
+   GstVideoCrop *vcrop = GST_VIDEO_CROP (trans);
+   GST_OBJECT_LOCK (vcrop);
+ 
+-  type = gst_navigation_event_get_type (event);
+-  if (GST_EVENT_TYPE (event) == GST_EVENT_NAVIGATION &&
+-      (vcrop->crop_left != 0 || vcrop->crop_top != 0) &&
+-      (type == GST_NAVIGATION_EVENT_MOUSE_MOVE
+-          || type == GST_NAVIGATION_EVENT_MOUSE_BUTTON_PRESS
+-          || type == GST_NAVIGATION_EVENT_MOUSE_BUTTON_RELEASE)) {
+-    if (gst_navigation_event_get_coordinates (event, &pointer_x, &pointer_y)) {
+-      event = gst_event_make_writable (event);
+-      gst_navigation_event_set_coordinates (event, pointer_x + vcrop->crop_left,
+-          pointer_y + vcrop->crop_top);
+-    } else {
+-      GST_WARNING_OBJECT (vcrop, "Failed to read navigation event");
+-    }
++  switch (GST_EVENT_TYPE (event)) {
++    case GST_EVENT_NAVIGATION:
++      if ((vcrop->crop_left != 0 || vcrop->crop_top != 0)
++          && gst_navigation_event_get_coordinates (event, &x, &y)) {
++
++        new_x = x + vcrop->crop_left;
++        new_y = y + vcrop->crop_top;
++
++        event = gst_event_make_writable (event);
++
++        GST_TRACE_OBJECT (vcrop, "from %fx%f to %fx%f", x, y, new_x, new_y);
++        gst_navigation_event_set_coordinates (event, new_x, new_y);
++      }
++      break;
++    default:
++      break;
+   }
+ 
+   GST_OBJECT_UNLOCK (vcrop);
+diff --git a/subprojects/gst-plugins-good/gst/videofilter/gstvideoflip.c b/subprojects/gst-plugins-good/gst/videofilter/gstvideoflip.c
+index 69d9a5e43e..07db89969d 100644
+--- a/subprojects/gst-plugins-good/gst/videofilter/gstvideoflip.c
++++ b/subprojects/gst-plugins-good/gst/videofilter/gstvideoflip.c
+@@ -1777,7 +1777,7 @@ gst_video_flip_sink_event (GstBaseTransform * trans, GstEvent * event)
+ {
+   GstVideoFlip *vf = GST_VIDEO_FLIP (trans);
+   GstTagList *taglist;
+-  gchar *orientation;
++  GstVideoOrientationMethod method;
+   gboolean ret;
+ 
+   GST_DEBUG_OBJECT (vf, "handling %s event", GST_EVENT_TYPE_NAME (event));
+@@ -1786,25 +1786,8 @@ gst_video_flip_sink_event (GstBaseTransform * trans, GstEvent * event)
+     case GST_EVENT_TAG:
+       gst_event_parse_tag (event, &taglist);
+ 
+-      if (gst_tag_list_get_string (taglist, "image-orientation", &orientation)) {
+-        if (!g_strcmp0 ("rotate-0", orientation))
+-          gst_video_flip_set_method (vf, GST_VIDEO_ORIENTATION_IDENTITY, TRUE);
+-        else if (!g_strcmp0 ("rotate-90", orientation))
+-          gst_video_flip_set_method (vf, GST_VIDEO_ORIENTATION_90R, TRUE);
+-        else if (!g_strcmp0 ("rotate-180", orientation))
+-          gst_video_flip_set_method (vf, GST_VIDEO_ORIENTATION_180, TRUE);
+-        else if (!g_strcmp0 ("rotate-270", orientation))
+-          gst_video_flip_set_method (vf, GST_VIDEO_ORIENTATION_90L, TRUE);
+-        else if (!g_strcmp0 ("flip-rotate-0", orientation))
+-          gst_video_flip_set_method (vf, GST_VIDEO_ORIENTATION_HORIZ, TRUE);
+-        else if (!g_strcmp0 ("flip-rotate-90", orientation))
+-          gst_video_flip_set_method (vf, GST_VIDEO_ORIENTATION_UL_LR, TRUE);
+-        else if (!g_strcmp0 ("flip-rotate-180", orientation))
+-          gst_video_flip_set_method (vf, GST_VIDEO_ORIENTATION_VERT, TRUE);
+-        else if (!g_strcmp0 ("flip-rotate-270", orientation))
+-          gst_video_flip_set_method (vf, GST_VIDEO_ORIENTATION_UR_LL, TRUE);
+-
+-        g_free (orientation);
++      if (gst_video_orientation_from_tag (taglist, &method)) {
++        gst_video_flip_set_method (vf, method, TRUE);
+       }
+       break;
+     default:
+diff --git a/subprojects/gst-plugins-good/gst/wavparse/gstwavparse.c b/subprojects/gst-plugins-good/gst/wavparse/gstwavparse.c
+index 0c624c4599..1b71ccab77 100644
+--- a/subprojects/gst-plugins-good/gst/wavparse/gstwavparse.c
++++ b/subprojects/gst-plugins-good/gst/wavparse/gstwavparse.c
+@@ -1923,11 +1923,12 @@ gst_wavparse_add_src_pad (GstWavParse * wav, GstBuffer * buf)
+   if (s && gst_structure_has_name (s, "audio/x-raw") && buf != NULL
+       && (GST_BUFFER_OFFSET (buf) == 0 || !GST_BUFFER_OFFSET_IS_VALID (buf))) {
+     GstTypeFindProbability prob;
+-    GstCaps *tf_caps;
++    GstCaps *tf_caps, *dts_caps;
+ 
++    dts_caps = gst_caps_from_string ("audio/x-dts");
+     tf_caps =
+-        gst_type_find_helper_for_buffer_with_extension (GST_OBJECT (wav), buf,
+-        "dts", &prob);
++        gst_type_find_helper_for_buffer_with_caps (GST_OBJECT (wav), buf,
++        dts_caps, &prob);
+     if (tf_caps != NULL) {
+       GST_LOG ("typefind caps = %" GST_PTR_FORMAT ", P=%d", tf_caps, prob);
+       if (gst_wavparse_have_dts_caps (tf_caps, prob)) {
+@@ -1943,6 +1944,7 @@ gst_wavparse_add_src_pad (GstWavParse * wav, GstBuffer * buf)
+         gst_caps_unref (tf_caps);
+       }
+     }
++    gst_caps_unref (dts_caps);
+   }
+ 
+   gst_pad_set_caps (wav->srcpad, wav->caps);
+diff --git a/subprojects/gst-plugins-good/meson.build b/subprojects/gst-plugins-good/meson.build
+index 8950a05f44..942b38eb88 100644
+--- a/subprojects/gst-plugins-good/meson.build
++++ b/subprojects/gst-plugins-good/meson.build
+@@ -1,5 +1,5 @@
+ project('gst-plugins-good', 'c',
+-  version : '1.21.2',
++  version : '1.21.2.1',
+   meson_version : '>= 0.62',
+   default_options : [ 'warning_level=1',
+                       'buildtype=debugoptimized' ])
+diff --git a/subprojects/gst-plugins-good/meson_options.txt b/subprojects/gst-plugins-good/meson_options.txt
+index 4c2d1990a2..81b78d0a88 100644
+--- a/subprojects/gst-plugins-good/meson_options.txt
++++ b/subprojects/gst-plugins-good/meson_options.txt
+@@ -67,6 +67,7 @@ option('osxvideo', type : 'feature', value : 'auto', description : 'macOS Cocoa
+ option('png', type : 'feature', value : 'auto', description : 'PNG image codec plugin')
+ option('pulse', type : 'feature', value : 'auto', description : 'Pulseaudio audio source/sink plugin')
+ option('qt5', type : 'feature', value : 'auto', yield : true, description : 'Qt5 QML video sink plugin')
++option('qt6', type : 'feature', value : 'auto', yield : true, description : 'Qt6 QML video sink plugin')
+ option('shout2', type : 'feature', value : 'auto', description : 'Shout-casting network sink plugin based on libshout2')
+ option('soup', type : 'feature', value : 'auto', description : 'libsoup HTTP client source/sink plugin')
+ option('speex', type : 'feature', value : 'auto', description : 'Speex audio codec plugin')
+diff --git a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2bufferpool.c b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2bufferpool.c
+index 4c471f184f..c5da1f8a5b 100644
+--- a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2bufferpool.c
++++ b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2bufferpool.c
+@@ -259,16 +259,9 @@ gst_v4l2_buffer_pool_import_userptr (GstV4l2BufferPool * pool,
+     for (i = 0; i < GST_VIDEO_FORMAT_INFO_N_PLANES (finfo); i++) {
+       if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
+         gint tinfo = GST_VIDEO_FRAME_PLANE_STRIDE (&data->frame, i);
+-        gint pstride;
+-        guint pheight;
+-
+-        pstride = GST_VIDEO_TILE_X_TILES (tinfo) <<
+-            GST_VIDEO_FORMAT_INFO_TILE_WS (finfo);
+-
+-        pheight = GST_VIDEO_TILE_Y_TILES (tinfo) <<
+-            GST_VIDEO_FORMAT_INFO_TILE_HS (finfo);
+-
+-        size[i] = pstride * pheight;
++        size[i] = GST_VIDEO_TILE_X_TILES (tinfo) *
++            GST_VIDEO_TILE_Y_TILES (tinfo) *
++            GST_VIDEO_FORMAT_INFO_TILE_SIZE (finfo, i);
+       } else {
+         size[i] = GST_VIDEO_FRAME_PLANE_STRIDE (&data->frame, i) *
+             GST_VIDEO_FRAME_COMP_HEIGHT (&data->frame, i);
+diff --git a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2object.c b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2object.c
+index 4e6aaf9472..ecaaaad160 100644
+--- a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2object.c
++++ b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2object.c
+@@ -3245,23 +3245,16 @@ gst_v4l2_object_set_stride (GstVideoInfo * info, GstVideoAlignment * align,
+   const GstVideoFormatInfo *finfo = info->finfo;
+ 
+   if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
+-    gint x_tiles, y_tiles, ws, hs, tile_height, padded_height;
++    gint x_tiles, y_tiles, tile_height, padded_height;
+ 
+-    ws = GST_VIDEO_FORMAT_INFO_TILE_WS (finfo);
+-    hs = GST_VIDEO_FORMAT_INFO_TILE_HS (finfo);
+-
+-    /* this only works for what we support, NV12 subsampled tiles */
+-    if (GST_VIDEO_FORMAT_INFO_HAS_SUBTILES (finfo) && plane == 1)
+-      hs -= 1;
+-
+-    tile_height = 1 << hs;
++    tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (finfo, plane);
+ 
+     padded_height = GST_VIDEO_FORMAT_INFO_SCALE_HEIGHT (finfo, plane,
+         info->height + align->padding_top + align->padding_bottom);
+-    padded_height = GST_ROUND_UP_N (padded_height, tile_height);
++    padded_height = (padded_height + tile_height - 1) / tile_height;
+ 
+-    x_tiles = stride >> ws;
+-    y_tiles = padded_height >> hs;
++    x_tiles = stride / GST_VIDEO_FORMAT_INFO_TILE_STRIDE (finfo, plane);
++    y_tiles = padded_height / tile_height;
+     info->stride[plane] = GST_VIDEO_TILE_MAKE_STRIDE (x_tiles, y_tiles);
+   } else {
+     info->stride[plane] = stride;
+@@ -3348,12 +3341,9 @@ gst_v4l2_object_save_format (GstV4l2Object * v4l2object,
+   padded_height = format->fmt.pix.height;
+ 
+   if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
+-    guint hs, tile_height;
+-
+-    hs = GST_VIDEO_FORMAT_INFO_TILE_HS (finfo);
+-    tile_height = 1 << hs;
+-
+-    padded_height = GST_ROUND_UP_N (padded_height, tile_height);
++    guint tile_height;
++    tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (finfo, 0);
++    padded_height = (padded_height + tile_height - 1) / tile_height;
+   }
+ 
+   align->padding_bottom =
+@@ -3504,6 +3494,18 @@ gst_v4l2_video_colorimetry_matches (const GstVideoColorimetry * cinfo,
+       && gst_video_colorimetry_is_equal (cinfo, &ci_jpeg))
+     return TRUE;
+ 
++  /* bypass check the below transfer types, because those types are cast to
++   * V4L2_XFER_FUNC_NONE type when try format or set format and V4L2_XFER_FUNC_NONE
++   * type is cast to GST_VIDEO_TRANSFER_GAMMA10 type in gst_v4l2_object_get_colorspace */
++  if ((info.colorimetry.transfer == GST_VIDEO_TRANSFER_GAMMA18) ||
++      (info.colorimetry.transfer == GST_VIDEO_TRANSFER_GAMMA20) ||
++      (info.colorimetry.transfer == GST_VIDEO_TRANSFER_GAMMA22) ||
++      (info.colorimetry.transfer == GST_VIDEO_TRANSFER_GAMMA28)) {
++    info.colorimetry.transfer = GST_VIDEO_TRANSFER_GAMMA10;
++    if (gst_video_colorimetry_is_equal (&info.colorimetry, cinfo))
++      return TRUE;
++  }
++
+   return FALSE;
+ }
+ 
+@@ -3764,8 +3766,8 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
+       gint stride = GST_VIDEO_INFO_PLANE_STRIDE (&info, i);
+ 
+       if (GST_VIDEO_FORMAT_INFO_IS_TILED (info.finfo))
+-        stride = GST_VIDEO_TILE_X_TILES (stride) <<
+-            GST_VIDEO_FORMAT_INFO_TILE_WS (info.finfo);
++        stride = GST_VIDEO_TILE_X_TILES (stride) *
++            GST_VIDEO_FORMAT_INFO_TILE_STRIDE (info.finfo, i);
+ 
+       format.fmt.pix_mp.plane_fmt[i].bytesperline = stride;
+     }
+@@ -3783,8 +3785,8 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
+     format.fmt.pix.field = field;
+ 
+     if (GST_VIDEO_FORMAT_INFO_IS_TILED (info.finfo))
+-      stride = GST_VIDEO_TILE_X_TILES (stride) <<
+-          GST_VIDEO_FORMAT_INFO_TILE_WS (info.finfo);
++      stride = GST_VIDEO_TILE_X_TILES (stride) *
++          GST_VIDEO_FORMAT_INFO_TILE_STRIDE (info.finfo, i);
+ 
+     /* try to ask our preferred stride */
+     format.fmt.pix.bytesperline = stride;
+@@ -4804,8 +4806,8 @@ gst_v4l2_object_match_buffer_layout (GstV4l2Object * obj, guint n_planes,
+         gint plane_stride = stride[i];
+ 
+         if (GST_VIDEO_FORMAT_INFO_IS_TILED (obj->info.finfo))
+-          plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) <<
+-              GST_VIDEO_FORMAT_INFO_TILE_WS (obj->info.finfo);
++          plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) *
++              GST_VIDEO_FORMAT_INFO_TILE_STRIDE (obj->info.finfo, i);
+ 
+         format.fmt.pix_mp.plane_fmt[i].bytesperline = plane_stride;
+         format.fmt.pix_mp.height = padded_height;
+@@ -4818,8 +4820,8 @@ gst_v4l2_object_match_buffer_layout (GstV4l2Object * obj, guint n_planes,
+       GST_DEBUG_OBJECT (obj->dbg_obj, "Wanted stride: %i", plane_stride);
+ 
+       if (GST_VIDEO_FORMAT_INFO_IS_TILED (obj->info.finfo))
+-        plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) <<
+-            GST_VIDEO_FORMAT_INFO_TILE_WS (obj->info.finfo);
++        plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) *
++            GST_VIDEO_FORMAT_INFO_TILE_STRIDE (obj->info.finfo, 0);
+ 
+       format.fmt.pix.bytesperline = plane_stride;
+       format.fmt.pix.height = padded_height;
+diff --git a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2videodec.c b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2videodec.c
+index 9f6fa7bbee..2a110e5e4a 100644
+--- a/subprojects/gst-plugins-good/sys/v4l2/gstv4l2videodec.c
++++ b/subprojects/gst-plugins-good/sys/v4l2/gstv4l2videodec.c
+@@ -675,11 +675,9 @@ gst_v4l2_video_dec_loop (GstVideoDecoder * decoder)
+   GstVideoCodecFrame *frame;
+   GstBuffer *buffer = NULL;
+   GstFlowReturn ret;
+-  gint capture_configuration_change;
+ 
+   GST_VIDEO_DECODER_STREAM_LOCK (decoder);
+-  if ((capture_configuration_change =
+-          g_atomic_int_get (&self->capture_configuration_change))) {
++  if (g_atomic_int_get (&self->capture_configuration_change)) {
+     gst_v4l2_object_stop (self->v4l2capture);
+     ret = gst_v4l2_video_dec_setup_capture (decoder);
+     if (ret != GST_FLOW_OK) {
+@@ -761,36 +759,38 @@ gst_v4l2_video_dec_loop (GstVideoDecoder * decoder)
+     while ((oldest_frame = gst_video_decoder_get_oldest_frame (decoder)) &&
+         check_system_frame_number_too_old (frame->system_frame_number,
+             oldest_frame->system_frame_number)) {
+-      gst_video_decoder_drop_frame (decoder, oldest_frame);
+-      oldest_frame = NULL;
+-
+-      if (!warned) {
+-        g_warning ("%s: Too old frames, bug in decoder -- please file a bug",
+-            GST_ELEMENT_NAME (decoder));
+-        warned = TRUE;
+-      }
+-    }
+-
+-    /* If the initial frame triggered a Caps renegotiation, but with no actual change in 
+-     * resolution, already-correctly-decoded frames may incorrectly be dropped by the driver.
+-     * This has been observed to occur in at least one driver.  These frames will never dequeue.
+-     * As a workaround, drop all pending frames older than the current frame now. */
+-    if (capture_configuration_change && oldest_frame
+-        && oldest_frame->system_frame_number == 0
+-        && frame->system_frame_number) {
+-      gint counter = 0;
+-      while (oldest_frame) {
+-        counter++;
++      if (oldest_frame->system_frame_number > 0) {
+         gst_video_decoder_drop_frame (decoder, oldest_frame);
+-        oldest_frame = gst_video_decoder_get_oldest_frame (decoder);
+-        if (oldest_frame->system_frame_number == frame->system_frame_number) {
+-          gst_video_codec_frame_unref (oldest_frame);
+-          oldest_frame = NULL;
++        oldest_frame = NULL;
++
++        if (!warned) {
++          g_warning ("%s: Too old frames, bug in decoder -- please file a bug",
++              GST_ELEMENT_NAME (decoder));
++          warned = TRUE;
++        }
++      } else {
++        /* special treatment when oldest_frame->system_frame_number = 0:
++         * if a consecutive sequence 0, 1, 2,..., n < frame->system_frame_number
++         * is pending, drop them all at this time. (This has been seen to occur
++         * as a driver bug when the initial frame triggered a Caps re-negotiation,
++         * and the driver dropped these frames) */
++        guint32 counter = 0;
++        while (oldest_frame) {
++          gst_video_decoder_drop_frame (decoder, oldest_frame);
++          counter++;
++          oldest_frame = gst_video_decoder_get_oldest_frame (decoder);
++          if (oldest_frame &&
++              (oldest_frame->system_frame_number > counter ||
++                  oldest_frame->system_frame_number >=
++                  frame->system_frame_number)) {
++            gst_video_codec_frame_unref (oldest_frame);
++            oldest_frame = NULL;
++          }
+         }
++        g_warning
++            ("%s: %i initial frames were not dequeued: bug in decoder -- please file a bug",
++            GST_ELEMENT_NAME (decoder), counter);
+       }
+-      g_warning
+-          ("%s: %i initial frames before frame %u were not dequeued: bug in decoder -- please file a bug",
+-          GST_ELEMENT_NAME (decoder), counter, frame->system_frame_number);
+     }
+     if (oldest_frame)
+       gst_video_codec_frame_unref (oldest_frame);
+diff --git a/subprojects/gst-plugins-good/tests/check/elements/dash_mpd.c b/subprojects/gst-plugins-good/tests/check/elements/dash_mpd.c
+index d45ee7dedc..bda2787df9 100644
+--- a/subprojects/gst-plugins-good/tests/check/elements/dash_mpd.c
++++ b/subprojects/gst-plugins-good/tests/check/elements/dash_mpd.c
+@@ -4108,6 +4108,57 @@ GST_START_TEST (dash_mpdparser_get_baseURL8)
+ 
+ GST_END_TEST;
+ 
++/*
++ * Test getting baseURL with query
++ *
++ */
++GST_START_TEST (dash_mpdparser_get_baseURL_with_query)
++{
++  gboolean ret;
++  gchar *uri;
++  gint64 range_start, range_end;
++  const gchar *xml =
++      "<?xml version=\"1.0\"?>"
++      "<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\""
++      "     profiles=\"urn:mpeg:dash:profile:isoff-main:2011\">"
++      "  <Period id=\"Period0\" duration=\"P0Y0M1DT1H1M1S\">"
++      "    <AdaptationSet id=\"1\" mimeType=\"audio\" lang=\"en\">"
++      "      <Representation id=\"1\" bandwidth=\"250000\">"
++      "        <BaseURL>http://example.com/test?param1=value1&amp;param2=value2</BaseURL>"
++      "        <SegmentBase indexRange=\"100-200\" indexRangeExact=\"true\">"
++      "          <Initialization range=\"0-100\" />"
++      "        </SegmentBase>"
++      "      </Representation></AdaptationSet></Period></MPD>";
++
++  GstMPDClient2 *mpdclient = setup_mpd_client (xml);
++
++  /* get segment url and range from segment Initialization */
++  ret =
++      gst_mpd_client2_get_next_header (mpdclient, &uri, 0, &range_start,
++      &range_end);
++  assert_equals_int (ret, TRUE);
++  assert_equals_string (uri,
++      "http://example.com/test?param1=value1&param2=value2");
++  assert_equals_int64 (range_start, 0);
++  assert_equals_int64 (range_end, 100);
++  g_free (uri);
++
++  /* get segment url and range from segment indexRange */
++  ret =
++      gst_mpd_client2_get_next_header_index (mpdclient, &uri, 0, &range_start,
++      &range_end);
++  assert_equals_int (ret, TRUE);
++  assert_equals_string (uri,
++      "http://example.com/test?param1=value1&param2=value2");
++  assert_equals_int64 (range_start, 100);
++  assert_equals_int64 (range_end, 200);
++  g_free (uri);
++
++  gst_mpd_client2_free (mpdclient);
++}
++
++GST_END_TEST;
++
+ /*
+  * Test getting mediaPresentationDuration
+  *
+@@ -6425,6 +6476,7 @@ dash_suite (void)
+   tcase_add_test (tc_complexMPD, dash_mpdparser_get_baseURL6);
+   tcase_add_test (tc_complexMPD, dash_mpdparser_get_baseURL7);
+   tcase_add_test (tc_complexMPD, dash_mpdparser_get_baseURL8);
++  tcase_add_test (tc_complexMPD, dash_mpdparser_get_baseURL_with_query);
+   tcase_add_test (tc_complexMPD, dash_mpdparser_get_mediaPresentationDuration);
+   tcase_add_test (tc_complexMPD, dash_mpdparser_get_streamPresentationOffset);
+   tcase_add_test (tc_complexMPD, dash_mpdparser_segments);
+diff --git a/subprojects/gst-plugins-good/tests/check/elements/rtpjitterbuffer.c b/subprojects/gst-plugins-good/tests/check/elements/rtpjitterbuffer.c
+index 1712399939..2ae1904b8e 100644
+--- a/subprojects/gst-plugins-good/tests/check/elements/rtpjitterbuffer.c
++++ b/subprojects/gst-plugins-good/tests/check/elements/rtpjitterbuffer.c
+@@ -2697,6 +2697,48 @@ GST_START_TEST (test_deadline_ts_offset)
+ 
+ GST_END_TEST;
+ 
++GST_START_TEST (test_deadline_ts_offset_overflow)
++{
++  GstHarness *h = gst_harness_new ("rtpjitterbuffer");
++  GstTestClock *testclock;
++  GstClockID id;
++  const gint jb_latency_ms = 10;
++
++  gst_harness_set_src_caps (h, generate_caps ());
++  testclock = gst_harness_get_testclock (h);
++
++  g_object_set (h->element, "latency", jb_latency_ms, NULL);
++
++  /* push the first buffer in */
++  fail_unless_equals_int (GST_FLOW_OK,
++      gst_harness_push (h, generate_test_buffer (0)));
++
++  /* wait_next_timeout() syncs on the deadline timer */
++  gst_test_clock_wait_for_next_pending_id (testclock, &id);
++  fail_unless_equals_uint64 (jb_latency_ms * GST_MSECOND,
++      gst_clock_id_get_time (id));
++  gst_clock_id_unref (id);
++
++  /* add ts-offset while waiting, this reschedules the deadline to a negative time */
++  g_object_set (h->element, "ts-offset", -20 * GST_MSECOND, NULL);
++
++  /* wait_next_timeout() syncs on the new deadline timer, which is scheduled
++   * to the jitterbuffer latency due to being in the past */
++  gst_test_clock_wait_for_next_pending_id (testclock, &id);
++  fail_unless_equals_uint64 (jb_latency_ms * GST_MSECOND,
++      gst_clock_id_get_time (id));
++  gst_clock_id_unref (id);
++
++  gst_test_clock_set_time_and_process (testclock, jb_latency_ms * GST_MSECOND);
++
++  gst_buffer_unref (gst_harness_pull (h));
++
++  gst_object_unref (testclock);
++  gst_harness_teardown (h);
++}
++
++GST_END_TEST;
++
+ GST_START_TEST (test_big_gap_seqnum)
+ {
+   GstHarness *h = gst_harness_new ("rtpjitterbuffer");
+@@ -3515,6 +3557,7 @@ rtpjitterbuffer_suite (void)
+   tcase_add_test (tc_chain, test_dont_drop_packet_based_on_skew);
+ 
+   tcase_add_test (tc_chain, test_deadline_ts_offset);
++  tcase_add_test (tc_chain, test_deadline_ts_offset_overflow);
+   tcase_add_test (tc_chain, test_big_gap_seqnum);
+   tcase_add_test (tc_chain, test_big_gap_arrival_time);
+   tcase_add_test (tc_chain, test_fill_queue);
+diff --git a/subprojects/gst-plugins-good/tests/check/elements/rtpsession.c b/subprojects/gst-plugins-good/tests/check/elements/rtpsession.c
+index ab7c5ad70c..ab3d4e92af 100644
+--- a/subprojects/gst-plugins-good/tests/check/elements/rtpsession.c
++++ b/subprojects/gst-plugins-good/tests/check/elements/rtpsession.c
+@@ -988,6 +988,7 @@ GST_START_TEST (test_receive_regular_pli)
+ {
+   SessionHarness *h = session_harness_new ();
+   GstEvent *ev;
++  const GstStructure *s;
+ 
+   /* PLI packet */
+   guint8 rtcp_pkt[] = {
+@@ -1017,6 +1018,9 @@ GST_START_TEST (test_receive_regular_pli)
+   fail_unless ((ev = gst_harness_pull_upstream_event (h->send_rtp_h)) != NULL);
+   fail_unless_equals_int (GST_EVENT_CUSTOM_UPSTREAM, GST_EVENT_TYPE (ev));
+   fail_unless (gst_video_event_is_force_key_unit (ev));
++  s = gst_event_get_structure (ev);
++  fail_unless (s);
++  fail_unless (G_VALUE_HOLDS_UINT (gst_structure_get_value (s, "ssrc")));
+   gst_event_unref (ev);
+ 
+   session_harness_free (h);
+@@ -1028,6 +1032,7 @@ GST_START_TEST (test_receive_pli_no_sender_ssrc)
+ {
+   SessionHarness *h = session_harness_new ();
+   GstEvent *ev;
++  const GstStructure *s;
+ 
+   /* PLI packet */
+   guint8 rtcp_pkt[] = {
+@@ -1057,6 +1062,9 @@ GST_START_TEST (test_receive_pli_no_sender_ssrc)
+   fail_unless ((ev = gst_harness_pull_upstream_event (h->send_rtp_h)) != NULL);
+   fail_unless_equals_int (GST_EVENT_CUSTOM_UPSTREAM, GST_EVENT_TYPE (ev));
+   fail_unless (gst_video_event_is_force_key_unit (ev));
++  s = gst_event_get_structure (ev);
++  fail_unless (s);
++  fail_unless (G_VALUE_HOLDS_UINT (gst_structure_get_value (s, "ssrc")));
+   gst_event_unref (ev);
+ 
+   session_harness_free (h);
+diff --git a/subprojects/gst-plugins-good/tests/examples/meson.build b/subprojects/gst-plugins-good/tests/examples/meson.build
+index d5fa1279fd..0af2aa64a3 100644
+--- a/subprojects/gst-plugins-good/tests/examples/meson.build
++++ b/subprojects/gst-plugins-good/tests/examples/meson.build
+@@ -2,6 +2,7 @@ subdir('audiofx')
+ subdir('cairo')
+ subdir('level')
+ subdir('qt')
++subdir('qt6')
+ 
+ if is_variable('gstrpicamsrc')
+   subdir('rpicamsrc')
+diff --git a/subprojects/gst-plugins-good/tests/examples/qt6/meson.build b/subprojects/gst-plugins-good/tests/examples/qt6/meson.build
+new file mode 100644
+index 0000000000..23d3fb6c5d
+--- /dev/null
++++ b/subprojects/gst-plugins-good/tests/examples/qt6/meson.build
+@@ -0,0 +1,17 @@
++if qt6_option.disabled()
++  subdir_done()
++endif
++
++# We already did all the checks when building the qt6 plugin
++if not qt6qml_dep.found()
++  subdir_done()
++endif
++
++qt6qml_example_deps = dependency('qt6', modules : ['Core', 'Gui', 'Widgets', 'Qml', 'Quick'],
++                         required: get_option('examples'))
++
++if not qt6qml_example_deps.found()
++  subdir_done()
++endif
++
++subdir('qmlsink')
+diff --git a/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/main.cpp b/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/main.cpp
+new file mode 100644
+index 0000000000..81f305252b
+--- /dev/null
++++ b/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/main.cpp
+@@ -0,0 +1,85 @@
++#include <QApplication>
++#include <QQmlApplicationEngine>
++#include <QQuickWindow>
++#include <QQuickItem>
++#include <QRunnable>
++#include <gst/gst.h>
++
++class SetPlaying : public QRunnable
++{
++public:
++  SetPlaying(GstElement *);
++  ~SetPlaying();
++
++  void run ();
++
++private:
++  GstElement * pipeline_;
++};
++
++SetPlaying::SetPlaying (GstElement * pipeline)
++{
++  this->pipeline_ = pipeline ? static_cast<GstElement *> (gst_object_ref (pipeline)) : NULL;
++}
++
++SetPlaying::~SetPlaying ()
++{
++  if (this->pipeline_)
++    gst_object_unref (this->pipeline_);
++}
++
++void
++SetPlaying::run ()
++{
++  if (this->pipeline_)
++    gst_element_set_state (this->pipeline_, GST_STATE_PLAYING);
++}
++
++int main(int argc, char *argv[])
++{
++  int ret;
++
++  gst_init (&argc, &argv);
++
++  {
++    QGuiApplication app(argc, argv);
++
++    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
++
++    GstElement *pipeline = gst_pipeline_new (NULL);
++    GstElement *src = gst_element_factory_make ("videotestsrc", NULL);
++    GstElement *glupload = gst_element_factory_make ("glupload", NULL);
++    /* the plugin must be loaded before loading the qml file to register the
++     * GstGLVideoItem qml item */
++    GstElement *sink = gst_element_factory_make ("qml6glsink", NULL);
++
++    g_assert (src && glupload && sink);
++
++    gst_bin_add_many (GST_BIN (pipeline), src, glupload, sink, NULL);
++    gst_element_link_many (src, glupload, sink, NULL);
++
++    QQmlApplicationEngine engine;
++    engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
++
++    QQuickItem *videoItem;
++    QQuickWindow *rootObject;
++
++    /* find and set the videoItem on the sink */
++    rootObject = static_cast<QQuickWindow *> (engine.rootObjects().first());
++    videoItem = rootObject->findChild<QQuickItem *> ("videoItem");
++    g_assert (videoItem);
++    g_object_set(sink, "widget", videoItem, NULL);
++
++    rootObject->scheduleRenderJob (new SetPlaying (pipeline),
++        QQuickWindow::BeforeSynchronizingStage);
++
++    ret = app.exec();
++
++    gst_element_set_state (pipeline, GST_STATE_NULL);
++    gst_object_unref (pipeline);
++  }
++
++  gst_deinit ();
++
++  return ret;
++}
+diff --git a/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/main.qml b/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/main.qml
+new file mode 100644
+index 0000000000..bf182b34f0
+--- /dev/null
++++ b/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/main.qml
+@@ -0,0 +1,59 @@
++import QtQuick 6.0
++import QtQuick.Controls 6.0
++import QtQuick.Dialogs 6.0
++import QtQuick.Window 6.0
++
++import org.freedesktop.gstreamer.Qt6GLVideoItem 1.0
++
++ApplicationWindow {
++    id: window
++    visible: true
++    width: 640
++    height: 480
++    x: 30
++    y: 30
++    color: "black"
++
++    Item {
++        anchors.fill: parent
++
++        GstGLQt6VideoItem {
++            id: video
++            objectName: "videoItem"
++            anchors.centerIn: parent
++            width: parent.width
++            height: parent.height
++        }
++
++        Rectangle {
++            color: Qt.rgba(1, 1, 1, 0.7)
++            border.width: 1
++            border.color: "white"
++            anchors.bottom: video.bottom
++            anchors.bottomMargin: 15
++            anchors.horizontalCenter: parent.horizontalCenter
++            width : parent.width - 30
++            height: parent.height - 30
++            radius: 8
++
++            MouseArea {
++                id: mousearea
++                anchors.fill: parent
++                hoverEnabled: true
++                onEntered: {
++                    parent.opacity = 1.0
++                    hidetimer.start()
++                }
++            }
++
++            Timer {
++                id: hidetimer
++                interval: 5000
++                onTriggered: {
++                    parent.opacity = 0.0
++                    stop()
++                }
++            }
++        }
++    }
++}
+diff --git a/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/meson.build b/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/meson.build
+new file mode 100644
+index 0000000000..93bf6aa388
+--- /dev/null
++++ b/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/meson.build
+@@ -0,0 +1,12 @@
++sources = [
++  'main.cpp',
++]
++
++
++qt_preprocessed = qt6_mod.preprocess(qresources : 'qmlsink.qrc')
++executable('qml6sink', sources, qt_preprocessed,
++    dependencies : [gst_dep, qt6qml_example_deps],
++    override_options : ['cpp_std=c++17'],
++    c_args : gst_plugins_good_args,
++    include_directories : [configinc],
++    install: false)
+diff --git a/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/play.pro b/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/play.pro
+new file mode 100644
+index 0000000000..9ecaf87b12
+--- /dev/null
++++ b/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/play.pro
+@@ -0,0 +1,20 @@
++TEMPLATE = app
++
++QT += qml quick widgets
++
++QT_CONFIG -= no-pkg-config
++CONFIG += link_pkgconfig debug
++PKGCONFIG = \
++    gstreamer-1.0 \
++    gstreamer-video-1.0
++
++DEFINES += GST_USE_UNSTABLE_API
++
++INCLUDEPATH += ../lib
++
++SOURCES += main.cpp
++
++RESOURCES += qmlsink.qrc
++
++# Additional import path used to resolve QML modules in Qt Creator's code model
++QML_IMPORT_PATH =
+diff --git a/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/qmlsink.qrc b/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/qmlsink.qrc
+new file mode 100644
+index 0000000000..5f6483ac33
+--- /dev/null
++++ b/subprojects/gst-plugins-good/tests/examples/qt6/qmlsink/qmlsink.qrc
+@@ -0,0 +1,5 @@
++<RCC>
++    <qresource prefix="/">
++        <file>main.qml</file>
++    </qresource>
++</RCC>
+diff --git a/subprojects/gst-plugins-good/tests/examples/rtsp/test-onvif.c b/subprojects/gst-plugins-good/tests/examples/rtsp/test-onvif.c
+index 2f47445e4b..ddaaeee52d 100644
+--- a/subprojects/gst-plugins-good/tests/examples/rtsp/test-onvif.c
++++ b/subprojects/gst-plugins-good/tests/examples/rtsp/test-onvif.c
+@@ -14,15 +14,21 @@ new_sample (GstElement * appsink, GstElement * rtspsrc)
+ 
+   g_assert (stream_id != -1);
+ 
++  /* get the sample from appsink */
+   g_signal_emit_by_name (appsink, "pull-sample", &sample);
+ 
+   if (!sample)
+-    goto out;
++    goto nosample;
+ 
+-  g_signal_emit_by_name (rtspsrc, "push-backchannel-buffer", stream_id, sample,
++  g_signal_emit_by_name (rtspsrc, "push-backchannel-sample", stream_id, sample,
+       &ret);
+ 
+-out:
++  /* Action signal callbacks don't take ownership of the arguments passed, so we must unref the sample here.
++   * (The "push-backchannel-buffer" callback unrefs the sample, which is wrong and doesn't work with bindings
++   * but could not be changed, hence the new "push-backchannel-sample" callback that behaves correctly.)  */
++  gst_sample_unref (sample);
++
++nosample:
+   return ret;
+ }
+ 

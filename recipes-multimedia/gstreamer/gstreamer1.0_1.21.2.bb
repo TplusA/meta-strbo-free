@@ -20,10 +20,10 @@ SRC_URI = "https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-${PV}.tar.x
            file://0002-tests-add-support-for-install-the-tests.patch \
            file://0003-tests-use-a-dictionaries-for-environment.patch \
            file://0004-tests-add-helper-script-to-run-the-installed_tests.patch \
-           file://gstreamer-1.21.2-225-g2a32861ab3.patch;pnum=3 \
+           file://gstreamer-1.21.2-259-gca7f66f9b5.patch;pnum=3 \
            file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
            "
-PR = "r2"
+PR = "r3"
 SRC_URI[sha256sum] = "27d7139ff517a52a49b91908e6bb150df930f05c3c0ea7de20624cf7be40f640"
 
 PACKAGECONFIG ??= "${@bb.utils.contains('PTEST_ENABLED', '1', 'tests', '', d)} \
