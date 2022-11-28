@@ -245,6 +245,22 @@ index a811c4789d..784c047cf3 100644
    gboolean is_done = TRUE;
    guint blocksize;
    GstAudioAggregatorPad *srcpad = GST_AUDIO_AGGREGATOR_PAD (agg->srcpad);
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/audio/gstaudiofilter.c b/subprojects/gst-plugins-base/gst-libs/gst/audio/gstaudiofilter.c
+index e6ad740bff..0039833407 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/audio/gstaudiofilter.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/audio/gstaudiofilter.c
+@@ -180,6 +180,11 @@ gst_audio_filter_submit_input_buffer (GstBaseTransform * btrans,
+   GstAudioFilter *filter = GST_AUDIO_FILTER (btrans);
+ 
+   if (btrans->segment.format == GST_FORMAT_TIME) {
++    if (!GST_AUDIO_INFO_IS_VALID (&filter->info)) {
++      GST_WARNING_OBJECT (filter, "Got buffer, but not negotiated yet!");
++      return GST_FLOW_NOT_NEGOTIATED;
++    }
++
+     input =
+         gst_audio_buffer_clip (input, &btrans->segment, filter->info.rate,
+         filter->info.bpf);
 diff --git a/subprojects/gst-plugins-base/gst-libs/gst/gl/egl/gsteglimage.c b/subprojects/gst-plugins-base/gst-libs/gst/gl/egl/gsteglimage.c
 index f97d85b7d6..179abe9762 100644
 --- a/subprojects/gst-plugins-base/gst-libs/gst/gl/egl/gsteglimage.c
@@ -1407,6 +1423,38 @@ index f1000e8dfa..0cdbaf8a62 100644
  GST_VIDEO_API
  guint           gst_video_tile_get_index                (GstVideoTileMode mode, gint x, gint y,
                                                           gint x_tiles, gint y_tiles);
+diff --git a/subprojects/gst-plugins-base/gst/audioconvert/gstaudioconvert.c b/subprojects/gst-plugins-base/gst/audioconvert/gstaudioconvert.c
+index 896ef9c03b..474dcaea8f 100644
+--- a/subprojects/gst-plugins-base/gst/audioconvert/gstaudioconvert.c
++++ b/subprojects/gst-plugins-base/gst/audioconvert/gstaudioconvert.c
+@@ -934,6 +934,11 @@ gst_audio_convert_submit_input_buffer (GstBaseTransform * base,
+   GstAudioConvert *this = GST_AUDIO_CONVERT (base);
+ 
+   if (base->segment.format == GST_FORMAT_TIME) {
++    if (!GST_AUDIO_INFO_IS_VALID (&this->in_info)) {
++      GST_WARNING_OBJECT (this, "Got buffer, but not negotiated yet!");
++      return GST_FLOW_NOT_NEGOTIATED;
++    }
++
+     input =
+         gst_audio_buffer_clip (input, &base->segment, this->in_info.rate,
+         this->in_info.bpf);
+diff --git a/subprojects/gst-plugins-base/gst/audioresample/gstaudioresample.c b/subprojects/gst-plugins-base/gst/audioresample/gstaudioresample.c
+index fbfb5ca636..d05957584b 100644
+--- a/subprojects/gst-plugins-base/gst/audioresample/gstaudioresample.c
++++ b/subprojects/gst-plugins-base/gst/audioresample/gstaudioresample.c
+@@ -977,6 +977,11 @@ gst_audio_resample_submit_input_buffer (GstBaseTransform * base,
+   GstAudioResample *resample = GST_AUDIO_RESAMPLE (base);
+ 
+   if (base->segment.format == GST_FORMAT_TIME) {
++    if (!GST_AUDIO_INFO_IS_VALID (&resample->in)) {
++      GST_WARNING_OBJECT (resample, "Got buffer, but not negotiated yet!");
++      return GST_FLOW_NOT_NEGOTIATED;
++    }
++
+     input =
+         gst_audio_buffer_clip (input, &base->segment, resample->in.rate,
+         resample->in.bpf);
 diff --git a/subprojects/gst-plugins-base/gst/encoding/gstencodebasebin.c b/subprojects/gst-plugins-base/gst/encoding/gstencodebasebin.c
 index e8b7af2c1f..85a4913e14 100644
 --- a/subprojects/gst-plugins-base/gst/encoding/gstencodebasebin.c

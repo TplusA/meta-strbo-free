@@ -6,10 +6,10 @@ BUGTRACKER = "https://gitlab.freedesktop.org/gstreamer/gst-plugins-good/-/issues
 
 SRC_URI = "https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-${PV}.tar.xz \
            file://0001-qt-include-ext-qt-gstqtgl.h-instead-of-gst-gl-gstglf.patch \
-           file://gst-plugins-good-1.21.2-259-gca7f66f9b5.patch;pnum=3 \
+           file://gst-plugins-good-1.21.2-266-gdec3aa55e9.patch;pnum=3 \
            file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
            "
-PR = "r3"
+PR = "r4"
 SRC_URI[sha256sum] = "9fa448eba2f766d87d4bc776fb7359f0882f66839163e50c926f7a12c0e8e43f"
 
 S = "${WORKDIR}/gst-plugins-good-${PV}"
