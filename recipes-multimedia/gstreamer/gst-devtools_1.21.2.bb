@@ -10,10 +10,10 @@ LIC_FILES_CHKSUM = "file://validate/COPYING;md5=a6f89e2100d9b6cdffcea4f398e37343
 
 SRC_URI = "https://gstreamer.freedesktop.org/src/gst-devtools/gst-devtools-${PV}.tar.xz \
            file://0001-connect-has-a-different-signature-on-musl.patch \
-           file://gst-devtools-1.21.2-266-gdec3aa55e9.patch;pnum=3 \
+           file://gst-devtools-1.21.2-272-g12aa3925d0.patch;pnum=3 \
            file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
            "
-PR = "r4"
+PR = "r5"
 
 SRC_URI[sha256sum] = "bbbd45ead703367ea8f4be9b3c082d7b62bef47b240a39083f27844e28758c47"
 

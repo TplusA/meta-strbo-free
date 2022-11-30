@@ -1,7 +1,7 @@
-From 0d04e52dbf35e34519330f40157e6273e674a06c Mon Sep 17 00:00:00 2001
+From 87c54a24c80a07a7d0300a06dbd0bca2d130125c Mon Sep 17 00:00:00 2001
 From: Robert Tiemann <rtie@gmx.de>
 Date: Thu, 29 Sep 2022 08:58:16 +0200
-Subject: [PATCH] Revert "meson: Use implicit builtin dirs in pkgconfig
+Subject: [PATCH 2/2] Revert "meson: Use implicit builtin dirs in pkgconfig
  generation"
 
 This reverts commit a0e6278dba899f122d806994d47ee0e2c1741b34.

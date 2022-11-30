@@ -1,7 +1,7 @@
-From c628b0ec773bf3cd94e7797aecd0ed0b10d740c5 Mon Sep 17 00:00:00 2001
+From 8e6ae51503ae5c4c1f705848309ba3c73fdfb56e Mon Sep 17 00:00:00 2001
 From: Robert Tiemann <rtie@gmx.de>
 Date: Thu, 17 Nov 2022 08:45:02 +0100
-Subject: [PATCH 2/2] decodebin3: Unique name for multiqueue.
+Subject: [PATCH 3/3] decodebin3: Unique name for multiqueue.
 
 ---
  subprojects/gst-plugins-base/gst/playback/gstdecodebin3.c | 2 +-

@@ -86,6 +86,21 @@ index 0609ebc994..c3d8b03ad1 100644
                  "hierarchy": [
                      "GstVideoConvertScale",
                      "GstVideoFilter",
+diff --git a/subprojects/gst-plugins-base/ext/gl/gstglimagesink.c b/subprojects/gst-plugins-base/ext/gl/gstglimagesink.c
+index b6ee5de713..bf0ee8b14b 100644
+--- a/subprojects/gst-plugins-base/ext/gl/gstglimagesink.c
++++ b/subprojects/gst-plugins-base/ext/gl/gstglimagesink.c
+@@ -2298,6 +2298,10 @@ gst_glimage_sink_on_resize (GstGLImageSink * gl_sink, gint width, gint height)
+         src.h = GST_VIDEO_SINK_HEIGHT (gl_sink);
+       }
+ 
++      /* The stream may not be negotiated yet */
++      src.w = MAX (1, src.w);
++      src.h = MAX (1, src.h);
++
+       dst.x = 0;
+       dst.y = 0;
+       dst.w = width;
 diff --git a/subprojects/gst-plugins-base/ext/ogg/gstoggdemux.c b/subprojects/gst-plugins-base/ext/ogg/gstoggdemux.c
 index 649f63d593..e72fda80ac 100644
 --- a/subprojects/gst-plugins-base/ext/ogg/gstoggdemux.c
@@ -609,6 +624,37 @@ index 1520581b4e..0fd2d827a5 100644
        priv->onvif_mode = FALSE;
        priv->next_seqnum = -1;
        priv->negotiated = FALSE;
+diff --git a/subprojects/gst-plugins-base/gst-libs/gst/sdp/gstsdpmessage.c b/subprojects/gst-plugins-base/gst-libs/gst/sdp/gstsdpmessage.c
+index a42757bff5..1de3849281 100644
+--- a/subprojects/gst-plugins-base/gst-libs/gst/sdp/gstsdpmessage.c
++++ b/subprojects/gst-plugins-base/gst-libs/gst/sdp/gstsdpmessage.c
+@@ -620,7 +620,7 @@ hex_to_int (gchar c)
+ /**
+  * gst_sdp_message_parse_uri:
+  * @uri: the start of the uri
+- * @msg: (out caller-allocates): the result #GstSDPMessage
++ * @msg: (transfer none): the result #GstSDPMessage
+  *
+  * Parse the null-terminated @uri and store the result in @msg.
+  *
+@@ -3121,7 +3121,7 @@ gst_sdp_parse_line (SDPContext * c, gchar type, gchar * buffer)
+  * gst_sdp_message_parse_buffer:
+  * @data: (array length=size): the start of the buffer
+  * @size: the size of the buffer
+- * @msg: (out caller-allocates): the result #GstSDPMessage
++ * @msg: (transfer none): the result #GstSDPMessage
+  *
+  * Parse the contents of @size bytes pointed to by @data and store the result in
+  * @msg.
+@@ -3439,7 +3439,7 @@ gst_sdp_parse_rtpmap (const gchar * rtpmap, gint * payload, gchar ** name,
+     *params = NULL;
+     goto out;
+   } else {
+-    *name = strdup (*name);
++    *name = g_strdup (*name);
+   }
+ 
+   t = p;
 diff --git a/subprojects/gst-plugins-base/gst-libs/gst/video/gstvideoaggregator.c b/subprojects/gst-plugins-base/gst-libs/gst/video/gstvideoaggregator.c
 index 31e9d700e6..ffbf69d401 100644
 --- a/subprojects/gst-plugins-base/gst-libs/gst/video/gstvideoaggregator.c

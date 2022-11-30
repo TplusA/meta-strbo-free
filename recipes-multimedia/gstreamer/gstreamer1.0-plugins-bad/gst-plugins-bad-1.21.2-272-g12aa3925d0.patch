@@ -9694,6 +9694,19 @@ index fbeeda2de4..d1f13d65ee 100644
  
  struct _GstD3D11ScreenCaptureSrc
  {
+diff --git a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11videosink.cpp b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11videosink.cpp
+index 001c4f12a1..06b305c777 100644
+--- a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11videosink.cpp
++++ b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11videosink.cpp
+@@ -1108,7 +1108,7 @@ gst_d3d11_video_sink_propose_allocation (GstBaseSink * sink, GstQuery * query)
+    * on window-resize event */
+   gst_query_add_allocation_pool (query, pool, size, 2, 0);
+   if (pool)
+-    g_object_unref (pool);
++    gst_object_unref (pool);
+ 
+   gst_query_add_allocation_meta (query, GST_VIDEO_META_API_TYPE, NULL);
+   gst_query_add_allocation_meta (query,
 diff --git a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11vp8dec.cpp b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11vp8dec.cpp
 index 5e1ddb4e48..d933b49168 100644
 --- a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11vp8dec.cpp
@@ -9723,6 +9736,58 @@ index 52efa02065..444307a78c 100644
      GST_ERROR_OBJECT (self, "Failed to copy buffer");
      goto error;
    }
+diff --git a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_corewindow.cpp b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_corewindow.cpp
+index 2ff60abfe7..b4cee66206 100644
+--- a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_corewindow.cpp
++++ b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_corewindow.cpp
+@@ -549,7 +549,7 @@ gst_d3d11_window_core_window_new (GstD3D11Device * device, guintptr handle)
+     return NULL;
+   }
+ 
+-  g_object_ref_sink (window);
++  gst_object_ref_sink (window);
+ 
+   return window;
+ }
+diff --git a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_dummy.cpp b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_dummy.cpp
+index 0009f70103..e85f3d41db 100644
+--- a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_dummy.cpp
++++ b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_dummy.cpp
+@@ -330,7 +330,7 @@ gst_d3d11_window_dummy_new (GstD3D11Device * device)
+       g_object_new (GST_TYPE_D3D11_WINDOW_DUMMY, "d3d11device", device, NULL);
+ 
+   window->initialized = TRUE;
+-  g_object_ref_sink (window);
++  gst_object_ref_sink (window);
+ 
+   return window;
+ }
+diff --git a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_swapchainpanel.cpp b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_swapchainpanel.cpp
+index 4574aab8d7..a034489858 100644
+--- a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_swapchainpanel.cpp
++++ b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_swapchainpanel.cpp
+@@ -540,7 +540,7 @@ gst_d3d11_window_swap_chain_panel_new (GstD3D11Device * device, guintptr handle)
+     return NULL;
+   }
+ 
+-  g_object_ref_sink (window);
++  gst_object_ref_sink (window);
+ 
+   return window;
+ }
+diff --git a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_win32.cpp b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_win32.cpp
+index 6ef2623406..8c8a22fcbe 100644
+--- a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_win32.cpp
++++ b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11window_win32.cpp
+@@ -1128,7 +1128,7 @@ gst_d3d11_window_win32_new (GstD3D11Device * device, guintptr handle)
+     return NULL;
+   }
+ 
+-  g_object_ref_sink (window);
++  gst_object_ref_sink (window);
+ 
+   return window;
+ }
 diff --git a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11winrtcapture.cpp b/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11winrtcapture.cpp
 index 3c2c2cbd7e..4c876f36cf 100644
 --- a/subprojects/gst-plugins-bad/sys/d3d11/gstd3d11winrtcapture.cpp
@@ -10501,6 +10566,59 @@ index 9bb8f97539..30ebe425e6 100644
      return FALSE;
  
    for (guint i = 0;; i++) {
+diff --git a/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfsourcereader.cpp b/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfsourcereader.cpp
+index c8f4de444c..f0066e3995 100644
+--- a/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfsourcereader.cpp
++++ b/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfsourcereader.cpp
+@@ -167,6 +167,8 @@ gst_mf_source_reader_constructed (GObject * object)
+   while (!g_main_loop_is_running (self->loop))
+     g_cond_wait (&self->cond, &self->lock);
+   g_mutex_unlock (&self->lock);
++
++  G_OBJECT_CLASS (parent_class)->constructed (object);
+ }
+ 
+ static gboolean
+diff --git a/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfvideosrc.cpp b/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfvideosrc.cpp
+index d909d0722b..81ae8f094a 100644
+--- a/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfvideosrc.cpp
++++ b/subprojects/gst-plugins-bad/sys/mediafoundation/gstmfvideosrc.cpp
+@@ -451,16 +451,20 @@ gst_mf_video_src_create (GstPushSrc * pushsrc, GstBuffer ** buffer)
+     ret = GST_BASE_SRC_CLASS (parent_class)->alloc (GST_BASE_SRC (self), 0,
+         GST_VIDEO_INFO_SIZE (&self->info), &buf);
+ 
+-    if (ret != GST_FLOW_OK)
++    if (ret != GST_FLOW_OK) {
++      gst_clear_buffer (&buf);
+       return ret;
++    }
+ 
+     ret = gst_mf_source_object_fill (self->source, buf);
+   } else {
+     ret = gst_mf_source_object_create (self->source, &buf);
+   }
+ 
+-  if (ret != GST_FLOW_OK)
++  if (ret != GST_FLOW_OK) {
++    gst_clear_buffer (&buf);
+     return ret;
++  }
+ 
+   /* DirectShow capture object will set caps if it's got updated */
+   if (sample) {
+diff --git a/subprojects/gst-plugins-bad/sys/mediafoundation/gstwin32devicewatcher.cpp b/subprojects/gst-plugins-bad/sys/mediafoundation/gstwin32devicewatcher.cpp
+index 464c36e9b1..fbb61e3014 100644
+--- a/subprojects/gst-plugins-bad/sys/mediafoundation/gstwin32devicewatcher.cpp
++++ b/subprojects/gst-plugins-bad/sys/mediafoundation/gstwin32devicewatcher.cpp
+@@ -94,6 +94,8 @@ gst_win32_device_watcher_constructed (GObject * object)
+   while (!g_main_loop_is_running (self->loop))
+     g_cond_wait (&self->cond, &self->lock);
+   g_mutex_unlock (&self->lock);
++
++  G_OBJECT_CLASS (parent_class)->constructed (object);
+ }
+ 
+ static void
 diff --git a/subprojects/gst-plugins-bad/sys/meson.build b/subprojects/gst-plugins-bad/sys/meson.build
 index c95c873234..cfe1778207 100644
 --- a/subprojects/gst-plugins-bad/sys/meson.build

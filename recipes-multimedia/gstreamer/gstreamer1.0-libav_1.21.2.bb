@@ -12,10 +12,10 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=69333daa044cb77e486cc36129f7a770 \
                     "
 
 SRC_URI = "https://gstreamer.freedesktop.org/src/gst-libav/gst-libav-${PV}.tar.xz \
-           file://gst-libav-1.21.2-266-gdec3aa55e9.patch;pnum=3 \
+           file://gst-libav-1.21.2-272-g12aa3925d0.patch;pnum=3 \
            file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
            "
-PR = "r4"
+PR = "r5"
 SRC_URI[sha256sum] = "88cafec6a03cce6c2f6c9cbb3200da9140d24e74cc303ed5dde6e5a401e24225"
 
 S = "${WORKDIR}/gst-libav-${PV}"
