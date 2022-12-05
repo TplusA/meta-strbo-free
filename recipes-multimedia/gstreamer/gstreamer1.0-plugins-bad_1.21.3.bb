@@ -12,11 +12,9 @@ SRC_URI = "https://gstreamer.freedesktop.org/src/gst-plugins-bad/gst-plugins-bad
            file://0004-opencv-resolve-missing-opencv-data-dir-in-yocto-buil.patch \
            file://0005-msdk-fix-includedir-path.patch \
            file://0006-tests-Remove-test-for-srtp.patch;pnum=3 \
-           file://gst-plugins-bad-1.21.2-272-g12aa3925d0.patch;pnum=3 \
            file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
            "
-PR = "r5"
-SRC_URI[sha256sum] = "92fb4556e867d368f11178f659451a1110be2dcb71f54a1c00bc2173315d7697"
+SRC_URI[sha256sum] = "4f7c9620e3b4bd6e868b6341af4738952f696c761755db1535d5372f0003ca48"
 
 S = "${WORKDIR}/gst-plugins-bad-${PV}"
 

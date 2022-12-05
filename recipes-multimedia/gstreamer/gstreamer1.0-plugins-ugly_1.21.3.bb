@@ -12,11 +12,9 @@ LICENSE_FLAGS = "commercial"
 
 SRC_URI = " \
             https://gstreamer.freedesktop.org/src/gst-plugins-ugly/gst-plugins-ugly-${PV}.tar.xz \
-            file://gst-plugins-ugly-1.21.2-272-g12aa3925d0.patch;pnum=3 \
             file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
             "
-PR = "r5"
-SRC_URI[sha256sum] = "34dd6f4a44db30a7b171223e7789d863febe5aa20991cf920b0d25191968393c"
+SRC_URI[sha256sum] = "40b8c864eb91399f06d557d6dcb123b0e3589569221ba126967834c8a55529fb"
 
 S = "${WORKDIR}/gst-plugins-ugly-${PV}"
 

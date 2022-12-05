@@ -20,12 +20,9 @@ SRC_URI = "https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-${PV}.tar.x
            file://0002-tests-add-support-for-install-the-tests.patch \
            file://0003-tests-use-a-dictionaries-for-environment.patch \
            file://0004-tests-add-helper-script-to-run-the-installed_tests.patch \
-           file://gstreamer-1.21.2-272-g12aa3925d0.patch;pnum=3 \
-           file://0001-multiqueue-Handle-gapless-with-flushing.patch;pnum=3 \
-           file://0002-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
+           file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
            "
-PR = "r5"
-SRC_URI[sha256sum] = "27d7139ff517a52a49b91908e6bb150df930f05c3c0ea7de20624cf7be40f640"
+SRC_URI[sha256sum] = "27a75236bce2b10b188fe0c0087c6ceb9ee13c18fe9bf7437e0234a0e4afa226"
 
 PACKAGECONFIG ??= "${@bb.utils.contains('PTEST_ENABLED', '1', 'tests', '', d)} \
                    check \
