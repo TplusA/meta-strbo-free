@@ -6,7 +6,7 @@ LICENSE = "MIT"
 
 PV := "${DISTRO_VERSION}"
 
-FILES_${PN} += "${nonarch_libdir}/strbo-release"
+FILES:${PN} += "${nonarch_libdir}/strbo-release"
 
 do_compile() {
     echo -n '' >${B}/strbo-release
@@ -22,6 +22,6 @@ do_compile[vardeps] += "${DISTRO_DATETIME} ${DISTRO_GIT_COMMIT}"
 do_install () {
     install -d ${D}${nonarch_libdir} ${D}${sysconfdir}
     install -m 0644 strbo-release ${D}${nonarch_libdir}/
-    lnr ${D}${nonarch_libdir}/strbo-release ${D}${sysconfdir}/strbo-release
+    ln -rs ${D}${nonarch_libdir}/strbo-release ${D}${sysconfdir}/strbo-release
     chown root:root ${D}${sysconfdir}/strbo-release
 }

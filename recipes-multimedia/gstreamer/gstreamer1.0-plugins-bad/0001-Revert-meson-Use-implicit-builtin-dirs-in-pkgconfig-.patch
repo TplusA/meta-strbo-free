@@ -1,0 +1,26 @@
+From b268afc765e0c2666eef5a272e4d49cde0520b3c Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <rtie@gmx.de>
+Date: Thu, 29 Sep 2022 08:58:16 +0200
+Subject: [PATCH] Revert "meson: Use implicit builtin dirs in pkgconfig
+ generation"
+
+This reverts commit a0e6278dba899f122d806994d47ee0e2c1741b34.
+---
+ subprojects/gst-plugins-bad/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/subprojects/gst-plugins-bad/meson.build b/subprojects/gst-plugins-bad/meson.build
+index 64562bdc85..210f2642bd 100644
+--- a/subprojects/gst-plugins-bad/meson.build
++++ b/subprojects/gst-plugins-bad/meson.build
+@@ -1,6 +1,6 @@
+ project('gst-plugins-bad', 'c', 'cpp',
+   version : '1.21.3',
+-  meson_version : '>= 0.62',
++  meson_version : '>= 0.60',
+   default_options : [ 'warning_level=1',
+                       'buildtype=debugoptimized' ])
+ 
+-- 
+2.25.1
+

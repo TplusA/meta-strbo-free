@@ -1,21 +1,19 @@
 SUMMARY = "T+A Streaming Board recovery boot image for Raspberry Compute Module"
 
-PR = "r2"
-
 require conf/distro/include/partitions.inc
 
 inherit bcm2835_boot_partition
 
 ROOTFS_SIZE = "${RECOVERYBOOT_PARTITION_SIZE}"
 IMAGE_ROOTFS_SIZE = "${RECOVERYBOOT_PARTITION_SIZE}"
-IMAGE_ROOTFS_EXTRA_SPACE_append = "${@bb.utils.contains("PACKAGE_INSTALL", "dnf", " - 102400", "" ,d)}"
+IMAGE_ROOTFS_EXTRA_SPACE:append = "${@bb.utils.contains("PACKAGE_INSTALL", "dnf", " - 102400", "" ,d)}"
 IMAGE_FSTYPES += "${RECOVERYBOOT_TYPE}"
-EXTRA_IMAGECMD_${RECOVERYBOOT_TYPE} ?= "${RECOVERYBOOT_MKFS_EXTRA}"
+EXTRA_IMAGECMD:${RECOVERYBOOT_TYPE} ?= "${RECOVERYBOOT_MKFS_EXTRA}"
 INITRAMFS_IMAGE = "${RECOVERYROOTFS_INITRAMFS_IMAGE}"
 INITRAMFS_FSTYPES = "${RECOVERYROOTFS_TYPE}"
 BOOT_PARTITION_MOUNTPOINT = "${RECOVERYBOOT_PARTITION_MOUNTPOINT}"
 
-IMAGE_INSTALL_append = " \
+IMAGE_INSTALL:append = " \
     strbo-release \
     u-boot-rpi-recovery \
     u-boot-rpi3-recovery \
@@ -26,7 +24,7 @@ IMAGE_INSTALL_append = " \
 "
 IMAGE_LINGUAS = " "
 
-IMAGE_PREPROCESS_COMMAND_append += "resolve_symlinks; "
+IMAGE_PREPROCESS_COMMAND:append += "resolve_symlinks; "
 
 resolve_symlinks () {
     cd ${IMAGE_ROOTFS}

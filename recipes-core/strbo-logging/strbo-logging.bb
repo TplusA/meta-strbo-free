@@ -4,14 +4,14 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 PR = "r4"
 
-ALLOW_EMPTY_${PN} = "1"
+ALLOW_EMPTY:${PN} = "1"
 DEPENDS = "systemd-systemctl-native"
-RDEPENDS_${PN} = "systemd systemd-journal-gatewayd"
+RDEPENDS:${PN} = "systemd systemd-journal-gatewayd"
 PACKAGE_WRITE_DEPS += "systemd-systemctl-native"
 
 inherit allarch
 
-pkg_postinst_${PN} () {
+pkg_postinst:${PN} () {
 if [ x"$D" = x ]
 then
     SYSTEMCTL_OPTS=""
@@ -25,7 +25,7 @@ then
 fi
 }
 
-pkg_prerm_${PN} () {
+pkg_prerm:${PN} () {
 if [ x"$D" = x ]
 then
     SYSTEMCTL_OPTS=""

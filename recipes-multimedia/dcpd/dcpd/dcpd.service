@@ -6,10 +6,12 @@ BindsTo=strbo-dbus.service dcpspi.service
 
 [Service]
 Type=forking
-ExecStart=/usr/bin/dcpd --enable-phy-reset
+ExecStart=/usr/bin/dcpd
 KillMode=process
 UMask=0007
 User=strbo-dcpd
+StartupCPUWeight=50
+CPUWeight=100
 
 [Install]
 WantedBy=strbo.target

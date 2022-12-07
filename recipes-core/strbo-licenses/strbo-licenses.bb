@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384
 PR = "r1"
 
 inherit allarch
-RDEPENDS_${PN} = "lighttpd lighttpd-module-alias"
+RDEPENDS:${PN} = "lighttpd lighttpd-module-alias"
 
 SRC_URI += "file://10-licenses-alias.conf"
 

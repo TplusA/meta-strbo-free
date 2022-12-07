@@ -3,7 +3,6 @@ SECTION = "base"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 S = "${WORKDIR}"
-PR = "r1"
 
 SRC_URI = " \
     file://bashrc \
@@ -12,21 +11,22 @@ SRC_URI = " \
     file://sudoers \
 "
 
-FILES_${PN} = " \
+FILES:${PN} = " \
     /home/developer/.bashrc \
     /home/developer/.profile \
     /home/developer/.vimrc \
     ${sysconfdir}/sudoers.d/50-developer-account \
 "
 
-RRECOMMENDS_${PN} = "sudo"
+RRECOMMENDS:${PN} = "sudo"
 
 DIRFILES = "1"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 
 PASSWORD = "\\\$1\\\$c4\\\$iAPIHXTXO1uZNLhEncD1v."
 USERADD_PACKAGES = "${PN}"
-USERADD_PARAM_${PN} = "-N -p ${PASSWORD} developer"
+USERADD_PARAM:${PN} = "-N -p ${PASSWORD} developer"
+GROUPMEMS_PARAM:${PN} = ""
 
 inherit allarch useradd
 
@@ -41,6 +41,6 @@ do_install() {
     install -m 644 ${WORKDIR}/sudoers ${D}${sysconfdir}/sudoers.d/50-developer-account
 }
 
-pkg_postrm_${PN}() {
+pkg_postrm:${PN}() {
     userdel -r developer
 }

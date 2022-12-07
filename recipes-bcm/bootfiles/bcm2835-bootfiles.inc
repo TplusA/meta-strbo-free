@@ -8,7 +8,7 @@ SRC_URI += " \
     file://dt-blob-GPIO-47-is-an-input-on-CM1.patch;patchdir=${RPIFW_S} \
 "
 
-RDEPENDS_${PN} = ""
+RDEPENDS:${PN} = ""
 DEPENDS += "dtc-native"
 
 #
@@ -19,12 +19,12 @@ DEPENDS += "dtc-native"
 #
 # Therefore, the QA checks for matching architecture has to be disabled.
 #
-INSANE_SKIP_${PN} += "arch"
+INSANE_SKIP:${PN} += "arch"
 
 COMPATIBLE_MACHINE = "^rpi$"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-FILES_${PN} = " \
+FILES:${PN} = " \
     ${BOOT_PARTITION_MOUNTPOINT}/config.txt \
     ${BOOT_PARTITION_MOUNTPOINT}/cmdline.txt \
     ${BOOT_PARTITION_MOUNTPOINT}/bootcode.bin \

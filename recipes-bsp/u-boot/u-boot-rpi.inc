@@ -1,7 +1,7 @@
-require ${COREBASE}/meta/recipes-bsp/u-boot/u-boot_2020.01.bb
+require u-boot-common.inc
+require u-boot.inc
 
-FILESEXTRAPATHS_prepend = "${COREBASE}/meta/recipes-bsp/u-boot/files:"
-
+DEPENDS += "bc-native dtc-native"
 PROVIDES = ""
 
 SRC_URI += " \
@@ -10,7 +10,6 @@ SRC_URI += " \
         file://0003-Set-GPIO-28-to-high-level-at-board-init-time.patch \
         file://0004-Wait-for-mains-power-before-booting-481.patch \
         file://0005-rpi-Remove-bcm2835-video-driver-the-hard-way.patch \
-        file://0006-Remove-redundant-YYLOC-global-declaration.patch \
         file://0007-Alternative-way-to-trigger-system-recovery-472.patch \
 "
 
@@ -22,7 +21,7 @@ SRC_URI += " \
 "
 
 DEPENDS += "u-boot-mkimage-native"
-RDEPENDS_${PN}_remove = "${PN}-env"
+RDEPENDS:${PN}:remove = "${PN}-env"
 
 UBOOT_MACHINE = ""
 UBOOT_CONFIG[main] = "strbo_main_defconfig"
@@ -30,14 +29,14 @@ UBOOT_CONFIG[main7] = "strbo_main7_defconfig"
 UBOOT_CONFIG[recovery] = "strbo_recovery_defconfig"
 UBOOT_CONFIG[recovery7] = "strbo_recovery7_defconfig"
 
-FILES_${PN} = " \
+FILES:${PN} = " \
     ${BOOT_PARTITION_MOUNTPOINT}/${KERNEL_IMG} \
     ${BOOT_PARTITION_MOUNTPOINT}/${BOOT_SCR} \
 "
 
 DIRFILES = "1"
 
-do_configure_prepend() {
+do_configure:prepend() {
     for f in strbo_main_defconfig strbo_main7_defconfig strbo_recovery_defconfig strbo_recovery7_defconfig
     do
         install -m 0644 ${WORKDIR}/${f} ${S}/configs/ || die "U-Boot configuration ${f} not available."

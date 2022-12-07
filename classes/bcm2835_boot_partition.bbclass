@@ -9,7 +9,7 @@ IMAGE_ROOTFS_REMOVE_FILES ?= ""
 
 LICENSE = "MIT"
 
-IMAGE_PREPROCESS_COMMAND_append = "move_release_files; delete_clutter; move_boot_files; "
+IMAGE_PREPROCESS_COMMAND:append = "move_release_files; delete_clutter; move_boot_files; "
 
 delete_clutter() {
     if test "x${IMAGE_ROOTFS}" != 'x' && test "$(basename ${IMAGE_ROOTFS})" != '/'

@@ -1,0 +1,24 @@
+From 69893e43c9f7322c28c4d67ccf4576ae6f704bed Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Thu, 18 Aug 2022 12:38:18 +0200
+Subject: [PATCH] Use setuptools instead of distutils.
+
+---
+ setup.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/setup.py b/setup.py
+index 8b0c6bc..1c6ca91 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1,6 +1,6 @@
+ # Bootstrap setuptools
+ 
+-from distutils.core import setup
++from setuptools import setup
+ 
+ setup(
+     name='flipflop',
+-- 
+2.32.0
+

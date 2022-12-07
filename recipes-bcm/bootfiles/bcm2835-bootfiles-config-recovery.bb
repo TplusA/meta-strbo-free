@@ -8,9 +8,7 @@ require bcm2835-bootfiles.inc
 SUMMARY = "Broadcom boot loader configuration files for StrBo recovery system"
 DEPENDS += "strbo-recovery-boot-image"
 
-PR = "r5"
-
-do_install_append() {
+do_install:append() {
     #
     # The rootfs archive is assumed to exist at this point.
     #
@@ -27,3 +25,4 @@ do_install_append() {
 
     echo "smsc95xx.macaddr=: dwc_otg.lpm_enable=0 console=ttyAMA0,115200 kgdboc=ttyAMA0,115200 initrd=0x04800000,${ROOTFSSIZE} rootfstype=ramfs rootwait" >${D}${BOOT_PARTITION_MOUNTPOINT}/cmdline.txt
 }
+do_install[depends] += "linux-strbo-recovery-initramfs:do_package"

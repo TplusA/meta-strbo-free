@@ -1,9 +1,9 @@
 # remove /etc/fstab, file is provided by either base-files-main or
 # base-files-recovery
-CONFFILES_${PN} = "$@{string.replace(CONFFILES_${PN}, '${sysconfdir}/fstab', '')}"
+CONFFILES:${PN} = "$@{string.replace(CONFFILES:${PN}, '${sysconfdir}/fstab', '')}"
 
 PR .= ".1"
 
-do_install_append () {
+do_install:append () {
     rm ${D}${sysconfdir}/fstab
 }

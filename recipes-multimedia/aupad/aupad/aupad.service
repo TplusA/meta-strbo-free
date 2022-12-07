@@ -10,6 +10,8 @@ KillMode=process
 UMask=0007
 User=strbo
 Group=strbo
+StartupCPUWeight=5000
+CPUWeight=100
 
 [Install]
 WantedBy=strbo.target

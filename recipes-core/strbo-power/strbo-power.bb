@@ -13,9 +13,9 @@ S = "${WORKDIR}"
 
 PR = "r3"
 
-SYSTEMD_SERVICE_${PN} = "strbo-power.service"
+SYSTEMD_SERVICE:${PN} = "strbo-power.service"
 
-RDEPENDS_${PN} += "polkit offevent"
+RDEPENDS:${PN} += "polkit offevent"
 
 DIRFILES = "1"
 

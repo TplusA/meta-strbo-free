@@ -1,8 +1,8 @@
-inherit image_types
+inherit image_types image-artifact-names
 
 FAT32_LOGICAL_SECTOR_SIZE ?= "512"
 
-IMAGE_CMD_fat32 () {
+IMAGE_CMD:fat32 () {
     mkfs.vfat -S ${FAT32_LOGICAL_SECTOR_SIZE} ${EXTRA_IMAGECMD} -C ${IMGDEPLOYDIR}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.fat32 ${ROOTFS_SIZE}
 
     # mcopy won't strip the path, so we have to loop manually
@@ -12,7 +12,7 @@ IMAGE_CMD_fat32 () {
     done
 }
 
-EXTRA_IMAGECMD_fat32 ?= ""
+EXTRA_IMAGECMD:fat32 ?= ""
 
 do_image_fat32[depends] += "dosfstools-native:do_populate_sysroot"
 do_image_fat32[depends] += "mtools-native:do_populate_sysroot"

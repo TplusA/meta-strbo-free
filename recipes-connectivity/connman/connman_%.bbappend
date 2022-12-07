@@ -1,15 +1,22 @@
 require conf/distro/include/partitions.inc
 
-FILESEXTRAPATHS_prepend := "${COREBASE}/meta/recipes-connectivity/${PN}/${PN}:"
-FILESEXTRAPATHS_append := ":${THISDIR}/${PN}"
+FILESEXTRAPATHS:append := ":${THISDIR}/${PN}"
+
+SRC_URI:remove = " \
+    file://CVE-2022-32293_p1.patch \
+    file://CVE-2022-32293_p2.patch \
+    file://CVE-2022-32292.patch \
+"
+
+SRC_URI += " \
+    file://connman_master-19789ae039.patch \
+    file://0001-systemd-Run-service-at-nice-level-10.patch \
+    file://main.conf \
+"
 
 PR = "r1"
 
-SRC_URI += "file://main.conf"
-
-DEPENDS += "libmnl"
-
-do_install_append() {
+do_install:append() {
     install -d ${D}/${sysconfdir} ${D}/${sysconfdir}/connman
     install -m 644 ${WORKDIR}/main.conf ${D}/${sysconfdir}/connman
 

@@ -16,11 +16,11 @@ SRC_URI = " \
 S = "${WORKDIR}"
 
 DEPENDS = "dbus"
-RDEPENDS_${PN} += "dbus"
+RDEPENDS:${PN} += "dbus"
 
-SYSTEMD_SERVICE_${PN} = "strbo-dbus.service"
+SYSTEMD_SERVICE:${PN} = "strbo-dbus.service"
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${sysconfdir}/dbus-1/system.d/strbo.conf \
     ${sysconfdir}/dbus-1/session.d/users.conf \
 "
@@ -42,13 +42,13 @@ do_install() {
     install -m 644 ${WORKDIR}/users-allow-root.conf ${D}${sysconfdir}/dbus-1/session.d
 }
 
-FILES_${PN} += "${systemd_unitdir}/system/strbo-dbus.service"
+FILES:${PN} += "${systemd_unitdir}/system/strbo-dbus.service"
 
 PACKAGES =+ "strbo-dbus-allow-root"
 
-FILES_strbo-dbus-allow-root = " \
+FILES:strbo-dbus-allow-root = " \
     ${sysconfdir}/dbus-1/system.d/strbo-allow-root.conf \
     ${sysconfdir}/dbus-1/session.d/users-allow-root.conf \
     "
 
-ALLOW_EMPTY_${PN}-allow-root = "1"
+ALLOW_EMPTY:${PN}-allow-root = "1"

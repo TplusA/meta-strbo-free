@@ -12,9 +12,9 @@ S = "${WORKDIR}"
 
 PR = "r2"
 
-SYSTEMD_SERVICE_${PN} = "strbo-recovery.service"
+SYSTEMD_SERVICE:${PN} = "strbo-recovery.service"
 
-RDEPENDS_${PN} += "util-linux strbo-systeminfo-recovery"
+RDEPENDS:${PN} += "util-linux strbo-systeminfo-recovery"
 
 inherit allarch systemd
 
@@ -29,7 +29,7 @@ do_install() {
     fi
 }
 
-FILES_${PN} += " \
+FILES:${PN} += " \
     ${systemd_unitdir}/system/strbo-recovery.service \
     ${libexecdir}/recover-system \
 "

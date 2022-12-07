@@ -1,6 +1,4 @@
-PR = "r2"
-
-do_install_append() {
+do_install:append() {
     # Remove useless stuff
     FW="${D}${nonarch_base_libdir}/firmware"
 
@@ -60,26 +58,12 @@ do_install_append() {
     rm \
         ${FW}/a300_pfp.fw \
         ${FW}/a300_pm4.fw \
-        ${FW}/atmsar11.fw \
-        ${FW}/bnx2x-e1-4.8.53.0.fw \
-        ${FW}/bnx2x-e1-5.2.13.0.fw \
-        ${FW}/bnx2x-e1-5.2.7.0.fw \
-        ${FW}/bnx2x-e1h-4.8.53.0.fw \
-        ${FW}/bnx2x-e1h-5.2.13.0.fw \
-        ${FW}/bnx2x-e1h-5.2.7.0.fw \
-        ${FW}/cbfw-3.2.1.1.bin \
-        ${FW}/cbfw-3.2.3.0.bin \
         ${FW}/cbfw-3.2.5.1.bin \
-        ${FW}/ct2fw-3.2.1.1.bin \
-        ${FW}/ct2fw-3.2.3.0.bin \
         ${FW}/ct2fw-3.2.5.1.bin \
         ${FW}/ctefx.bin \
-        ${FW}/ctfw-3.2.1.1.bin \
-        ${FW}/ctfw-3.2.3.0.bin \
         ${FW}/ctfw-3.2.5.1.bin \
         ${FW}/ctspeq.bin \
         ${FW}/dvb-* \
-        ${FW}/intelliport2.bin \
         ${FW}/iwlwifi-*.ucode \
         ${FW}/mts_cdma.fw \
         ${FW}/mts_edge.fw \
@@ -110,7 +94,6 @@ do_install_append() {
         ${FW}/ql2500_fw.bin \
         ${FW}/ti_3410.fw \
         ${FW}/ti_5052.fw \
-        ${FW}/tr_smctr.bin \
         ${FW}/v4l-cx231xx-avcore-01.fw \
         ${FW}/v4l-cx23418-apu.fw \
         ${FW}/v4l-cx23418-cpu.fw \

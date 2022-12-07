@@ -2,8 +2,6 @@ inherit allarch
 
 require conf/distro/include/partitions.inc
 
-PR = "r6"
-
 S = "${WORKDIR}"
 
 generate_systeminfo() {

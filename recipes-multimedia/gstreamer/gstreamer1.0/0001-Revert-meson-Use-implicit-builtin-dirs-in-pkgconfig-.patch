@@ -1,0 +1,50 @@
+From b268afc765e0c2666eef5a272e4d49cde0520b3c Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <rtie@gmx.de>
+Date: Thu, 29 Sep 2022 08:58:16 +0200
+Subject: [PATCH] Revert "meson: Use implicit builtin dirs in pkgconfig
+ generation"
+
+This reverts commit a0e6278dba899f122d806994d47ee0e2c1741b34.
+---
+ subprojects/gstreamer/meson.build | 19 ++++++++++---------
+ 1 file changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/subprojects/gstreamer/meson.build b/subprojects/gstreamer/meson.build
+index b14fa79bb9..5c722aca81 100644
+--- a/subprojects/gstreamer/meson.build
++++ b/subprojects/gstreamer/meson.build
+@@ -1,6 +1,6 @@
+ project('gstreamer', 'c',
+   version : '1.21.3',
+-  meson_version : '>= 0.62',
++  meson_version : '>= 0.60',
+   default_options : [ 'warning_level=1',
+                       'buildtype=debugoptimized' ])
+ 
+@@ -609,14 +609,15 @@ if get_option('default_library') == 'shared'
+   # If we don't build static plugins there is no need to generate pc files
+   plugins_pkgconfig_install_dir = disabler()
+ endif
+-pkgconfig_variables = [
+-  'exec_prefix=${prefix}',
+-  'toolsdir=${exec_prefix}/bin',
+-  'pluginsdir=${libdir}/gstreamer-1.0',
+-  'girdir=${datadir}/gir-1.0',
+-  'typelibdir=${libdir}/girepository-1.0',
+-  'pluginscannerdir=${libexecdir}/gstreamer-1.0'
+-]
++pkgconfig_variables = ['exec_prefix=${prefix}',
++    'toolsdir=${exec_prefix}/bin',
++    'pluginsdir=${libdir}/gstreamer-1.0',
++    'datarootdir=${prefix}/share',
++    'datadir=${datarootdir}',
++    'girdir=${datadir}/gir-1.0',
++    'typelibdir=${libdir}/girepository-1.0',
++    'libexecdir=${prefix}/libexec',
++    'pluginscannerdir=${libexecdir}/gstreamer-1.0']
+ pkgconfig_uninstalled_variables = ['exec_prefix=${prefix}',
+ 	'gstreamerdir=${prefix}/subprojects/gstreamer',
+     'bashhelpersdir=${gstreamerdir}/data/bash-completion/helpers',
+-- 
+2.25.1
+

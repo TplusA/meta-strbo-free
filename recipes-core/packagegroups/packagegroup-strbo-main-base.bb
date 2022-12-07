@@ -10,7 +10,7 @@ PR = "r1"
 
 inherit packagegroup
 
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
     which \
     kernel \
     kernel-modules \
@@ -26,6 +26,7 @@ RDEPENDS_${PN} = " \
     util-linux-agetty \
     util-linux-mount \
     util-linux-mkfs \
+    e2fsprogs \
     systemd \
     systemd-journal-gatewayd \
     udev \
@@ -53,6 +54,17 @@ RDEPENDS_${PN} = " \
     ethtool \
     netcat \
     socat \
+    inetutils \
+    iproute2-devlink \
+    iproute2-genl \
+    iproute2-ifstat \
+    iproute2-ip \
+    iproute2-lnstat \
+    iproute2-nstat \
+    iproute2-rtacct \
+    iproute2-ss \
+    iproute2-tc \
+    iproute2-tipc \
     connman \
     connman-tools \
     connman-client \
@@ -67,6 +79,7 @@ RDEPENDS_${PN} = " \
     strbo-power \
     strbo-rest-lighttpd \
     updata \
+    strbo-package-repo \
     drcpd \
     drcpd-locale-de-de \
     drcpd-locale-en-us \
@@ -78,8 +91,8 @@ RDEPENDS_${PN} = " \
     dbusdl \
     dbusdl-dbus-service \
     flagpole \
-    gerbera \
     quota \
+    libcap-bin \
     \
     drcpd-locale-de-de \
     drcpd-locale-en-us \

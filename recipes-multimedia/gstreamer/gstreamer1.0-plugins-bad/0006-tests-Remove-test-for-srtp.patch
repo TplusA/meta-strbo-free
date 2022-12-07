@@ -1,0 +1,24 @@
+From a0db542c2d4628e1196e49eaeea0d82e24c46df7 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <rtie@gmx.de>
+Date: Thu, 12 May 2022 14:01:32 +0200
+Subject: [PATCH] tests: Remove test for srtp.
+
+---
+ subprojects/gst-plugins-bad/tests/check/meson.build | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/subprojects/gst-plugins-bad/tests/check/meson.build b/subprojects/gst-plugins-bad/tests/check/meson.build
+index e1b975a69d..e94e139853 100644
+--- a/subprojects/gst-plugins-bad/tests/check/meson.build
++++ b/subprojects/gst-plugins-bad/tests/check/meson.build
+@@ -65,7 +65,6 @@ base_tests = [
+   [['elements/rtponviftimestamp.c'], get_option('onvif').disabled()],
+   [['elements/rtpsrc.c'], get_option('rtp').disabled()],
+   [['elements/rtpsink.c'], get_option('rtp').disabled()],
+-  [['elements/srtp.c'], not srtp_dep.found(), [srtp_dep]],
+   [['elements/switchbin.c'], get_option('switchbin').disabled()],
+   [['elements/videoframe-audiolevel.c'], get_option('videoframe_audiolevel').disabled()],
+   [['elements/viewfinderbin.c']],
+-- 
+2.25.1
+

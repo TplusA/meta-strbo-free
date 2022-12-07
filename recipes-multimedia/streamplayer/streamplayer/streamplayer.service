@@ -6,10 +6,15 @@ BindsTo=strbo-dbus.service
 [Service]
 Type=dbus
 BusName=de.tahifi.Streamplayer
-ExecStart=/usr/bin/streamplayer --alsa-latency 100 --alsa-buffer 1000
+ExecStart=/usr/bin/streamplayer
+CapabilityBoundingSet=CAP_SYS_NICE
+AmbientCapabilities=CAP_SYS_NICE
+RestrictRealtime=no
 KillMode=process
 UMask=0007
 Nice=-20
+StartupCPUWeight=1800
+CPUWeight=100
 User=strbo-audio
 
 [Install]

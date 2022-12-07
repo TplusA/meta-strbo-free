@@ -6,11 +6,11 @@ inherit image
 
 ROOTFS_SIZE = "${RECOVERYDATAFS_PARTITION_SIZE}"
 IMAGE_ROOTFS_SIZE = "${RECOVERYDATAFS_PARTITION_SIZE}"
-IMAGE_ROOTFS_EXTRA_SPACE_append = "${@bb.utils.contains("PACKAGE_INSTALL", "dnf", " - 102400", "" ,d)}"
+IMAGE_ROOTFS_EXTRA_SPACE:append = "${@bb.utils.contains("PACKAGE_INSTALL", "dnf", " - 102400", "" ,d)}"
 IMAGE_FSTYPES += "${RECOVERYDATAFS_TYPE}"
-EXTRA_IMAGECMD_${RECOVERYDATAFS_TYPE} ?= "${RECOVERYDATAFS_MKFS_EXTRA}"
+EXTRA_IMAGECMD:${RECOVERYDATAFS_TYPE} ?= "${RECOVERYDATAFS_MKFS_EXTRA}"
 
-IMAGE_INSTALL_append = "bash strbo-release"
+IMAGE_INSTALL:append = "bash strbo-release"
 
 EXTRA_IMAGE_FEATURES = ""
 IMAGE_LINGUAS = " "
@@ -24,8 +24,8 @@ PART_BOOT = "${OTHER_DEPLOY_DIR_IMAGE}/strbo-main-boot-image-${MACHINE}.${MAINBO
 PART_ROOTFS = "${OTHER_DEPLOY_DIR_IMAGE}/strbo-main-image-${MACHINE}.${MAINROOTFS_TYPE}"
 DESTDIR = "${IMAGE_ROOTFS}/images"
 
-IMAGE_PREPROCESS_COMMAND_append = "delete_clutter; "
-ROOTFS_POSTPROCESS_COMMAND_append = "more_rootfs; "
+IMAGE_PREPROCESS_COMMAND:append = "delete_clutter; "
+ROOTFS_POSTPROCESS_COMMAND:append = "more_rootfs; "
 
 delete_clutter() {
     if test "x${IMAGE_ROOTFS}" != 'x' && test "$(basename ${IMAGE_ROOTFS})" != '/'

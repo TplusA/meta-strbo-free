@@ -1,0 +1,27 @@
+From 99bfb72baffd614c3ebd2168c9c2ffece8159994 Mon Sep 17 00:00:00 2001
+From: Robert Tiemann <r.tiemann@ta-hifi.com>
+Date: Mon, 21 Nov 2022 16:05:32 +0100
+Subject: [PATCH] discovery request: Remove warning about requests without MX
+ header
+
+These are spamming our logs.
+---
+ libgssdp/gssdp-resource-group.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/libgssdp/gssdp-resource-group.c b/libgssdp/gssdp-resource-group.c
+index 66cf508..caa8db0 100644
+--- a/libgssdp/gssdp-resource-group.c
++++ b/libgssdp/gssdp-resource-group.c
+@@ -887,8 +887,6 @@ message_received_cb (G_GNUC_UNUSED GSSDPClient *client,
+         /* Extract MX */
+         mx_str = soup_message_headers_get_one (headers, "MX");
+         if (mx_str == NULL || atoi (mx_str) <= 0) {
+-                g_warning ("Discovery request did not have a valid MX header");
+-
+                 return;
+         }
+ 
+-- 
+2.25.1
+

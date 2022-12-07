@@ -8,7 +8,7 @@ DEPENDS = "sed-native gzip-native asciidoc-native libxml2-native libxslt-native"
 
 BBCLASSEXTEND = "native nativesdk"
 
-SRC_URI = "gitsm://github.com/Autorevision/autorevision.git;branch=master"
+SRC_URI = "gitsm://github.com/Autorevision/autorevision.git;branch=master;protocol=https"
 SRCREV = "726cff14de9f9aee1d80458b1873b7aede6263d2"
 
 S = "${WORKDIR}/git"

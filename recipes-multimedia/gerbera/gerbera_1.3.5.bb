@@ -7,7 +7,6 @@
 # - Added custom user and group
 
 Description = "Gerbera UPnP media server"
-PR = "r1"
 
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://LICENSE.md;md5=25cdec9afe3f1f26212ead6bd2f7fac8"
@@ -48,26 +47,27 @@ DEPENDS += " \
     strbo-startup (>= 1.0-r15) \
 "
 
-RDEPENDS_${PN} += "xmlstarlet \
+RDEPENDS:${PN} += "xmlstarlet \
     mounta (>= 0.10) \
     flagpole-upnpgate (>= 0.2-r4) \
     bash \
     python3 \
     "
-RRECOMMENDS_${PN} += "listbrokers (>= 4.1)"
+RRECOMMENDS:${PN} += "listbrokers (>= 4.1)"
 
-SYSTEMD_SERVICE_${PN} = "gerbera.service"
-SYSTEMD_AUTO_ENABLE_${PN} = "disable"
+SYSTEMD_SERVICE:${PN} = "gerbera.service"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
 
 USERADD_PACKAGES = "${PN}"
-USERADD_PARAM_${PN} = "-r -N -g strbo strbo-mediaserver"
-GROUPADD_PARAM_${PN} = "-r strbo"
+USERADD_PARAM:${PN} = "-r -N -g strbo strbo-mediaserver"
+GROUPADD_PARAM:${PN} = "-r strbo"
+GROUPMEMS_PARAM:${PN} = ""
 
 inherit pkgconfig cmake systemd useradd
 
 EXTRA_OECMAKE = "-DWITH_JS=1 -DWITH_AVCODEC=1 -DWITH_TAGLIB=0 "
 
-do_install_append() {
+do_install:append() {
     install -d ${D}${systemd_system_unitdir}
     install -m 0644 ${WORKDIR}/gerbera.service ${D}${systemd_system_unitdir}/
     install -d ${D}/etc/gerbera
@@ -81,4 +81,4 @@ do_install_append() {
     ln -s -f -T /var/local/etc/gerbera/config.xml ${D}/etc/gerbera/config.xml
 }
 
-FILES_${PN} += "/Storage"
+FILES:${PN} += "/Storage"
