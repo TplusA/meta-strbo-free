@@ -4,7 +4,7 @@ LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "a8c63ce11ea895965e596c82985c575ef22ff24d"
+SRCREV = "5fa64be2b7c448f87ffe39269237bd0118c2653b"
 
 SRC_URI = "gitsm://git.tua.local/repo/TACAMan;branch=master;protocol=http \
            file://0001-extract_documentation-Use-Python-3-shebang.patch \
