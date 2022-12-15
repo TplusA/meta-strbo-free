@@ -1,12 +1,12 @@
 #
-# Copyright (C) 2015, 2018, 2020 T+A elektroakustik GmbH & Co. KG
+# Copyright (C) 2015, 2018, 2020, 2022 T+A elektroakustik GmbH & Co. KG
 #
 
 SUMMARY = "Basic packages used on the T+A Streaming Board"
 LICENSE = "MIT"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
-PR = "r1"
+PR = "r2"
 
 inherit packagegroup
 
@@ -71,6 +71,7 @@ RDEPENDS:${PN} = " \
     packagegroup-core-ssh-dropbear \
     packagegroup-base-wifi \
     openssh-sftp-server \
+    tree \
     \
     alsa-state \
     strbo-release \
