@@ -10,7 +10,7 @@
         <friendlyName>@FRIENDLY_NAME@</friendlyName>
         <manufacturer>T+A elektroakustik GmbH &amp; Co. KG</manufacturer>
         <modelName>T+A Streaming Board</modelName>
-        <manufacturerURL>https://www.ta-hifi.de/</manufacturerURL>
+        <manufacturerURL>http://www.ta-hifi.de/</manufacturerURL>
         <UDN>uuid:@UUID@</UDN>
         <serialNumber>@SERIAL_NUMBER@</serialNumber>
         <modelNumber>@VERSION_NUMBER@</modelNumber>
