@@ -1,4 +1,4 @@
-From b268afc765e0c2666eef5a272e4d49cde0520b3c Mon Sep 17 00:00:00 2001
+From d37a396426e026773408b6d923128dd0605983ca Mon Sep 17 00:00:00 2001
 From: Robert Tiemann <rtie@gmx.de>
 Date: Thu, 29 Sep 2022 08:58:16 +0200
 Subject: [PATCH 1/2] Revert "meson: Use implicit builtin dirs in pkgconfig
@@ -10,18 +10,18 @@ This reverts commit a0e6278dba899f122d806994d47ee0e2c1741b34.
  1 file changed, 9 insertions(+), 9 deletions(-)
 
 diff --git a/subprojects/gst-plugins-base/meson.build b/subprojects/gst-plugins-base/meson.build
-index b800814239..6a57a76aa0 100644
+index 19a8347e5a..323de1cbeb 100644
 --- a/subprojects/gst-plugins-base/meson.build
 +++ b/subprojects/gst-plugins-base/meson.build
 @@ -1,6 +1,6 @@
  project('gst-plugins-base', 'c',
-   version : '1.21.3',
+   version : '1.22.0',
 -  meson_version : '>= 0.62',
 +  meson_version : '>= 0.60',
    default_options : [ 'warning_level=1',
                        'buildtype=debugoptimized' ])
  
-@@ -460,14 +460,14 @@ if get_option('default_library') == 'shared'
+@@ -452,14 +452,14 @@ if get_option('default_library') == 'shared'
    plugins_pkgconfig_install_dir = disabler()
  endif
  

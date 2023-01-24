@@ -1,4 +1,4 @@
-From 31c4df9e9febfd443e2c5c2707a7a4840d4633b5 Mon Sep 17 00:00:00 2001
+From 7477e90f3b4cb3b3b8603cd36c6752d8347d224a Mon Sep 17 00:00:00 2001
 From: Robert Tiemann <rtie@gmx.de>
 Date: Thu, 17 Nov 2022 08:45:02 +0100
 Subject: [PATCH 2/2] decodebin3: Unique name for multiqueue.
@@ -8,10 +8,10 @@ Subject: [PATCH 2/2] decodebin3: Unique name for multiqueue.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/subprojects/gst-plugins-base/gst/playback/gstdecodebin3.c b/subprojects/gst-plugins-base/gst/playback/gstdecodebin3.c
-index 97a476b298..9de11759f8 100644
+index 4c48e52ec1..86ca82e1e3 100644
 --- a/subprojects/gst-plugins-base/gst/playback/gstdecodebin3.c
 +++ b/subprojects/gst-plugins-base/gst/playback/gstdecodebin3.c
-@@ -618,7 +618,7 @@ gst_decodebin3_init (GstDecodebin3 * dbin)
+@@ -619,7 +619,7 @@ gst_decodebin3_init (GstDecodebin3 * dbin)
    /* Create main input */
    dbin->main_input = create_new_input (dbin, TRUE);
  

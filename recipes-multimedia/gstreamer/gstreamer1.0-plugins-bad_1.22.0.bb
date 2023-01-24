@@ -14,7 +14,7 @@ SRC_URI = "https://gstreamer.freedesktop.org/src/gst-plugins-bad/gst-plugins-bad
            file://0006-tests-Remove-test-for-srtp.patch;pnum=3 \
            file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
            "
-SRC_URI[sha256sum] = "4f7c9620e3b4bd6e868b6341af4738952f696c761755db1535d5372f0003ca48"
+SRC_URI[sha256sum] = "3c9d9300f5f4fb3e3d36009379d1fb6d9ecd79c1a135df742b8a68417dd663a1"
 
 S = "${WORKDIR}/gst-plugins-bad-${PV}"
 
