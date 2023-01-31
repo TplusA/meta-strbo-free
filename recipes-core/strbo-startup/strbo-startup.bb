@@ -12,6 +12,8 @@ SRC_URI = " \
     file://flash.rules \
 "
 
+PR = "r1"
+
 S = "${WORKDIR}"
 
 INITSCRIPT_NAME = "startup"
