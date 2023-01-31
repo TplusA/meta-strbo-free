@@ -98,6 +98,20 @@ else
     /bin/chown strbo-tacaman:tacaman "$d"
 fi
 
+d='/var/local/data/updata'
+if test -d "$d"
+then
+    PERM="$(/bin/stat -c '%a %U %G' "$d")"
+    if test "x${PERM}" != 'x2775 updata updata'
+    then
+        /bin/chown updata:updata "$d"
+        /bin/chmod 02775 "$d"
+    fi
+else
+    /bin/mkdir -m 02775 "$d"
+    /bin/chown updata:updata "$d"
+fi
+
 # clean up lost+found directories
 for d in $(cut -f 2 -d ' ' /proc/mounts | sort -u)
 do
