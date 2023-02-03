@@ -9,8 +9,8 @@ Before=system-update.target
 [Service]
 Type=oneshot
 ExecStart=/bin/sh -c 'test -e /var/local/data/system_update_data/system_update.sh && exec /var/local/data/system_update_data/system_update.sh || exit 0'
-StandardOutput=syslog
-StandardError=syslog
+StandardOutput=journal
+StandardError=journal
 UMask=0007
 User=updata
 Group=updata
