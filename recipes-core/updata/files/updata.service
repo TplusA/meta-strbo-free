@@ -2,7 +2,7 @@
 Description=StrBo UpdaTA
 DefaultDependencies=no
 Requires=sysinit.target
-RequiresMountFor=/var/local/data /var/local/etc /bootpartm /bootpartr
+RequiresMountsFor=/var/local/data /var/local/etc /bootpartm /bootpartr
 After=sysinit.target system-update-pre.target
 Before=system-update.target
 
