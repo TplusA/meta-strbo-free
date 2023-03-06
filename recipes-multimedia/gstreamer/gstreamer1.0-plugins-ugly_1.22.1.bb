@@ -14,7 +14,7 @@ SRC_URI = " \
             https://gstreamer.freedesktop.org/src/gst-plugins-ugly/gst-plugins-ugly-${PV}.tar.xz \
             file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
             "
-SRC_URI[sha256sum] = "a644dc981afa2d8d3a913f763ab9523c0620ee4e65a7ec73c7721c29da3c5a0c"
+SRC_URI[sha256sum] = "4ab3d9e13481bce1ca3c7c4bb1f65dce4f0bb40fb1cac4416e8c06dd648815c2"
 
 S = "${WORKDIR}/gst-plugins-ugly-${PV}"
 

@@ -1,4 +1,4 @@
-From d37a396426e026773408b6d923128dd0605983ca Mon Sep 17 00:00:00 2001
+From 27b19baf4664a9f7863ac8c82af43217683e83f9 Mon Sep 17 00:00:00 2001
 From: Robert Tiemann <rtie@gmx.de>
 Date: Thu, 29 Sep 2022 08:58:16 +0200
 Subject: [PATCH] Revert "meson: Use implicit builtin dirs in pkgconfig
@@ -10,12 +10,12 @@ This reverts commit a0e6278dba899f122d806994d47ee0e2c1741b34.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/subprojects/gst-libav/meson.build b/subprojects/gst-libav/meson.build
-index b5b14e8465..463d97c0ea 100644
+index e66aa9200f..7b056813de 100644
 --- a/subprojects/gst-libav/meson.build
 +++ b/subprojects/gst-libav/meson.build
 @@ -1,6 +1,6 @@
  project('gst-libav', 'c',
-   version : '1.22.0',
+   version : '1.22.1',
 -  meson_version : '>= 0.62',
 +  meson_version : '>= 0.60',
    default_options : [ 'warning_level=1',

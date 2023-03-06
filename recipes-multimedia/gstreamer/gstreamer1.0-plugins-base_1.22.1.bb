@@ -13,7 +13,7 @@ SRC_URI = "https://gstreamer.freedesktop.org/src/gst-plugins-base/gst-plugins-ba
            file://0001-Revert-meson-Use-implicit-builtin-dirs-in-pkgconfig-.patch;pnum=3 \
            file://0002-decodebin3-Unique-name-for-multiqueue.patch;pnum=3 \
            "
-SRC_URI[sha256sum] = "f53672294f3985d56355c8b1df8f6b49c8c8721106563e19f53be3507ff2229d"
+SRC_URI[sha256sum] = "59bcaeacc5646b8dbdcfa4ef20ca6e818dd234910efb4cee1bbea441a3801c69"
 
 S = "${WORKDIR}/gst-plugins-base-${PV}"
 
