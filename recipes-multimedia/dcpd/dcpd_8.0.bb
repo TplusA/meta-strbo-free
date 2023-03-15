@@ -4,7 +4,7 @@ LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "91009145300718075c3a95e98d56daad15c7f37c"
+SRCREV = "3e3f53128f656d98b946d4a71ecae381559e7fc4"
 
 SRC_URI = " \
     gitsm://git.tua.local/repo/DCPD;branch=master;protocol=http \
