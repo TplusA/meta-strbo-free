@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 SRCREV = "3e3f53128f656d98b946d4a71ecae381559e7fc4"
 
 SRC_URI = " \
-    gitsm://git.tua.local/repo/DCPD;branch=master;protocol=http \
+    gitsm://github.com/TplusA/DCPD.git;branch=master;protocol=https \
     file://dcpd.service \
     file://dcpd.sudoers \
     file://polkit-systemd-restart-units.rules \

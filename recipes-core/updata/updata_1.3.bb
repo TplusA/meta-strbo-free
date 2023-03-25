@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 SRCREV = "712126045d2c84115e33b3b04b6c4073b2d53bd5"
 
 SRC_URI = " \
-    git://git.tua.local/repo/UpdaTA;branch=master;protocol=http \
+    git://github.com/TplusA/UpdaTA.git;branch=master;protocol=https \
     file://updata.service \
     file://updata.sudoers \
 "

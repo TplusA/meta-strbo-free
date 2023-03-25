@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 SRCREV = "cc0fda434eb3bd2194838c5f95394929d123c801"
 PR = "r1"
 
-SRC_URI = "git://git.tua.local/repo/OffEvent;branch=master;protocol=http"
+SRC_URI = "git://github.com/TplusA/OffEvent.git;branch=master;protocol=https"
 
 S = "${WORKDIR}/git"
 

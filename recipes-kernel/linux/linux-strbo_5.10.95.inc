@@ -1,7 +1,7 @@
 LINUX_VERSION = "5.10.95"
 SRCREV = "a538fd26f82b101cb6fb963042f3242768e628d4"
 SRC_URI = " \
-    git://git.tua.local/repo/RPI-Kernel.git;protocol=http;branch=rpi-5.10.95-tahifi \
+    git://github.com/TplusA/RPI-Kernel.git;protocol=https;branch=rpi-5.10.95-tahifi \
     file://0001-ASoC-tahifi-codec-generic-Add-T-A-HiFi-appliances-co.patch \
     file://0002-ASoC-tahifi-generic-Add-T-A-HiFi-appliances-driver-f.patch \
     file://0003-bcm2835-i2s-Bit-clock-is-always-on-for-SND_SOC_DAIFM.patch \

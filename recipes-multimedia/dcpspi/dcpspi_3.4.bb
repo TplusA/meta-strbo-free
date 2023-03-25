@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 
 SRCREV = "4ebd19ace5b13f66d28c7f22dcd895a0dbf4aca9"
 
-SRC_URI = "gitsm://git.tua.local/repo/DCPSPI;branch=master;protocol=http \
+SRC_URI = "gitsm://github.com/TplusA/DCPSPI.git;branch=master;protocol=https \
            file://dcpspi.service \
            file://dcpspi_gpio \
            file://gpio.rules \

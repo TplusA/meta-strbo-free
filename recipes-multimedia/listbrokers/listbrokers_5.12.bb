@@ -4,10 +4,11 @@ LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "8f48b45a917911679ec6203035d7dc97b2b02f84"
+SRCREV = "afb8f068bd71ab0b4a4a29cac257207edecca7e9"
+PR = "r1"
 
 SRC_URI = " \
-    gitsm://git.tua.local/repo/Listbrokers;branch=master;protocol=http \
+    gitsm://github.com/TplusA/Listbrokers.git;branch=master;protocol=https \
     file://0001-extract_documentation-Use-Python-3-shebang.patch \
 "
 

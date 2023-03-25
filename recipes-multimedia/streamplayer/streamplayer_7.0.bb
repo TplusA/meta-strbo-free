@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 
 SRCREV = "40737b55e462ca76e336f8c69789ab4e4bcf8199"
 
-SRC_URI = "gitsm://git.tua.local/repo/Streamplayer;branch=master;protocol=http \
+SRC_URI = "gitsm://github.com/TplusA/Streamplayer.git;branch=master;protocol=https \
            file://0001-extract_documentation-Use-Python-3-shebang.patch \
            file://streamplayer.service"
 

@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 SRCREV = "c657b3ca8c928242548c1f6ba6e0edc652fc1199"
 
 SRC_URI = " \
-    gitsm://git.tua.local/repo/MounTA;branch=master;protocol=http \
+    gitsm://github.com/TplusA/MounTA.git;branch=master;protocol=https \
     file://0001-extract_documentation-Use-Python-3-shebang.patch \
     file://mounta.service \
     file://mounta.sudoers \

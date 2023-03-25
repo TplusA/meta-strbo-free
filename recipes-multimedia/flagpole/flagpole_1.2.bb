@@ -8,7 +8,7 @@ DEPENDS = "gupnp gupnp-dlna"
 SRCREV = "8cb91b64c3febea6e8c7730981d1327de9c1b3b4"
 PR = "r4"
 
-SRC_URI = "git://git.tua.local/repo/Flagpole;branch=master;protocol=http \
+SRC_URI = "git://github.com/TplusA/Flagpole.git;branch=master;protocol=https \
            file://flagpole.xml.in \
            file://flagpole.service \
            file://flagpole_launcher \

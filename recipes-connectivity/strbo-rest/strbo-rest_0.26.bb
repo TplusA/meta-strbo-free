@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 SRCREV = "31d66c11350f89ee070e79a84632ea888feb0e95"
 
 SRC_URI = " \
-    git://git.tua.local/repo/StrBo-REST;branch=master;protocol=http \
+    git://github.com/TplusA/StrBo-REST.git;branch=master;protocol=https \
     file://launcher.sh \
     file://strbo-rest.conf \
     file://strbo-rest.sudoers \

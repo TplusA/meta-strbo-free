@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 
 SRCREV = "c6395420f01fece135c87cec9273060fd54340d9"
 
-SRC_URI = "gitsm://git.tua.local/repo/DRCPD;branch=master;protocol=http \
+SRC_URI = "gitsm://github.com/TplusA/DRCPD.git;branch=master;protocol=https \
            file://0001-extract_documentation-Use-Python-3-shebang.patch \
            file://drcpd.service"
 

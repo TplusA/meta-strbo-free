@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 
 SRCREV = "d66b87712c8d5c99222f28a183156da0b0a8d8a4"
 
-SRC_URI = "gitsm://git.tua.local/repo/DBusDL;branch=master;protocol=http \
+SRC_URI = "gitsm://github.com/TplusA/DBusDL.git;branch=master;protocol=https \
            file://0001-extract_documentation-Use-Python-3-shebang.patch"
 
 S = "${WORKDIR}/git"

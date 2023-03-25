@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 
 SRCREV = "5fa64be2b7c448f87ffe39269237bd0118c2653b"
 
-SRC_URI = "gitsm://git.tua.local/repo/TACAMan;branch=master;protocol=http \
+SRC_URI = "gitsm://github.com/TplusA/TACAMan.git;branch=master;protocol=https \
            file://0001-extract_documentation-Use-Python-3-shebang.patch \
            file://tacaman.service"
 
