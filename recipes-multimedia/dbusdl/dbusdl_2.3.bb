@@ -3,7 +3,7 @@ LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "d66b87712c8d5c99222f28a183156da0b0a8d8a4"
+SRCREV = "1f4ea0965380c3d88ee671acce4b955768e349a5"
 
 SRC_URI = "gitsm://github.com/TplusA/DBusDL.git;branch=master;protocol=https \
            file://0001-extract_documentation-Use-Python-3-shebang.patch"

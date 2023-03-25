@@ -5,8 +5,8 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
 
 DEPENDS = "gupnp gupnp-dlna"
 
-SRCREV = "8cb91b64c3febea6e8c7730981d1327de9c1b3b4"
-PR = "r4"
+SRCREV = "a270ca80b817095bcd58d79ff928dd0e62d83b54"
+PR = "r5"
 
 SRC_URI = "git://github.com/TplusA/Flagpole.git;branch=master;protocol=https \
            file://flagpole.xml.in \

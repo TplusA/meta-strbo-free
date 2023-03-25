@@ -4,7 +4,7 @@ LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "4ebd19ace5b13f66d28c7f22dcd895a0dbf4aca9"
+SRCREV = "4636c05945b06fa46b96f2999f9ce55283ee4be6"
 
 SRC_URI = "gitsm://github.com/TplusA/DCPSPI.git;branch=master;protocol=https \
            file://dcpspi.service \

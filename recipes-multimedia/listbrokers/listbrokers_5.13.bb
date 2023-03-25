@@ -4,8 +4,7 @@ LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "afb8f068bd71ab0b4a4a29cac257207edecca7e9"
-PR = "r1"
+SRCREV = "37b055cdccec5ad51cfceb02d04dc9c0b57d55f6"
 
 SRC_URI = " \
     gitsm://github.com/TplusA/Listbrokers.git;branch=master;protocol=https \

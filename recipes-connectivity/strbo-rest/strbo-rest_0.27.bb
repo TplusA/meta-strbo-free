@@ -3,7 +3,7 @@ SECTION = "net"
 LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
-SRCREV = "31d66c11350f89ee070e79a84632ea888feb0e95"
+SRCREV = "c2dd25baaf316d05a7d95c90d7cc44a5f99c85ac"
 
 SRC_URI = " \
     git://github.com/TplusA/StrBo-REST.git;branch=master;protocol=https \

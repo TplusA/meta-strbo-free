@@ -3,7 +3,7 @@ LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263 \
                     file://COPYING.GPLv3;md5=d32239bcb673463ab874e80d47fae504"
 
-SRCREV = "c657b3ca8c928242548c1f6ba6e0edc652fc1199"
+SRCREV = "2fd1fe187332217c219dd32f4d83633a0b85cb0b"
 
 SRC_URI = " \
     gitsm://github.com/TplusA/MounTA.git;branch=master;protocol=https \
