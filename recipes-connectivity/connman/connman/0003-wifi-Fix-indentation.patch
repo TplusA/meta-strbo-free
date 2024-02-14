@@ -1,0 +1,30 @@
+Subject: [PATCH 3/4] wifi: Fix indentation.
+
+---
+ plugins/wifi.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/plugins/wifi.c b/plugins/wifi.c
+index cc30d258..12389fa6 100644
+--- a/plugins/wifi.c
++++ b/plugins/wifi.c
+@@ -3405,11 +3405,11 @@ static GSupplicantSSID *ssid_ap_init(const struct connman_technology *technology
+ 		ap->security = G_SUPPLICANT_SECURITY_NONE;
+ 		ap->passphrase = NULL;
+ 	} else {
+-	       ap->security = G_SUPPLICANT_SECURITY_PSK;
+-	       ap->protocol = G_SUPPLICANT_PROTO_RSN;
+-	       ap->pairwise_cipher = G_SUPPLICANT_PAIRWISE_CCMP;
+-	       ap->group_cipher = G_SUPPLICANT_GROUP_CCMP;
+-	       ap->passphrase = g_strdup(passphrase);
++		ap->security = G_SUPPLICANT_SECURITY_PSK;
++		ap->protocol = G_SUPPLICANT_PROTO_RSN;
++		ap->pairwise_cipher = G_SUPPLICANT_PAIRWISE_CCMP;
++		ap->group_cipher = G_SUPPLICANT_GROUP_CCMP;
++		ap->passphrase = g_strdup(passphrase);
+ 	}
+ 
+ 	return ap;
+-- 
+2.34.1
+

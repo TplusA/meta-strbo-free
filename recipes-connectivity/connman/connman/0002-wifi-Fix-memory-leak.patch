@@ -1,0 +1,27 @@
+Subject: [PATCH 2/4] wifi: Fix memory leak.
+
+A GSupplicantSSID instance was leaked in ssid_ap_init() in case
+connman_technology_get_wifi_tethering() didn't succeed.
+---
+ plugins/wifi.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/plugins/wifi.c b/plugins/wifi.c
+index ba5aa2d7..cc30d258 100644
+--- a/plugins/wifi.c
++++ b/plugins/wifi.c
+@@ -3387,8 +3387,10 @@ static GSupplicantSSID *ssid_ap_init(const struct connman_technology *technology
+ 	ret = connman_technology_get_wifi_tethering(technology,
+ 						&ssid, &passphrase,
+ 						&freq);
+-	if (ret == false)
++	if (ret == false) {
++		g_free(ap);
+ 		return NULL;
++	}
+ 
+ 	ap->mode = G_SUPPLICANT_MODE_MASTER;
+ 	ap->ssid = g_strdup(ssid);
+-- 
+2.34.1
+
