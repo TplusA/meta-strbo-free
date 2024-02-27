@@ -8,11 +8,12 @@ SRC_URI += " \
     file://0002-wifi-Fix-memory-leak.patch \
     file://0003-wifi-Fix-indentation.patch \
     file://0004-technology-Fix-memory-leak.patch \
+    file://0001-log-Use-a-log-identity-always-valid-while-logging.patch \
     file://0001-systemd-Run-service-at-nice-level-10.patch \
     file://main.conf \
 "
 
-PR = "r3"
+PR = "r4"
 
 do_install:append() {
     install -d ${D}/${sysconfdir} ${D}/${sysconfdir}/connman
