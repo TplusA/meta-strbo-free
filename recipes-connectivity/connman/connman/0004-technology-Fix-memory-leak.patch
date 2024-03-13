@@ -1,0 +1,25 @@
+Subject: [PATCH 4/4] technology: Fix memory leak.
+
+---
+ src/technology.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/technology.c b/src/technology.c
+index 65fb9854..270d83d0 100644
+--- a/src/technology.c
++++ b/src/technology.c
+@@ -479,8 +479,10 @@ static void technology_load(struct connman_technology *technology)
+ 
+ 	enc = g_key_file_get_string(keyfile,
+ 				identifier, "Tethering.Passphrase", NULL);
+-	if (enc)
++	if (enc) {
+ 		technology->tethering_passphrase = g_strcompress(enc);
++		g_free(enc);
++	}
+ 
+ 	technology->tethering_freq = g_key_file_get_integer(keyfile,
+ 				identifier, "Tethering.Freq", NULL);
+-- 
+2.34.1
+

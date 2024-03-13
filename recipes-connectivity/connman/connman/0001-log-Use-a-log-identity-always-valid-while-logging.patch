@@ -1,0 +1,58 @@
+From bc2ca0b5305ba359fd52a49c1020e6b4b29c2fe5 Mon Sep 17 00:00:00 2001
+From: Christian Meusel <christian.meusel@posteo.de>
+Date: Thu, 22 Feb 2024 23:23:26 +0000
+Subject: [PATCH] log: Use a log identity always valid while logging
+
+The result from basename is not guaranteed to be.
+
+I'm running connmand 1.42 on Yocto Kirkstone and in this setup log
+identities ending up in the journal are garbage and change during the
+run of a connmand process.
+
+Explicitly allocating the log identity fixes this behaviour and gives
+the expected 'connmand'.
+---
+ src/log.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/src/log.c b/src/log.c
+index f7483194..108dcb0b 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -36,6 +36,11 @@
+ 
+ static const char *program_exec;
+ static const char *program_path;
++/*
++ * Provide a log identy to syslog whose lifetime is greater than the timespan
++ * we're logging. The result from basename does not guarantee that.
++ */
++static char *syslog_identity;
+ 
+ /* This makes sure we always have a __debug section. */
+ CONNMAN_DEBUG_ALIAS(dummy);
+@@ -212,7 +217,11 @@ int __connman_log_init(const char *program, const char *debug,
+ 	if (backtrace)
+ 		signal_setup(signal_handler);
+ 
+-	openlog(basename(program), option, LOG_DAEMON);
++	/* Clean up any previos identity and set the new one. */
++	g_free(syslog_identity);
++	syslog_identity = g_path_get_basename(program);
++
++	openlog(syslog_identity, option, LOG_DAEMON);
+ 
+ 	syslog(LOG_INFO, "%s version %s", program_name, program_version);
+ 
+@@ -228,5 +237,8 @@ void __connman_log_cleanup(gboolean backtrace)
+ 	if (backtrace)
+ 		signal_setup(SIG_DFL);
+ 
++	g_free(syslog_identity);
++	syslog_identity = NULL;
++
+ 	g_strfreev(enabled);
+ }
+-- 
+2.34.1
+

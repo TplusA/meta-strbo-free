@@ -2,19 +2,18 @@ require conf/distro/include/partitions.inc
 
 FILESEXTRAPATHS:append := ":${THISDIR}/${PN}"
 
-SRC_URI:remove = " \
-    file://CVE-2022-32293_p1.patch \
-    file://CVE-2022-32293_p2.patch \
-    file://CVE-2022-32292.patch \
-"
-
 SRC_URI += " \
-    file://connman_master-19789ae039.patch \
+    file://connman_master-ee0046efd0.patch \
+    file://0001-wifi-Fix-use-after-free-when-tethering-is-disabled.patch \
+    file://0002-wifi-Fix-memory-leak.patch \
+    file://0003-wifi-Fix-indentation.patch \
+    file://0004-technology-Fix-memory-leak.patch \
+    file://0001-log-Use-a-log-identity-always-valid-while-logging.patch \
     file://0001-systemd-Run-service-at-nice-level-10.patch \
     file://main.conf \
 "
 
-PR = "r1"
+PR = "r4"
 
 do_install:append() {
     install -d ${D}/${sysconfdir} ${D}/${sysconfdir}/connman
